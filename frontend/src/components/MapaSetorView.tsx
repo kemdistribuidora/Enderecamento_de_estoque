@@ -4,16 +4,19 @@ import { EnderecoComStatus, MapaSetor, PrateleiraComPosicoes } from '../types';
 interface Props {
   mapa: MapaSetor;
   onSelect: (endereco: EnderecoComStatus) => void;
+  termoBusca?: string;
 }
 
 function CelulaPosicao({
   posicao,
   onClick,
   grande,
+  destacado,
 }: {
   posicao: EnderecoComStatus;
   onClick: (e: EnderecoComStatus) => void;
   grande?: boolean;
+  destacado?: boolean;
 }) {
   const ocupado = posicao.status === 'ocupado';
   return (
@@ -23,9 +26,11 @@ function CelulaPosicao({
       className={`flex aspect-square min-w-0 items-center justify-center rounded-md border font-medium transition-transform hover:z-10 hover:scale-110 ${
         grande ? 'text-base' : 'text-xs'
       } ${
-        ocupado
-          ? 'border-blue-300 bg-blue-100 text-blue-800 hover:bg-blue-200'
-          : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200'
+        destacado
+          ? 'border-green-400 bg-green-200 text-green-800 ring-2 ring-green-500 hover:bg-green-300'
+          : ocupado
+            ? 'border-blue-300 bg-blue-100 text-blue-800 hover:bg-blue-200'
+            : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200'
       }`}
     >
       {posicao.posicao}
@@ -40,6 +45,7 @@ function BlocoPrateleira({
   onSelect,
   onExpandir,
   grande,
+  idsDestacados,
 }: {
   posicoes: EnderecoComStatus[];
   letraDono: string;
@@ -47,6 +53,7 @@ function BlocoPrateleira({
   onSelect: (e: EnderecoComStatus) => void;
   onExpandir?: () => void;
   grande?: boolean;
+  idsDestacados?: Set<number>;
 }) {
   const andares = Array.from(new Set(posicoes.map((p) => p.andar))).sort((a, b) => b - a);
   const colunas = Math.max(...andares.map((andar) => posicoes.filter((p) => p.andar === andar).length));
@@ -80,7 +87,13 @@ function BlocoPrateleira({
                 .filter((p) => p.andar === andar)
                 .sort((a, b) => a.posicao - b.posicao)
                 .map((p) => (
-                  <CelulaPosicao key={p.id} posicao={p} onClick={onSelect} grande={grande} />
+                  <CelulaPosicao
+                    key={p.id}
+                    posicao={p}
+                    onClick={onSelect}
+                    grande={grande}
+                    destacado={idsDestacados?.has(p.id)}
+                  />
                 ))}
             </div>
           </div>
@@ -94,10 +107,12 @@ function ModalPrateleiraExpandida({
   prateleira,
   onClose,
   onSelect,
+  idsDestacados,
 }: {
   prateleira: PrateleiraComPosicoes;
   onClose: () => void;
   onSelect: (e: EnderecoComStatus) => void;
+  idsDestacados?: Set<number>;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -122,6 +137,7 @@ function ModalPrateleiraExpandida({
               ladoDono={prateleira.dono.lado}
               onSelect={onSelect}
               grande
+              idsDestacados={idsDestacados}
             />
           </div>
         </div>
@@ -138,10 +154,19 @@ function FaixaCorredor({ letra }: { letra: string }) {
   );
 }
 
-export default function MapaSetorView({ mapa, onSelect }: Props) {
+export default function MapaSetorView({ mapa, onSelect, termoBusca }: Props) {
   const todasPosicoes = mapa.prateleiras.flatMap((p) => p.posicoes);
   const ocupados = todasPosicoes.filter((p) => p.status === 'ocupado').length;
   const [prateleiraExpandida, setPrateleiraExpandida] = useState<PrateleiraComPosicoes | null>(null);
+
+  const termo = termoBusca?.trim().toLowerCase();
+  const idsDestacados = new Set(
+    termo
+      ? todasPosicoes
+          .filter((p) => p.produto && (p.produto.nome.toLowerCase().includes(termo) || p.produto.codigo.toLowerCase().includes(termo)))
+          .map((p) => p.id)
+      : []
+  );
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -160,6 +185,7 @@ export default function MapaSetorView({ mapa, onSelect }: Props) {
               ladoDono={prateleira.dono.lado}
               onSelect={onSelect}
               onExpandir={() => setPrateleiraExpandida(prateleira)}
+              idsDestacados={idsDestacados}
             />
             {idx < mapa.corredores.length && <FaixaCorredor letra={mapa.corredores[idx]} />}
           </div>
@@ -170,6 +196,7 @@ export default function MapaSetorView({ mapa, onSelect }: Props) {
           prateleira={prateleiraExpandida}
           onClose={() => setPrateleiraExpandida(null)}
           onSelect={onSelect}
+          idsDestacados={idsDestacados}
         />
       )}
     </div>

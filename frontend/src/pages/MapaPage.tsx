@@ -3,6 +3,7 @@ import { buscarMapaSetor, buscarSetores } from '../api/client';
 import { EnderecoComStatus, MapaSetor, Setor } from '../types';
 import MapaSetorView from '../components/MapaSetorView';
 import ProdutoModal from '../components/ProdutoModal';
+import SearchBar from '../components/SearchBar';
 
 export default function MapaPage() {
   const [setores, setSetores] = useState<Setor[]>([]);
@@ -10,6 +11,7 @@ export default function MapaPage() {
   const [mapa, setMapa] = useState<MapaSetor | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [selecionado, setSelecionado] = useState<EnderecoComStatus | null>(null);
+  const [termoBusca, setTermoBusca] = useState('');
 
   useEffect(() => {
     buscarSetores().then((lista) => {
@@ -28,6 +30,8 @@ export default function MapaPage() {
 
   return (
     <div className="space-y-4">
+      <SearchBar onChange={setTermoBusca} />
+
       <div className="flex flex-wrap gap-2">
         {setores.map((s) => (
           <button
@@ -54,12 +58,15 @@ export default function MapaPage() {
         <span className="flex items-center gap-1">
           <span className="h-3 w-3 rounded-sm border border-dashed border-amber-300 bg-amber-50" /> corredor (passagem)
         </span>
+        <span className="flex items-center gap-1">
+          <span className="h-3 w-3 rounded-sm border border-green-400 bg-green-200" /> encontrado
+        </span>
       </div>
 
       {carregando || !mapa ? (
         <p className="text-sm text-slate-400">Carregando mapa...</p>
       ) : (
-        <MapaSetorView mapa={mapa} onSelect={setSelecionado} />
+        <MapaSetorView mapa={mapa} onSelect={setSelecionado} termoBusca={termoBusca} />
       )}
 
       <ProdutoModal endereco={selecionado} onClose={() => setSelecionado(null)} />
