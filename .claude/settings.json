@@ -64,7 +64,11 @@
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\); console.log\\('setor',j.setor\\); console.log\\('corredores',j.corredores\\); console.log\\('prateleiras count',j.prateleiras.length\\); console.log\\('primeira prateleira dono',j.prateleiras[0].dono,'qtd posicoes',j.prateleiras[0].posicoes.length\\); console.log\\('exemplo posicao',j.prateleiras[0].posicoes[0]\\); console.log\\('ultima prateleira dono', j.prateleiras[j.prateleiras.length-1].dono\\);}\\)\")",
       "Bash(curl -s \"http://localhost:3001/api/enderecos\")",
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\); console.log\\('total', j.length\\); console.log\\('exemplo', j[0]\\);}\\)\")",
-      "Bash(rtk git *)"
+      "Bash(rtk git *)",
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s https://enderecamento-de-estoque.onrender.com/api/produtos)",
+      "Bash(curl -s https://enderecamento-de-estoque.vercel.app)",
+      "Bash(curl -s https://enderecamento-de-estoque.vercel.app/assets/index-D9mZMmWv.js)"
     ],
     "additionalDirectories": [
       "c:\\Users\\tikem\\Documents\\vs\\Enderecamento_de_estoque\\backend\\src",
