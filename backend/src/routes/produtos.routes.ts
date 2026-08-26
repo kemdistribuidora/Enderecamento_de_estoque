@@ -6,16 +6,16 @@ export const produtosRouter = Router();
 
 // POST /api/produtos -> cadastra produto novo (dados mestre, sem posicao/estoque ainda)
 produtosRouter.post('/', async (req, res) => {
-  const { codigo, nome, descricao, codigo_barras, validade } = req.body ?? {};
+  const { codigo, nome, descricao, codigo_barras } = req.body ?? {};
 
-  if (!codigo || !nome || !codigo_barras || !validade) {
-    return res.status(400).json({ erro: 'codigo, nome, codigo_barras e validade sao obrigatorios' });
+  if (!codigo || !nome || !codigo_barras) {
+    return res.status(400).json({ erro: 'codigo, nome e codigo_barras sao obrigatorios' });
   }
 
   try {
     const info = await db.execute({
-      sql: `INSERT INTO produtos (codigo, nome, descricao, codigo_barras, validade) VALUES (?, ?, ?, ?, ?)`,
-      args: [codigo, nome, descricao ?? '', codigo_barras, validade],
+      sql: `INSERT INTO produtos (codigo, nome, descricao, codigo_barras) VALUES (?, ?, ?, ?)`,
+      args: [codigo, nome, descricao ?? '', codigo_barras],
     });
 
     const produto: Produto = {
@@ -24,7 +24,6 @@ produtosRouter.post('/', async (req, res) => {
       nome,
       descricao: descricao ?? '',
       codigo_barras,
-      validade,
     };
     res.status(201).json(produto);
   } catch (e: any) {
@@ -79,9 +78,10 @@ async function carregarPosicoes(produtoIds: number[]): Promise<Record<number, Pr
 
   const placeholders = produtoIds.map(() => '?').join(',');
   const rs = await db.execute({
-    sql: `SELECT ep.produto_id as produtoId, ep.endereco_id as enderecoId, ep.quantidade as quantidade, e.codigo as codigoEndereco
+    sql: `SELECT ep.produto_id as produtoId, ep.endereco_id as enderecoId, ep.quantidade as quantidade, ep.validade as validade, e.codigo as codigoEndereco, pr.setor_id as setorId
           FROM estoque_posicoes ep
           JOIN enderecos e ON e.id = ep.endereco_id
+          JOIN prateleiras pr ON pr.id = e.prateleira_id
           WHERE ep.produto_id IN (${placeholders})`,
     args: produtoIds,
   });
@@ -94,7 +94,13 @@ async function carregarPosicoes(produtoIds: number[]): Promise<Record<number, Pr
       endereco_id: Number(row.enderecoId),
       codigo_endereco: row.codigoEndereco,
       quantidade: Number(row.quantidade),
+      setor_id: Number(row.setorId),
+      validade: row.validade,
     });
+  }
+  // validade mais proxima primeiro (FEFO) -> indica de qual posicao tirar estoque antes
+  for (const produtoId of Object.keys(agrupado)) {
+    agrupado[Number(produtoId)].sort((a, b) => a.validade.localeCompare(b.validade));
   }
   return agrupado;
 }

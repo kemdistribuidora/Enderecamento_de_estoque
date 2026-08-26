@@ -4,7 +4,6 @@ export interface Produto {
   nome: string;
   descricao: string;
   codigo_barras: string;
-  validade: string; // ISO date (YYYY-MM-DD)
 }
 
 export interface Setor {
@@ -41,6 +40,7 @@ export interface EstoquePosicao {
   produto_id: number;
   endereco_id: number;
   quantidade: number;
+  validade: string; // ISO date (YYYY-MM-DD) — validade do lote nessa posicao
 }
 
 // Endereco com status calculado (join) + produto ocupante, se houver
@@ -51,6 +51,7 @@ export interface EnderecoComStatus extends Endereco {
     codigo: string;
     nome: string;
     quantidade: number;
+    validade: string;
   } | null;
 }
 
@@ -60,6 +61,8 @@ export interface ProdutoComPosicoes extends Produto {
     endereco_id: number;
     codigo_endereco: string;
     quantidade: number;
+    setor_id: number;
+    validade: string;
   }>;
 }
 

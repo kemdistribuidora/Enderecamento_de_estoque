@@ -53,8 +53,8 @@ export default function CadastroPage() {
     const quantidade = Number(form.quantidade);
     const enderecoId = Number(form.enderecoId);
 
-    if (!form.enderecoId || !quantidade || quantidade <= 0) {
-      setStatus({ tipo: 'erro', texto: 'Selecione um endereço e informe uma quantidade válida.' });
+    if (!form.enderecoId || !quantidade || quantidade <= 0 || !form.validade) {
+      setStatus({ tipo: 'erro', texto: 'Selecione um endereço, quantidade válida e validade do lote.' });
       return;
     }
 
@@ -68,7 +68,6 @@ export default function CadastroPage() {
           nome: form.nome,
           descricao: form.descricao,
           codigo_barras: form.codigo_barras,
-          validade: form.validade,
         });
         produtoId = produtoCriado.id;
       } catch (err: any) {
@@ -83,7 +82,7 @@ export default function CadastroPage() {
         }
       }
 
-      await ocuparEndereco(enderecoId, produtoId, quantidade);
+      await ocuparEndereco(enderecoId, produtoId, quantidade, form.validade);
 
       setStatus({ tipo: 'sucesso', texto: `Produto adicionado na posição ${enderecosLivres.find((e) => e.id === enderecoId)?.codigo}.` });
       setForm(FORM_INICIAL);
@@ -140,8 +139,12 @@ export default function CadastroPage() {
               placeholder="7890000000001"
             />
           </Campo>
+        </fieldset>
 
-          <Campo label="Validade">
+        <fieldset className="space-y-3 border-t border-slate-100 pt-4">
+          <legend className="mb-1 text-sm font-medium text-slate-600">Entrada em estoque</legend>
+
+          <Campo label="Validade do lote">
             <input
               required
               type="date"
@@ -150,10 +153,6 @@ export default function CadastroPage() {
               className="input"
             />
           </Campo>
-        </fieldset>
-
-        <fieldset className="space-y-3 border-t border-slate-100 pt-4">
-          <legend className="mb-1 text-sm font-medium text-slate-600">Entrada em estoque</legend>
 
           <Campo label="Endereço (posição livre)">
             <div className="flex gap-2">

@@ -3,8 +3,7 @@ CREATE TABLE IF NOT EXISTS produtos (
   codigo TEXT NOT NULL UNIQUE,
   nome TEXT NOT NULL,
   descricao TEXT NOT NULL DEFAULT '',
-  codigo_barras TEXT NOT NULL,
-  validade TEXT NOT NULL
+  codigo_barras TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS setores (
@@ -47,11 +46,14 @@ CREATE TABLE IF NOT EXISTS enderecos (
 
 -- status (livre/ocupado) NAO fica coluna aqui: eh derivado da presenca em estoque_posicoes,
 -- assim evita dessincronia entre coluna e realidade.
+-- validade aqui = validade da unidade que vence primeiro naquele pallet/posicao
+-- (nao eh mais dado mestre do produto: mesmo produto pode ter lotes com validades diferentes)
 CREATE TABLE IF NOT EXISTS estoque_posicoes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
   endereco_id INTEGER NOT NULL UNIQUE REFERENCES enderecos(id) ON DELETE CASCADE,
-  quantidade INTEGER NOT NULL DEFAULT 0
+  quantidade INTEGER NOT NULL DEFAULT 0,
+  validade TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_produtos_nome ON produtos(nome);

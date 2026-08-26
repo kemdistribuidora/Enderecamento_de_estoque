@@ -69,12 +69,18 @@
       "Bash(curl -s https://enderecamento-de-estoque.onrender.com/api/produtos)",
       "Bash(curl -s https://enderecamento-de-estoque.vercel.app)",
       "Bash(curl -s https://enderecamento-de-estoque.vercel.app/assets/index-D9mZMmWv.js)",
-      "Bash(rtk tsc *)"
+      "Bash(rtk tsc *)",
+      "Bash(cd /c/Users/tikem/Documents/vs/Enderecamento_de_estoque/backend && npx tsc --noEmit 2>&1 | head -50)",
+      "Bash(cd /c/Users/tikem/Documents/vs/Enderecamento_de_estoque/frontend && rtk npm run dev)",
+      "Bash(cd /c/Users/tikem/Documents/vs/Enderecamento_de_estoque/backend && npx tsc --noEmit 2>&1 | head -60)",
+      "Bash(cd /c/Users/tikem/Documents/vs/Enderecamento_de_estoque/frontend && npx tsc --noEmit 2>&1 | head -60)",
+      "Bash(rm \"/c/Users/tikem/Documents/vs/Enderecamento_de_estoque/backend/src/db/migrate-validade-lote.ts\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\tikem\\Documents\\vs\\Enderecamento_de_estoque\\backend\\src",
       "C:\\Users\\tikem\\Documents\\vs\\Enderecamento_de_estoque\\frontend\\src\\pages",
-      "C:\\Users\\tikem\\Documents\\vs\\Enderecamento_de_estoque\\backend"
+      "C:\\Users\\tikem\\Documents\\vs\\Enderecamento_de_estoque\\backend",
+      "C:\\Users\\tikem\\Documents\\vs\\Enderecamento_de_estoque\\backend\\src\\db"
     ]
   }
 }

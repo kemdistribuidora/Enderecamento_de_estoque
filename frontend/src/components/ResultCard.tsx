@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router-dom';
 import { ProdutoComPosicoes } from '../types';
 
 export default function ResultCard({ produto }: { produto: ProdutoComPosicoes }) {
+  const navigate = useNavigate();
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-2 flex items-start justify-between">
@@ -15,24 +17,29 @@ export default function ResultCard({ produto }: { produto: ProdutoComPosicoes })
         <span>
           <strong className="font-medium text-slate-700">Cód. barras:</strong> {produto.codigo_barras}
         </span>
-        <span>
-          <strong className="font-medium text-slate-700">Validade:</strong> {produto.validade}
-        </span>
       </div>
 
       <div>
-        <p className="mb-1 text-xs font-medium text-slate-500">Posições ({produto.posicoes.length})</p>
+        <p className="mb-1 text-xs font-medium text-slate-500">
+          Posições ({produto.posicoes.length}) · ordenado por validade, mais próxima primeiro
+        </p>
         {produto.posicoes.length === 0 ? (
           <p className="text-xs text-slate-400">Sem estoque em nenhuma posição.</p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
-            {produto.posicoes.map((p) => (
-              <span
+            {produto.posicoes.map((p, idx) => (
+              <button
                 key={p.endereco_id}
-                className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-800"
+                onClick={() => navigate(`/?setor=${p.setor_id}&endereco=${p.endereco_id}`)}
+                title="Ver no mapa"
+                className={`rounded-md border px-2 py-1 text-xs font-medium hover:opacity-80 ${
+                  idx === 0
+                    ? 'border-amber-300 bg-amber-50 text-amber-800'
+                    : 'border-blue-200 bg-blue-50 text-blue-800'
+                }`}
               >
-                {p.codigo_endereco} · {p.quantidade}un
-              </span>
+                {p.codigo_endereco} · {p.quantidade}un · vence {p.validade}
+              </button>
             ))}
           </div>
         )}

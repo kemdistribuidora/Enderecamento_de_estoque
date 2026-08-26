@@ -11,7 +11,7 @@ enderecosRouter.get('/', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
       e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
-      ep.quantidade as quantidade,
+      ep.quantidade as quantidade, ep.validade as validade,
       p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome
     FROM enderecos e
     LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
@@ -29,20 +29,20 @@ enderecosRouter.get('/', async (_req, res) => {
     codigo: r.codigo,
     status: r.produto_id ? 'ocupado' : 'livre',
     produto: r.produto_id
-      ? { id: Number(r.produto_id), codigo: r.produto_codigo, nome: r.produto_nome, quantidade: Number(r.quantidade) }
+      ? { id: Number(r.produto_id), codigo: r.produto_codigo, nome: r.produto_nome, quantidade: Number(r.quantidade), validade: r.validade }
       : null,
   }));
 
   res.json(resultado);
 });
 
-// POST /api/enderecos/:id/ocupar { produto_id, quantidade }
+// POST /api/enderecos/:id/ocupar { produto_id, quantidade, validade }
 enderecosRouter.post('/:id/ocupar', async (req, res) => {
   const enderecoId = Number(req.params.id);
-  const { produto_id, quantidade } = req.body ?? {};
+  const { produto_id, quantidade, validade } = req.body ?? {};
 
-  if (!produto_id || !quantidade || quantidade <= 0) {
-    return res.status(400).json({ erro: 'produto_id e quantidade (> 0) sao obrigatorios' });
+  if (!produto_id || !quantidade || quantidade <= 0 || !validade) {
+    return res.status(400).json({ erro: 'produto_id, quantidade (> 0) e validade sao obrigatorios' });
   }
 
   const endereco = await db.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [enderecoId] });
@@ -61,8 +61,8 @@ enderecosRouter.post('/:id/ocupar', async (req, res) => {
   }
 
   await db.execute({
-    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade) VALUES (?, ?, ?)`,
-    args: [produto_id, enderecoId, quantidade],
+    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade) VALUES (?, ?, ?, ?)`,
+    args: [produto_id, enderecoId, quantidade, validade],
   });
 
   res.status(201).json({ ok: true });

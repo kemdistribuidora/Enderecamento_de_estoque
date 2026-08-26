@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { buscarMapaSetor, buscarSetores } from '../api/client';
 import { EnderecoComStatus, MapaSetor, Setor } from '../types';
 import MapaSetorView from '../components/MapaSetorView';
@@ -6,6 +7,11 @@ import ProdutoModal from '../components/ProdutoModal';
 import SearchBar from '../components/SearchBar';
 
 export default function MapaPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const setorParam = searchParams.get('setor');
+  const enderecoParam = searchParams.get('endereco');
+  const enderecoDestacadoId = enderecoParam ? Number(enderecoParam) : null;
+
   const [setores, setSetores] = useState<Setor[]>([]);
   const [setorAtivoId, setSetorAtivoId] = useState<number | null>(null);
   const [mapa, setMapa] = useState<MapaSetor | null>(null);
@@ -16,8 +22,10 @@ export default function MapaPage() {
   useEffect(() => {
     buscarSetores().then((lista) => {
       setSetores(lista);
-      setSetorAtivoId(lista[0]?.id ?? null);
+      const inicial = setorParam ? Number(setorParam) : (lista[0]?.id ?? null);
+      setSetorAtivoId(inicial);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -36,7 +44,10 @@ export default function MapaPage() {
         {setores.map((s) => (
           <button
             key={s.id}
-            onClick={() => setSetorAtivoId(s.id)}
+            onClick={() => {
+              setSetorAtivoId(s.id);
+              setSearchParams({});
+            }}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               setorAtivoId === s.id
                 ? 'bg-slate-900 text-white'
@@ -66,7 +77,12 @@ export default function MapaPage() {
       {carregando || !mapa ? (
         <p className="text-sm text-slate-400">Carregando mapa...</p>
       ) : (
-        <MapaSetorView mapa={mapa} onSelect={setSelecionado} termoBusca={termoBusca} />
+        <MapaSetorView
+          mapa={mapa}
+          onSelect={setSelecionado}
+          termoBusca={termoBusca}
+          enderecoDestacadoId={enderecoDestacadoId}
+        />
       )}
 
       <ProdutoModal endereco={selecionado} onClose={() => setSelecionado(null)} />

@@ -28,6 +28,7 @@ export default function ProdutoModal({ endereco, onClose }: Props) {
             <Row label="Produto" value={endereco.produto.nome} />
             <Row label="Código" value={endereco.produto.codigo} />
             <Row label="Quantidade" value={String(endereco.produto.quantidade)} />
+            <Row label="Validade do lote" value={endereco.produto.validade} />
           </dl>
         )}
       </div>

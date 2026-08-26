@@ -5,6 +5,7 @@ interface Props {
   mapa: MapaSetor;
   onSelect: (endereco: EnderecoComStatus) => void;
   termoBusca?: string;
+  enderecoDestacadoId?: number | null;
 }
 
 function CelulaPosicao({
@@ -22,7 +23,11 @@ function CelulaPosicao({
   return (
     <button
       onClick={() => onClick(posicao)}
-      title={ocupado ? `${posicao.codigo} — ${posicao.produto?.nome}` : `${posicao.codigo} — livre`}
+      title={
+        ocupado
+          ? `${posicao.codigo} — ${posicao.produto?.nome} (vence ${posicao.produto?.validade})`
+          : `${posicao.codigo} — livre`
+      }
       className={`flex aspect-square min-w-0 items-center justify-center rounded-md border font-medium transition-transform hover:z-10 hover:scale-110 ${
         grande ? 'text-base' : 'text-xs'
       } ${
@@ -154,7 +159,7 @@ function FaixaCorredor({ letra }: { letra: string }) {
   );
 }
 
-export default function MapaSetorView({ mapa, onSelect, termoBusca }: Props) {
+export default function MapaSetorView({ mapa, onSelect, termoBusca, enderecoDestacadoId }: Props) {
   const todasPosicoes = mapa.prateleiras.flatMap((p) => p.posicoes);
   const ocupados = todasPosicoes.filter((p) => p.status === 'ocupado').length;
   const [prateleiraExpandida, setPrateleiraExpandida] = useState<PrateleiraComPosicoes | null>(null);
@@ -167,6 +172,7 @@ export default function MapaSetorView({ mapa, onSelect, termoBusca }: Props) {
           .map((p) => p.id)
       : []
   );
+  if (enderecoDestacadoId != null) idsDestacados.add(enderecoDestacadoId);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">

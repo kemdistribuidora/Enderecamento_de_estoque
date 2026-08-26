@@ -32,7 +32,6 @@ export interface DadosNovoProduto {
   nome: string;
   descricao: string;
   codigo_barras: string;
-  validade: string;
 }
 
 export function criarProduto(dados: DadosNovoProduto): Promise<Produto> {
@@ -43,10 +42,10 @@ export function criarProduto(dados: DadosNovoProduto): Promise<Produto> {
   }).then((r) => handleJson(r));
 }
 
-export function ocuparEndereco(enderecoId: number, produtoId: number, quantidade: number): Promise<void> {
+export function ocuparEndereco(enderecoId: number, produtoId: number, quantidade: number, validade: string): Promise<void> {
   return fetch(`${BASE_URL}/enderecos/${enderecoId}/ocupar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ produto_id: produtoId, quantidade }),
+    body: JSON.stringify({ produto_id: produtoId, quantidade, validade }),
   }).then((r) => handleJson(r));
 }

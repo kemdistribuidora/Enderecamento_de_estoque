@@ -4,7 +4,6 @@ export interface Produto {
   nome: string;
   descricao: string;
   codigo_barras: string;
-  validade: string;
 }
 
 export interface ProdutoComPosicoes extends Produto {
@@ -12,6 +11,8 @@ export interface ProdutoComPosicoes extends Produto {
     endereco_id: number;
     codigo_endereco: string;
     quantidade: number;
+    setor_id: number;
+    validade: string;
   }>;
 }
 
@@ -29,6 +30,7 @@ export interface EnderecoComStatus {
     codigo: string;
     nome: string;
     quantidade: number;
+    validade: string;
   } | null;
 }
 
