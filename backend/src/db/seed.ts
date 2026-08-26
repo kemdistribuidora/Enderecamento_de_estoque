@@ -46,8 +46,8 @@ async function seed() {
     const nome = NOMES_PRODUTOS[i];
     const codigo = `PRD${String(i + 1).padStart(4, '0')}`;
     const info = await db.execute({
-      sql: `INSERT INTO produtos (codigo, nome, descricao, codigo_barras) VALUES (?, ?, ?, ?)`,
-      args: [codigo, nome, `Produto ${nome} para uso geral no deposito.`, gerarCodigoBarras(i + 1)],
+      sql: `INSERT INTO produtos (codigo, nome, codigo_barras) VALUES (?, ?, ?)`,
+      args: [codigo, nome, gerarCodigoBarras(i + 1)],
     });
     produtoIds.push(Number(info.lastInsertRowid));
   }

@@ -2,7 +2,6 @@ export interface Produto {
   id: number;
   codigo: string;
   nome: string;
-  descricao: string;
   codigo_barras: string;
 }
 

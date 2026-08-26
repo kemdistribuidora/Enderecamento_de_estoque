@@ -6,7 +6,7 @@ export const produtosRouter = Router();
 
 // POST /api/produtos -> cadastra produto novo (dados mestre, sem posicao/estoque ainda)
 produtosRouter.post('/', async (req, res) => {
-  const { codigo, nome, descricao, codigo_barras } = req.body ?? {};
+  const { codigo, nome, codigo_barras } = req.body ?? {};
 
   if (!codigo || !nome || !codigo_barras) {
     return res.status(400).json({ erro: 'codigo, nome e codigo_barras sao obrigatorios' });
@@ -14,15 +14,14 @@ produtosRouter.post('/', async (req, res) => {
 
   try {
     const info = await db.execute({
-      sql: `INSERT INTO produtos (codigo, nome, descricao, codigo_barras) VALUES (?, ?, ?, ?)`,
-      args: [codigo, nome, descricao ?? '', codigo_barras],
+      sql: `INSERT INTO produtos (codigo, nome, codigo_barras) VALUES (?, ?, ?)`,
+      args: [codigo, nome, codigo_barras],
     });
 
     const produto: Produto = {
       id: Number(info.lastInsertRowid),
       codigo,
       nome,
-      descricao: descricao ?? '',
       codigo_barras,
     };
     res.status(201).json(produto);

@@ -30,7 +30,6 @@ export function buscarMapaSetor(setorId: number): Promise<MapaSetor> {
 export interface DadosNovoProduto {
   codigo: string;
   nome: string;
-  descricao: string;
   codigo_barras: string;
 }
 

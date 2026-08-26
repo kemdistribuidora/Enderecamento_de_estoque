@@ -8,7 +8,6 @@ export default function ResultCard({ produto }: { produto: ProdutoComPosicoes })
       <div className="mb-2 flex items-start justify-between">
         <div>
           <h3 className="font-semibold text-slate-800">{produto.nome}</h3>
-          <p className="text-xs text-slate-500">{produto.descricao}</p>
         </div>
         <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{produto.codigo}</span>
       </div>

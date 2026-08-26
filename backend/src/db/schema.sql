@@ -2,7 +2,6 @@ CREATE TABLE IF NOT EXISTS produtos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   codigo TEXT NOT NULL UNIQUE,
   nome TEXT NOT NULL,
-  descricao TEXT NOT NULL DEFAULT '',
   codigo_barras TEXT NOT NULL
 );
 

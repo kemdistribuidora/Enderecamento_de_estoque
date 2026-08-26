@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { buscarMapaEnderecos, buscarMapaSetor, buscarProdutos, buscarSetores, criarProduto, ocuparEndereco } from '../api/client';
-import { EnderecoComStatus, MapaSetor, Setor } from '../types';
+import { EnderecoComStatus, MapaSetor, ProdutoComPosicoes, Setor } from '../types';
 import MapaSetorView from '../components/MapaSetorView';
 
 const FORM_INICIAL = {
   codigo: '',
   nome: '',
-  descricao: '',
   codigo_barras: '',
   validade: '',
   enderecoId: '',
@@ -22,9 +21,37 @@ export default function CadastroPage() {
   const [status, setStatus] = useState<Status>(null);
   const [mapaAberto, setMapaAberto] = useState(false);
 
+  const [buscaProduto, setBuscaProduto] = useState('');
+  const [sugestoes, setSugestoes] = useState<ProdutoComPosicoes[]>([]);
+  const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoComPosicoes | null>(null);
+
   useEffect(() => {
     carregarEnderecosLivres();
   }, []);
+
+  useEffect(() => {
+    if (produtoSelecionado || buscaProduto.trim().length < 2) {
+      setSugestoes([]);
+      return;
+    }
+    const termo = buscaProduto.trim();
+    const timer = setTimeout(() => {
+      buscarProdutos(termo).then(setSugestoes);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [buscaProduto, produtoSelecionado]);
+
+  function selecionarProduto(p: ProdutoComPosicoes) {
+    setProdutoSelecionado(p);
+    setForm((f) => ({ ...f, codigo: p.codigo, nome: p.nome, codigo_barras: p.codigo_barras }));
+    setBuscaProduto('');
+    setSugestoes([]);
+  }
+
+  function limparSelecao() {
+    setProdutoSelecionado(null);
+    setForm((f) => ({ ...f, codigo: '', nome: '', codigo_barras: '' }));
+  }
 
   function carregarEnderecosLivres() {
     buscarMapaEnderecos().then((lista) => {
@@ -62,23 +89,26 @@ export default function CadastroPage() {
     try {
       let produtoId: number;
 
-      try {
-        const produtoCriado = await criarProduto({
-          codigo: form.codigo,
-          nome: form.nome,
-          descricao: form.descricao,
-          codigo_barras: form.codigo_barras,
-        });
-        produtoId = produtoCriado.id;
-      } catch (err: any) {
-        if (String(err.message).includes('ja cadastrado')) {
-          const existentes = await buscarProdutos(form.codigo);
-          const existente = existentes.find((p) => p.codigo.toLowerCase() === form.codigo.toLowerCase());
-          if (!existente) throw new Error('Código já cadastrado, mas não foi possível localizar o produto existente.');
-          produtoId = existente.id;
-          setStatus({ tipo: 'info', texto: `Código já cadastrado — adicionando estoque em "${existente.nome}".` });
-        } else {
-          throw err;
+      if (produtoSelecionado) {
+        produtoId = produtoSelecionado.id;
+      } else {
+        try {
+          const produtoCriado = await criarProduto({
+            codigo: form.codigo,
+            nome: form.nome,
+            codigo_barras: form.codigo_barras,
+          });
+          produtoId = produtoCriado.id;
+        } catch (err: any) {
+          if (String(err.message).includes('ja cadastrado')) {
+            const existentes = await buscarProdutos(form.codigo);
+            const existente = existentes.find((p) => p.codigo.toLowerCase() === form.codigo.toLowerCase());
+            if (!existente) throw new Error('Código já cadastrado, mas não foi possível localizar o produto existente.');
+            produtoId = existente.id;
+            setStatus({ tipo: 'info', texto: `Código já cadastrado — adicionando estoque em "${existente.nome}".` });
+          } else {
+            throw err;
+          }
         }
       }
 
@@ -86,6 +116,7 @@ export default function CadastroPage() {
 
       setStatus({ tipo: 'sucesso', texto: `Produto adicionado na posição ${enderecosLivres.find((e) => e.id === enderecoId)?.codigo}.` });
       setForm(FORM_INICIAL);
+      setProdutoSelecionado(null);
       carregarEnderecosLivres();
     } catch (err: any) {
       setStatus({ tipo: 'erro', texto: err.message ?? 'Erro ao salvar.' });
@@ -102,12 +133,51 @@ export default function CadastroPage() {
         <fieldset className="space-y-3">
           <legend className="mb-1 text-sm font-medium text-slate-600">Dados do produto</legend>
 
+          {!produtoSelecionado && (
+            <Campo label="Buscar produto existente (código ou nome)">
+              <div className="relative">
+                <input
+                  value={buscaProduto}
+                  onChange={(e) => setBuscaProduto(e.target.value)}
+                  className="input"
+                  placeholder="Digite código ou nome para localizar produto já cadastrado..."
+                />
+                {sugestoes.length > 0 && (
+                  <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                    {sugestoes.map((p) => (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          onClick={() => selecionarProduto(p)}
+                          className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                        >
+                          <span className="font-medium text-slate-800">{p.nome}</span>{' '}
+                          <span className="text-slate-400">— {p.codigo}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </Campo>
+          )}
+
+          {produtoSelecionado && (
+            <p className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+              Produto existente selecionado — código de barras herdado automaticamente.{' '}
+              <button type="button" onClick={limparSelecao} className="font-medium underline">
+                Cadastrar produto novo
+              </button>
+            </p>
+          )}
+
           <Campo label="Código">
             <input
               required
+              readOnly={!!produtoSelecionado}
               value={form.codigo}
               onChange={(e) => atualizarCampo('codigo', e.target.value)}
-              className="input"
+              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
               placeholder="PRD0031"
             />
           </Campo>
@@ -115,27 +185,21 @@ export default function CadastroPage() {
           <Campo label="Nome">
             <input
               required
+              readOnly={!!produtoSelecionado}
               value={form.nome}
               onChange={(e) => atualizarCampo('nome', e.target.value)}
-              className="input"
+              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
               placeholder="Arroz Branco 5kg"
-            />
-          </Campo>
-
-          <Campo label="Descrição">
-            <input
-              value={form.descricao}
-              onChange={(e) => atualizarCampo('descricao', e.target.value)}
-              className="input"
             />
           </Campo>
 
           <Campo label="Código de barras">
             <input
               required
+              readOnly={!!produtoSelecionado}
               value={form.codigo_barras}
               onChange={(e) => atualizarCampo('codigo_barras', e.target.value)}
-              className="input"
+              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
               placeholder="7890000000001"
             />
           </Campo>

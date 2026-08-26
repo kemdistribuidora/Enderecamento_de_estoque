@@ -74,7 +74,11 @@
       "Bash(cd /c/Users/tikem/Documents/vs/Enderecamento_de_estoque/frontend && rtk npm run dev)",
       "Bash(cd /c/Users/tikem/Documents/vs/Enderecamento_de_estoque/backend && npx tsc --noEmit 2>&1 | head -60)",
       "Bash(cd /c/Users/tikem/Documents/vs/Enderecamento_de_estoque/frontend && npx tsc --noEmit 2>&1 | head -60)",
-      "Bash(rm \"/c/Users/tikem/Documents/vs/Enderecamento_de_estoque/backend/src/db/migrate-validade-lote.ts\")"
+      "Bash(rm \"/c/Users/tikem/Documents/vs/Enderecamento_de_estoque/backend/src/db/migrate-validade-lote.ts\")",
+      "Bash(cd \"/c/Users/tikem/Documents/vs/Enderecamento_de_estoque/backend\" && npm run seed 2>&1 | tail -20)",
+      "Bash(cd \"/c/Users/tikem/Documents/vs/Enderecamento_de_estoque/frontend\" && rtk npm run dev)",
+      "Bash(sqlite3 data.sqlite \".schema produtos\")",
+      "Bash(rm \"/c/Users/tikem/Documents/vs/Enderecamento_de_estoque/backend/src/db/drop_col_tmp.ts\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\tikem\\Documents\\vs\\Enderecamento_de_estoque\\backend\\src",
