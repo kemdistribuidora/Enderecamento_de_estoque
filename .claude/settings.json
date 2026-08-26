@@ -68,7 +68,8 @@
       "Bash(git commit -m ' *)",
       "Bash(curl -s https://enderecamento-de-estoque.onrender.com/api/produtos)",
       "Bash(curl -s https://enderecamento-de-estoque.vercel.app)",
-      "Bash(curl -s https://enderecamento-de-estoque.vercel.app/assets/index-D9mZMmWv.js)"
+      "Bash(curl -s https://enderecamento-de-estoque.vercel.app/assets/index-D9mZMmWv.js)",
+      "Bash(rtk tsc *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\tikem\\Documents\\vs\\Enderecamento_de_estoque\\backend\\src",
