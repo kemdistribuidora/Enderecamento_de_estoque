@@ -61,3 +61,14 @@ CREATE INDEX IF NOT EXISTS idx_estoque_produto ON estoque_posicoes(produto_id);
 CREATE INDEX IF NOT EXISTS idx_corredores_setor ON corredores(setor_id);
 CREATE INDEX IF NOT EXISTS idx_prateleiras_setor ON prateleiras(setor_id);
 CREATE INDEX IF NOT EXISTS idx_enderecos_prateleira ON enderecos(prateleira_id);
+
+-- Saldo importado do Winthor (ERP), so pra conferencia/reconciliacao contra a
+-- ocupacao fisica em estoque_posicoes. NUNCA usado como fonte de posicao fisica.
+CREATE TABLE IF NOT EXISTS estoque_erp_saldo (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
+  filial TEXT NOT NULL,
+  saldo INTEGER NOT NULL,
+  atualizado_em TEXT NOT NULL,
+  UNIQUE (produto_id, filial)
+);

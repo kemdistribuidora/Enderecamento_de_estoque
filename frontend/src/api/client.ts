@@ -48,3 +48,25 @@ export function ocuparEndereco(enderecoId: number, produtoId: number, quantidade
     body: JSON.stringify({ produto_id: produtoId, quantidade, validade }),
   }).then((r) => handleJson(r));
 }
+
+export interface ResultadoImportacao {
+  ok: number;
+  falhas: number;
+  avisos: string[];
+}
+
+export function importarProdutosCsv(csv: string): Promise<ResultadoImportacao> {
+  return fetch(`${BASE_URL}/importacao/produtos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csv }),
+  }).then((r) => handleJson(r));
+}
+
+export function importarSaldoCsv(csv: string): Promise<ResultadoImportacao> {
+  return fetch(`${BASE_URL}/importacao/saldo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csv }),
+  }).then((r) => handleJson(r));
+}

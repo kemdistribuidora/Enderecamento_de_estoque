@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from 'react-router-dom';
 import MapaPage from './pages/MapaPage';
 import BuscaPage from './pages/BuscaPage';
 import CadastroPage from './pages/CadastroPage';
+import ImportacaoPage from './pages/ImportacaoPage';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -24,6 +25,9 @@ export default function App() {
             <NavLink to="/cadastro" className={linkClass}>
               Cadastro
             </NavLink>
+            <NavLink to="/importacao" className={linkClass}>
+              Importar Winthor
+            </NavLink>
           </nav>
         </div>
       </header>
@@ -32,6 +36,7 @@ export default function App() {
           <Route path="/" element={<MapaPage />} />
           <Route path="/busca" element={<BuscaPage />} />
           <Route path="/cadastro" element={<CadastroPage />} />
+          <Route path="/importacao" element={<ImportacaoPage />} />
         </Routes>
       </main>
     </div>

@@ -7,7 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json && node -e \"require('fs').copyFileSync('src/db/schema.sql','dist/db/schema.sql')\"",
     "start": "node dist/index.js",
-    "seed": "tsx src/db/seed.ts"
+    "seed": "tsx src/db/seed.ts",
+    "import:winthor:produtos": "tsx src/scripts/import-winthor-produtos.ts",
+    "import:winthor:saldo": "tsx src/scripts/import-winthor-saldo.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
