@@ -3,6 +3,7 @@ import MapaPage from './pages/MapaPage';
 import BuscaPage from './pages/BuscaPage';
 import CadastroPage from './pages/CadastroPage';
 import ImportacaoPage from './pages/ImportacaoPage';
+import PosicionamentoPage from './pages/PosicionamentoPage';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -28,6 +29,9 @@ export default function App() {
             <NavLink to="/importacao" className={linkClass}>
               Importar Winthor
             </NavLink>
+            <NavLink to="/posicionamento" className={linkClass}>
+              Posicionar Estoque
+            </NavLink>
           </nav>
         </div>
       </header>
@@ -37,6 +41,7 @@ export default function App() {
           <Route path="/busca" element={<BuscaPage />} />
           <Route path="/cadastro" element={<CadastroPage />} />
           <Route path="/importacao" element={<ImportacaoPage />} />
+          <Route path="/posicionamento" element={<PosicionamentoPage />} />
         </Routes>
       </main>
     </div>

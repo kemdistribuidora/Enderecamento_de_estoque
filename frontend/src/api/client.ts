@@ -49,10 +49,19 @@ export function ocuparEndereco(enderecoId: number, produtoId: number, quantidade
   }).then((r) => handleJson(r));
 }
 
+export interface ProdutoComSaldoImportado {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  filial: string;
+  saldo: number;
+}
+
 export interface ResultadoImportacao {
   ok: number;
   falhas: number;
   avisos: string[];
+  produtosComSaldo: ProdutoComSaldoImportado[];
 }
 
 export function importarProdutosCsv(csv: string): Promise<ResultadoImportacao> {
@@ -69,4 +78,27 @@ export function importarSaldoCsv(csv: string): Promise<ResultadoImportacao> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ csv }),
   }).then((r) => handleJson(r));
+}
+
+export interface PendenciaPosicionamento {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  saldo_total: number;
+  alocado_total: number;
+  pendente: number;
+}
+
+export function buscarPendenciasPosicionamento(): Promise<PendenciaPosicionamento[]> {
+  return fetch(`${BASE_URL}/produtos/pendencias-posicionamento`).then((r) => handleJson(r));
+}
+
+export interface SugestaoEndereco {
+  endereco_id: number;
+  codigo: string;
+  setor_id: number;
+}
+
+export function buscarSugestaoEndereco(produtoId: number): Promise<SugestaoEndereco | null> {
+  return fetch(`${BASE_URL}/produtos/${produtoId}/sugestao-endereco`).then((r) => handleJson(r));
 }

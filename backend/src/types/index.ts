@@ -79,3 +79,20 @@ export interface MapaSetor {
   corredores: string[]; // letras, na ordem
   prateleiras: PrateleiraComPosicoes[];
 }
+
+// Produto com saldo importado do Winthor maior que o ja alocado fisicamente -- falta
+// posicionar (parcial ou total) a diferenca.
+export interface PendenciaPosicionamento {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  saldo_total: number;
+  alocado_total: number;
+  pendente: number;
+}
+
+export interface SugestaoEndereco {
+  endereco_id: number;
+  codigo: string;
+  setor_id: number;
+}

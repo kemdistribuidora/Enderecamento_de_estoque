@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db/client';
-import { Produto, ProdutoComPosicoes } from '../types';
+import { Produto, ProdutoComPosicoes, PendenciaPosicionamento, SugestaoEndereco } from '../types';
+import { sugerirEnderecoLivre, EnderecoParaSugestao } from '../services/endereco.service';
 
 export const produtosRouter = Router();
 
@@ -54,6 +55,71 @@ produtosRouter.get('/', async (req, res) => {
     posicoes: posicoesPorProduto[Number(p.id)] ?? [],
   }));
 
+  res.json(resultado);
+});
+
+// GET /api/produtos/pendencias-posicionamento -> produtos com saldo importado do Winthor
+// maior que o ja alocado fisicamente. Precisa vir antes de GET /:id (senao Express casa
+// "pendencias-posicionamento" como :id).
+produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
+  const rs = await db.execute(`
+    SELECT
+      p.id as produto_id, p.codigo, p.nome,
+      COALESCE(saldo.total, 0) as saldo_total,
+      COALESCE(alocado.total, 0) as alocado_total
+    FROM produtos p
+    JOIN (SELECT produto_id, SUM(saldo) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
+    LEFT JOIN (SELECT produto_id, SUM(quantidade) as total FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
+    WHERE COALESCE(saldo.total, 0) > COALESCE(alocado.total, 0)
+    ORDER BY p.nome
+  `);
+
+  const pendencias: PendenciaPosicionamento[] = (rs.rows as any[]).map((r) => ({
+    produto_id: Number(r.produto_id),
+    codigo: r.codigo,
+    nome: r.nome,
+    saldo_total: Number(r.saldo_total),
+    alocado_total: Number(r.alocado_total),
+    pendente: Number(r.saldo_total) - Number(r.alocado_total),
+  }));
+
+  res.json(pendencias);
+});
+
+// GET /api/produtos/:id/sugestao-endereco -> endereco livre mais perto de onde o produto
+// ja tem estoque fisico hoje. Sem estoque atual, sem sugestao (null).
+produtosRouter.get('/:id/sugestao-endereco', async (req, res) => {
+  const produtoId = Number(req.params.id);
+
+  const rs = await db.execute(`
+    SELECT e.id, e.andar, e.posicao, pr.setor_id, pr.id as prateleira_id, pr.ordem as prateleira_ordem, ep.produto_id
+    FROM enderecos e
+    JOIN prateleiras pr ON pr.id = e.prateleira_id
+    LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
+  `);
+
+  const rows = rs.rows as any[];
+  const paraSugestao = (r: any): EnderecoParaSugestao => ({
+    id: Number(r.id),
+    setor_id: Number(r.setor_id),
+    prateleira_id: Number(r.prateleira_id),
+    prateleira_ordem: Number(r.prateleira_ordem),
+    andar: Number(r.andar),
+    posicao: Number(r.posicao),
+  });
+
+  const ocupados = rows.filter((r) => Number(r.produto_id) === produtoId).map(paraSugestao);
+  const livres = rows.filter((r) => r.produto_id == null).map(paraSugestao);
+
+  const sugestao = sugerirEnderecoLivre(ocupados, livres);
+  if (!sugestao) {
+    return res.json(null);
+  }
+
+  const enderecoRs = await db.execute({ sql: `SELECT codigo FROM enderecos WHERE id = ?`, args: [sugestao.id] });
+  const codigo = (enderecoRs.rows[0] as any)?.codigo ?? '';
+
+  const resultado: SugestaoEndereco = { endereco_id: sugestao.id, codigo, setor_id: sugestao.setor_id };
   res.json(resultado);
 });
 

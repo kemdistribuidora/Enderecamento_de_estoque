@@ -3,10 +3,21 @@
 // de upload (src/routes/importacao.routes.ts) -- uma fonte so pra regra de parsing.
 import { db } from '../db/client';
 
+export interface ProdutoComSaldoImportado {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  filial: string;
+  saldo: number;
+}
+
 export interface ResultadoImportacao {
   ok: number;
   falhas: number;
   avisos: string[];
+  // preenchido so por importarSaldoCsv: produtos que vieram com saldo > 0,
+  // pra tela de importacao oferecer alocar endereco na hora
+  produtosComSaldo: ProdutoComSaldoImportado[];
 }
 
 // produtos: sem cabecalho, separador ';', colunas: codigo;nome;codigo_barras
@@ -38,7 +49,7 @@ export async function importarProdutosCsv(conteudo: string): Promise<ResultadoIm
     ok++;
   }
 
-  return { ok, falhas: avisos.length, avisos };
+  return { ok, falhas: avisos.length, avisos, produtosComSaldo: [] };
 }
 
 // saldo: sem cabecalho, separador ';', colunas: filial;codigo;saldo
@@ -47,6 +58,7 @@ export async function importarProdutosCsv(conteudo: string): Promise<ResultadoIm
 export async function importarSaldoCsv(conteudo: string): Promise<ResultadoImportacao> {
   const linhas = conteudo.split(/\r?\n/).filter((l) => l.trim().length > 0);
   const avisos: string[] = [];
+  const produtosComSaldo: ProdutoComSaldoImportado[] = [];
   const agora = new Date().toISOString();
   let ok = 0;
 
@@ -64,7 +76,7 @@ export async function importarSaldoCsv(conteudo: string): Promise<ResultadoImpor
       continue;
     }
 
-    const produtoRs = await db.execute({ sql: `SELECT id FROM produtos WHERE codigo = ?`, args: [codigo] });
+    const produtoRs = await db.execute({ sql: `SELECT id, nome FROM produtos WHERE codigo = ?`, args: [codigo] });
     const produto = produtoRs.rows[0] as any;
     if (!produto) {
       avisos.push(`Linha ${i + 1} ignorada (produto codigo=${codigo} nao cadastrado): ${linha}`);
@@ -79,7 +91,11 @@ export async function importarSaldoCsv(conteudo: string): Promise<ResultadoImpor
       args: [Number(produto.id), filial, saldo, agora],
     });
     ok++;
+
+    if (saldo > 0) {
+      produtosComSaldo.push({ produto_id: Number(produto.id), codigo, nome: produto.nome, filial, saldo });
+    }
   }
 
-  return { ok, falhas: avisos.length, avisos };
+  return { ok, falhas: avisos.length, avisos, produtosComSaldo };
 }
