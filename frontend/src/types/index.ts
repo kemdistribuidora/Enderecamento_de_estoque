@@ -1,3 +1,5 @@
+export type StatusValidade = 'vencido' | 'proximo' | 'normal';
+
 export interface Produto {
   id: number;
   codigo: string;
@@ -12,6 +14,7 @@ export interface ProdutoComPosicoes extends Produto {
     quantidade: number;
     setor_id: number;
     validade: string;
+    status_validade: StatusValidade;
   }>;
 }
 
@@ -30,6 +33,7 @@ export interface EnderecoComStatus {
     nome: string;
     quantidade: number;
     validade: string;
+    status_validade: StatusValidade;
   } | null;
 }
 

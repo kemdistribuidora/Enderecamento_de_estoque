@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db/client';
 import { donoPrateleira } from '../services/endereco.service';
+import { calcularStatusValidade } from '../services/validade.service';
 import { EnderecoComStatus, MapaSetor, Setor } from '../types';
 
 export const mapaRouter = Router();
@@ -68,7 +69,14 @@ mapaRouter.get('/:setorId', async (req, res) => {
         codigo: r.codigo,
         status: r.produto_id ? 'ocupado' : 'livre',
         produto: r.produto_id
-          ? { id: Number(r.produto_id), codigo: r.produto_codigo, nome: r.produto_nome, quantidade: Number(r.quantidade), validade: r.validade }
+          ? {
+              id: Number(r.produto_id),
+              codigo: r.produto_codigo,
+              nome: r.produto_nome,
+              quantidade: Number(r.quantidade),
+              validade: r.validade,
+              status_validade: calcularStatusValidade(r.validade),
+            }
           : null,
       });
     }

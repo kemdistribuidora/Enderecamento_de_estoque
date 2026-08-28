@@ -4,6 +4,9 @@ import BuscaPage from './pages/BuscaPage';
 import CadastroPage from './pages/CadastroPage';
 import ImportacaoPage from './pages/ImportacaoPage';
 import PosicionamentoPage from './pages/PosicionamentoPage';
+import HistoricoPage from './pages/HistoricoPage';
+import CurvaAbcPage from './pages/CurvaAbcPage';
+import ValidadePage from './pages/ValidadePage';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -32,6 +35,15 @@ export default function App() {
             <NavLink to="/posicionamento" className={linkClass}>
               Posicionar Estoque
             </NavLink>
+            <NavLink to="/historico" className={linkClass}>
+              Histórico
+            </NavLink>
+            <NavLink to="/curva-abc" className={linkClass}>
+              Curva ABC
+            </NavLink>
+            <NavLink to="/validade" className={linkClass}>
+              Validade
+            </NavLink>
           </nav>
         </div>
       </header>
@@ -42,6 +54,9 @@ export default function App() {
           <Route path="/cadastro" element={<CadastroPage />} />
           <Route path="/importacao" element={<ImportacaoPage />} />
           <Route path="/posicionamento" element={<PosicionamentoPage />} />
+          <Route path="/historico" element={<HistoricoPage />} />
+          <Route path="/curva-abc" element={<CurvaAbcPage />} />
+          <Route path="/validade" element={<ValidadePage />} />
         </Routes>
       </main>
     </div>

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ProdutoComPosicoes } from '../types';
+import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 
 export default function ResultCard({ produto }: { produto: ProdutoComPosicoes }) {
   const navigate = useNavigate();
@@ -30,14 +31,19 @@ export default function ResultCard({ produto }: { produto: ProdutoComPosicoes })
               <button
                 key={p.endereco_id}
                 onClick={() => navigate(`/?setor=${p.setor_id}&endereco=${p.endereco_id}`)}
-                title="Ver no mapa"
-                className={`rounded-md border px-2 py-1 text-xs font-medium hover:opacity-80 ${
+                title={p.status_validade !== 'normal' ? ROTULO_STATUS_VALIDADE[p.status_validade] : 'Ver no mapa'}
+                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium hover:opacity-80 ${
                   idx === 0
                     ? 'border-amber-300 bg-amber-50 text-amber-800'
                     : 'border-blue-200 bg-blue-50 text-blue-800'
                 }`}
               >
                 {p.codigo_endereco} · {p.quantidade}un · vence {p.validade}
+                {p.status_validade !== 'normal' && (
+                  <span className={`rounded-full px-1.5 py-0.5 ${BADGE_STATUS_VALIDADE[p.status_validade]}`}>
+                    {p.status_validade === 'vencido' ? 'vencido' : 'em breve'}
+                  </span>
+                )}
               </button>
             ))}
           </div>

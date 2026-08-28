@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
+  DivergenciaSobra,
   PendenciaPosicionamento,
   SugestaoEndereco,
+  buscarDivergenciasSobra,
   buscarPendenciasPosicionamento,
   buscarSugestaoEndereco,
   ocuparEndereco,
@@ -11,13 +13,17 @@ import ModalEscolherNoMapa from '../components/ModalEscolherNoMapa';
 
 export default function PosicionamentoPage() {
   const [pendencias, setPendencias] = useState<PendenciaPosicionamento[]>([]);
+  const [sobras, setSobras] = useState<DivergenciaSobra[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [emEdicao, setEmEdicao] = useState<PendenciaPosicionamento | null>(null);
 
   function carregar() {
     setCarregando(true);
-    buscarPendenciasPosicionamento()
-      .then(setPendencias)
+    Promise.all([buscarPendenciasPosicionamento(), buscarDivergenciasSobra()])
+      .then(([listaPendencias, listaSobras]) => {
+        setPendencias(listaPendencias);
+        setSobras(listaSobras);
+      })
       .finally(() => setCarregando(false));
   }
 
@@ -78,6 +84,46 @@ export default function PosicionamentoPage() {
           </table>
         </div>
       )}
+
+      <div className="border-t border-slate-200 pt-4">
+        <h2 className="text-base font-semibold text-slate-800">Possível saída não registrada</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Estoque físico maior que o saldo do Winthor. O Winthor manda — provavelmente uma saída aconteceu e ninguém
+          liberou a posição aqui no sistema ainda. Só alerta, não mexe em nada sozinho.
+        </p>
+
+        {!carregando && sobras.length === 0 && (
+          <p className="mt-3 rounded-md bg-slate-50 p-4 text-sm text-slate-500">Nenhuma divergência desse tipo.</p>
+        )}
+
+        {sobras.length > 0 && (
+          <div className="mt-3 overflow-hidden rounded-lg border border-red-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="bg-red-50 text-left text-xs font-medium uppercase text-red-700">
+                <tr>
+                  <th className="px-4 py-2">Produto</th>
+                  <th className="px-4 py-2 text-right">Saldo Winthor</th>
+                  <th className="px-4 py-2 text-right">Alocado aqui</th>
+                  <th className="px-4 py-2 text-right">Excesso</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sobras.map((s) => (
+                  <tr key={s.produto_id}>
+                    <td className="px-4 py-2">
+                      <span className="font-medium text-slate-800">{s.nome}</span>{' '}
+                      <span className="text-slate-400">— {s.codigo}</span>
+                    </td>
+                    <td className="px-4 py-2 text-right">{s.saldo_total}</td>
+                    <td className="px-4 py-2 text-right">{s.alocado_total}</td>
+                    <td className="px-4 py-2 text-right font-medium text-red-700">{s.excesso}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {emEdicao && (
         <PosicionarModal

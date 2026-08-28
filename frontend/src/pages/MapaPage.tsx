@@ -36,6 +36,11 @@ export default function MapaPage() {
       .finally(() => setCarregando(false));
   }, [setorAtivoId]);
 
+  function recarregarMapa() {
+    if (setorAtivoId === null) return;
+    buscarMapaSetor(setorAtivoId).then(setMapa);
+  }
+
   return (
     <div className="space-y-4">
       <SearchBar onChange={setTermoBusca} />
@@ -67,6 +72,12 @@ export default function MapaPage() {
           <span className="h-3 w-3 rounded-sm border border-blue-300 bg-blue-100" /> ocupado
         </span>
         <span className="flex items-center gap-1">
+          <span className="h-3 w-3 rounded-sm border border-amber-300 bg-amber-100" /> vence em breve
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="h-3 w-3 rounded-sm border border-red-300 bg-red-100" /> vencido
+        </span>
+        <span className="flex items-center gap-1">
           <span className="h-3 w-3 rounded-sm border border-dashed border-amber-300 bg-amber-50" /> corredor (passagem)
         </span>
         <span className="flex items-center gap-1">
@@ -85,7 +96,7 @@ export default function MapaPage() {
         />
       )}
 
-      <ProdutoModal endereco={selecionado} onClose={() => setSelecionado(null)} />
+      <ProdutoModal endereco={selecionado} onClose={() => setSelecionado(null)} onLiberado={recarregarMapa} />
     </div>
   );
 }

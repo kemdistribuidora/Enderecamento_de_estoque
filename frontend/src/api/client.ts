@@ -1,4 +1,4 @@
-import { EnderecoComStatus, MapaSetor, Produto, ProdutoComPosicoes, Setor } from '../types';
+import { EnderecoComStatus, MapaSetor, Produto, ProdutoComPosicoes, Setor, StatusValidade } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -47,6 +47,10 @@ export function ocuparEndereco(enderecoId: number, produtoId: number, quantidade
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ produto_id: produtoId, quantidade, validade }),
   }).then((r) => handleJson(r));
+}
+
+export function liberarEndereco(enderecoId: number): Promise<{ ok: true; movimentacao_id: number }> {
+  return fetch(`${BASE_URL}/enderecos/${enderecoId}/liberar`, { method: 'POST' }).then((r) => handleJson(r));
 }
 
 export interface ProdutoComSaldoImportado {
@@ -101,4 +105,72 @@ export interface SugestaoEndereco {
 
 export function buscarSugestaoEndereco(produtoId: number): Promise<SugestaoEndereco | null> {
   return fetch(`${BASE_URL}/produtos/${produtoId}/sugestao-endereco`).then((r) => handleJson(r));
+}
+
+export interface DivergenciaSobra {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  saldo_total: number;
+  alocado_total: number;
+  excesso: number;
+}
+
+export function buscarDivergenciasSobra(): Promise<DivergenciaSobra[]> {
+  return fetch(`${BASE_URL}/produtos/divergencias-sobra`).then((r) => handleJson(r));
+}
+
+export interface ItemCurvaAbc {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  total_saida: number;
+  percentual: number;
+  percentual_acumulado: number;
+  classe: 'A' | 'B' | 'C';
+}
+
+export function buscarCurvaAbc(): Promise<ItemCurvaAbc[]> {
+  return fetch(`${BASE_URL}/produtos/curva-abc`).then((r) => handleJson(r));
+}
+
+export type TipoMovimentacao = 'entrada' | 'saida';
+export type StatusMovimentacao = 'confirmada' | 'standby' | 'revertida';
+
+export interface Movimentacao {
+  id: number;
+  tipo: TipoMovimentacao;
+  produto_id: number;
+  produto_codigo: string;
+  produto_nome: string;
+  endereco_id: number;
+  endereco_codigo: string;
+  quantidade: number;
+  validade: string;
+  status: StatusMovimentacao;
+  criado_em: string;
+}
+
+export function buscarMovimentacoes(): Promise<Movimentacao[]> {
+  return fetch(`${BASE_URL}/movimentacoes`).then((r) => handleJson(r));
+}
+
+export function desfazerMovimentacao(id: number): Promise<void> {
+  return fetch(`${BASE_URL}/movimentacoes/${id}/desfazer`, { method: 'POST' }).then((r) => handleJson(r));
+}
+
+export interface PosicaoAVencer {
+  endereco_id: number;
+  endereco_codigo: string;
+  setor_id: number;
+  produto_id: number;
+  produto_codigo: string;
+  produto_nome: string;
+  quantidade: number;
+  validade: string;
+  status_validade: StatusValidade;
+}
+
+export function buscarPosicoesAVencer(): Promise<PosicaoAVencer[]> {
+  return fetch(`${BASE_URL}/enderecos/a-vencer`).then((r) => handleJson(r));
 }

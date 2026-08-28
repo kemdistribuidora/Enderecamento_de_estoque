@@ -72,3 +72,22 @@ CREATE TABLE IF NOT EXISTS estoque_erp_saldo (
   atualizado_em TEXT NOT NULL,
   UNIQUE (produto_id, filial)
 );
+
+-- Historico de entrada/saida. Saida NAO apaga o rastro: nasce com status 'standby'
+-- (endereco ja fica livre de verdade, mas da pra desfazer enquanto ninguem reocupou
+-- aquele endereco -- protege contra erro de digitacao). 'revertida' = foi desfeita.
+-- Sem usuario/login no sistema ainda, entao sem coluna de quem fez -- soh o que e quando.
+CREATE TABLE IF NOT EXISTS movimentacoes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tipo TEXT NOT NULL CHECK (tipo IN ('entrada', 'saida')),
+  produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
+  endereco_id INTEGER NOT NULL REFERENCES enderecos(id) ON DELETE CASCADE,
+  quantidade INTEGER NOT NULL,
+  validade TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'confirmada' CHECK (status IN ('confirmada', 'standby', 'revertida')),
+  criado_em TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_movimentacoes_produto ON movimentacoes(produto_id);
+CREATE INDEX IF NOT EXISTS idx_movimentacoes_endereco ON movimentacoes(endereco_id);
+CREATE INDEX IF NOT EXISTS idx_movimentacoes_criado_em ON movimentacoes(criado_em);

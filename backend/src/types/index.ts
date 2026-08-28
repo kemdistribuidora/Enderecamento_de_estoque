@@ -1,3 +1,5 @@
+import { StatusValidade } from '../services/validade.service';
+
 export interface Produto {
   id: number;
   codigo: string;
@@ -51,6 +53,7 @@ export interface EnderecoComStatus extends Endereco {
     nome: string;
     quantidade: number;
     validade: string;
+    status_validade: StatusValidade;
   } | null;
 }
 
@@ -62,6 +65,7 @@ export interface ProdutoComPosicoes extends Produto {
     quantidade: number;
     setor_id: number;
     validade: string;
+    status_validade: StatusValidade;
   }>;
 }
 
@@ -95,4 +99,58 @@ export interface SugestaoEndereco {
   endereco_id: number;
   codigo: string;
   setor_id: number;
+}
+
+// Produto com estoque fisico maior que o saldo Winthor -- provavel saida que ficou
+// so no sistema fisico e nao foi registrada no ERP (o Winthor manda: ele que reflete
+// nota fiscal/movimentacao fiscal de saida).
+export interface DivergenciaSobra {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  saldo_total: number;
+  alocado_total: number;
+  excesso: number;
+}
+
+export type TipoMovimentacao = 'entrada' | 'saida';
+export type StatusMovimentacao = 'confirmada' | 'standby' | 'revertida';
+
+export interface Movimentacao {
+  id: number;
+  tipo: TipoMovimentacao;
+  produto_id: number;
+  produto_codigo: string;
+  produto_nome: string;
+  endereco_id: number;
+  endereco_codigo: string;
+  quantidade: number;
+  validade: string;
+  status: StatusMovimentacao;
+  criado_em: string;
+}
+
+// Curva ABC por giro (saida): produto ordenado por total de saida desc, com percentual
+// acumulado sobre o total geral. Classe A = ate 80% acumulado, B = ate 95%, C = resto.
+export interface ItemCurvaAbc {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  total_saida: number;
+  percentual: number;
+  percentual_acumulado: number;
+  classe: 'A' | 'B' | 'C';
+}
+
+// Posicao ocupada com validade vencida ou proxima (ver DIAS_ALERTA_VENCIMENTO).
+export interface PosicaoAVencer {
+  endereco_id: number;
+  endereco_codigo: string;
+  setor_id: number;
+  produto_id: number;
+  produto_codigo: string;
+  produto_nome: string;
+  quantidade: number;
+  validade: string;
+  status_validade: StatusValidade;
 }

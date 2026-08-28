@@ -5,6 +5,7 @@ import { produtosRouter } from './routes/produtos.routes';
 import { enderecosRouter } from './routes/enderecos.routes';
 import { mapaRouter } from './routes/mapa.routes';
 import { importacaoRouter } from './routes/importacao.routes';
+import { movimentacoesRouter } from './routes/movimentacoes.routes';
 
 async function main() {
   await initSchema();
@@ -17,6 +18,7 @@ async function main() {
   app.use('/api/enderecos', enderecosRouter);
   app.use('/api/mapa', mapaRouter);
   app.use('/api/importacao', importacaoRouter);
+  app.use('/api/movimentacoes', movimentacoesRouter);
 
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
 

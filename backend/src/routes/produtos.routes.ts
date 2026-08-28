@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { db } from '../db/client';
-import { Produto, ProdutoComPosicoes, PendenciaPosicionamento, SugestaoEndereco } from '../types';
+import { Produto, ProdutoComPosicoes, PendenciaPosicionamento, SugestaoEndereco, DivergenciaSobra, ItemCurvaAbc } from '../types';
 import { sugerirEnderecoLivre, EnderecoParaSugestao } from '../services/endereco.service';
+import { calcularStatusValidade } from '../services/validade.service';
 
 export const produtosRouter = Router();
 
@@ -86,6 +87,77 @@ produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
   res.json(pendencias);
 });
 
+// GET /api/produtos/divergencias-sobra -> produtos com estoque fisico MAIOR que o saldo
+// Winthor. O Winthor manda (reflete nota fiscal/saida oficial); sobra fisica normalmente
+// significa saida que ninguem registrou no sistema ainda. So alerta, nao mexe em nada.
+produtosRouter.get('/divergencias-sobra', async (_req, res) => {
+  const rs = await db.execute(`
+    SELECT
+      p.id as produto_id, p.codigo, p.nome,
+      COALESCE(saldo.total, 0) as saldo_total,
+      COALESCE(alocado.total, 0) as alocado_total
+    FROM produtos p
+    JOIN (SELECT produto_id, SUM(saldo) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
+    LEFT JOIN (SELECT produto_id, SUM(quantidade) as total FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
+    WHERE COALESCE(alocado.total, 0) > COALESCE(saldo.total, 0)
+    ORDER BY p.nome
+  `);
+
+  const divergencias: DivergenciaSobra[] = (rs.rows as any[]).map((r) => ({
+    produto_id: Number(r.produto_id),
+    codigo: r.codigo,
+    nome: r.nome,
+    saldo_total: Number(r.saldo_total),
+    alocado_total: Number(r.alocado_total),
+    excesso: Number(r.alocado_total) - Number(r.saldo_total),
+  }));
+
+  res.json(divergencias);
+});
+
+// GET /api/produtos/curva-abc -> classificacao ABC por giro (soma de saida confirmada,
+// ou seja, nao revertida). Ordena por saida desc, acumula % do total geral, corta em
+// 80% (A) e 95% (B); resto vira C. Depende de movimentacoes ter dado registrado.
+produtosRouter.get('/curva-abc', async (_req, res) => {
+  const rs = await db.execute(`
+    SELECT p.id as produto_id, p.codigo, p.nome, COALESCE(SUM(m.quantidade), 0) as total_saida
+    FROM produtos p
+    LEFT JOIN movimentacoes m ON m.produto_id = p.id AND m.tipo = 'saida' AND m.status != 'revertida'
+    GROUP BY p.id
+    ORDER BY total_saida DESC, p.nome
+  `);
+
+  const linhas = (rs.rows as any[]).map((r) => ({
+    produto_id: Number(r.produto_id),
+    codigo: r.codigo,
+    nome: r.nome,
+    total_saida: Number(r.total_saida),
+  }));
+
+  const totalGeral = linhas.reduce((soma, l) => soma + l.total_saida, 0);
+
+  // Classe usa o acumulado ANTES de somar este item (onde ele "comeca" na curva), nao
+  // depois -- senao um item sozinho que ja fecha 80%+ do volume (comum com poucos SKUs
+  // com dado ainda) cai errado fora de A, mesmo sendo literalmente o maior consumo.
+  let acumulado = 0;
+  const curva: ItemCurvaAbc[] = linhas.map((l) => {
+    const percentual = totalGeral > 0 ? (l.total_saida / totalGeral) * 100 : 0;
+    const classe: ItemCurvaAbc['classe'] = acumulado < 80 ? 'A' : acumulado < 95 ? 'B' : 'C';
+    acumulado += percentual;
+    return {
+      produto_id: l.produto_id,
+      codigo: l.codigo,
+      nome: l.nome,
+      total_saida: l.total_saida,
+      percentual,
+      percentual_acumulado: acumulado,
+      classe,
+    };
+  });
+
+  res.json(curva);
+});
+
 // GET /api/produtos/:id/sugestao-endereco -> endereco livre mais perto de onde o produto
 // ja tem estoque fisico hoje. Sem estoque atual, sem sugestao (null).
 produtosRouter.get('/:id/sugestao-endereco', async (req, res) => {
@@ -161,6 +233,7 @@ async function carregarPosicoes(produtoIds: number[]): Promise<Record<number, Pr
       quantidade: Number(row.quantidade),
       setor_id: Number(row.setorId),
       validade: row.validade,
+      status_validade: calcularStatusValidade(row.validade),
     });
   }
   // validade mais proxima primeiro (FEFO) -> indica de qual posicao tirar estoque antes

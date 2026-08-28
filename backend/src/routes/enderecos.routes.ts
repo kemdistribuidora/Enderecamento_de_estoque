@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db/client';
-import { EnderecoComStatus } from '../types';
+import { EnderecoComStatus, PosicaoAVencer } from '../types';
+import { calcularStatusValidade } from '../services/validade.service';
 
 export const enderecosRouter = Router();
 
@@ -29,9 +30,48 @@ enderecosRouter.get('/', async (_req, res) => {
     codigo: r.codigo,
     status: r.produto_id ? 'ocupado' : 'livre',
     produto: r.produto_id
-      ? { id: Number(r.produto_id), codigo: r.produto_codigo, nome: r.produto_nome, quantidade: Number(r.quantidade), validade: r.validade }
+      ? {
+          id: Number(r.produto_id),
+          codigo: r.produto_codigo,
+          nome: r.produto_nome,
+          quantidade: Number(r.quantidade),
+          validade: r.validade,
+          status_validade: calcularStatusValidade(r.validade),
+        }
       : null,
   }));
+
+  res.json(resultado);
+});
+
+// GET /api/enderecos/a-vencer -> posicoes ocupadas com validade vencida ou proxima
+// (ver DIAS_ALERTA_VENCIMENTO), vencido primeiro.
+enderecosRouter.get('/a-vencer', async (_req, res) => {
+  const rs = await db.execute(`
+    SELECT
+      e.id as endereco_id, e.codigo as endereco_codigo, pr.setor_id,
+      ep.produto_id, ep.quantidade, ep.validade,
+      p.codigo as produto_codigo, p.nome as produto_nome
+    FROM estoque_posicoes ep
+    JOIN enderecos e ON e.id = ep.endereco_id
+    JOIN prateleiras pr ON pr.id = e.prateleira_id
+    JOIN produtos p ON p.id = ep.produto_id
+    ORDER BY ep.validade ASC
+  `);
+
+  const resultado: PosicaoAVencer[] = (rs.rows as any[])
+    .map((r) => ({
+      endereco_id: Number(r.endereco_id),
+      endereco_codigo: r.endereco_codigo,
+      setor_id: Number(r.setor_id),
+      produto_id: Number(r.produto_id),
+      produto_codigo: r.produto_codigo,
+      produto_nome: r.produto_nome,
+      quantidade: Number(r.quantidade),
+      validade: r.validade,
+      status_validade: calcularStatusValidade(r.validade),
+    }))
+    .filter((p) => p.status_validade !== 'normal');
 
   res.json(resultado);
 });
@@ -65,17 +105,35 @@ enderecosRouter.post('/:id/ocupar', async (req, res) => {
     args: [produto_id, enderecoId, quantidade, validade],
   });
 
+  await db.execute({
+    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, status, criado_em) VALUES ('entrada', ?, ?, ?, ?, 'confirmada', ?)`,
+    args: [produto_id, enderecoId, quantidade, validade, new Date().toISOString()],
+  });
+
   res.status(201).json({ ok: true });
 });
 
-// POST /api/enderecos/:id/liberar -> remove ocupacao do endereco
+// POST /api/enderecos/:id/liberar -> remove ocupacao do endereco. Nao apaga o rastro: fica
+// registrado em movimentacoes com status 'standby', dando pra desfazer (POST
+// /api/movimentacoes/:id/desfazer) enquanto ninguem reocupar esse endereco.
 enderecosRouter.post('/:id/liberar', async (req, res) => {
   const enderecoId = Number(req.params.id);
-  const info = await db.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
 
-  if (info.rowsAffected === 0) {
+  const ocupacaoRs = await db.execute({
+    sql: `SELECT produto_id, quantidade, validade FROM estoque_posicoes WHERE endereco_id = ?`,
+    args: [enderecoId],
+  });
+  const ocupacao = ocupacaoRs.rows[0] as any;
+  if (!ocupacao) {
     return res.status(404).json({ erro: 'Endereco ja estava livre' });
   }
 
-  res.json({ ok: true });
+  await db.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
+
+  const movimentacaoInfo = await db.execute({
+    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, status, criado_em) VALUES ('saida', ?, ?, ?, ?, 'standby', ?)`,
+    args: [Number(ocupacao.produto_id), enderecoId, Number(ocupacao.quantidade), ocupacao.validade, new Date().toISOString()],
+  });
+
+  res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid) });
 });

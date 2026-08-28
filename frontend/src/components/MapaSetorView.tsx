@@ -20,23 +20,28 @@ function CelulaPosicao({
   destacado?: boolean;
 }) {
   const ocupado = posicao.status === 'ocupado';
+  const statusValidade = posicao.produto?.status_validade;
+
+  const corOcupado =
+    statusValidade === 'vencido'
+      ? 'border-red-300 bg-red-100 text-red-800 hover:bg-red-200'
+      : statusValidade === 'proximo'
+        ? 'border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200'
+        : 'border-blue-300 bg-blue-100 text-blue-800 hover:bg-blue-200';
+
   return (
     <button
       onClick={() => onClick(posicao)}
       title={
         ocupado
-          ? `${posicao.codigo} — ${posicao.produto?.nome} (vence ${posicao.produto?.validade})`
+          ? `${posicao.codigo} — ${posicao.produto?.nome} (vence ${posicao.produto?.validade}${
+              statusValidade === 'vencido' ? ' — VENCIDO' : statusValidade === 'proximo' ? ' — vence em breve' : ''
+            })`
           : `${posicao.codigo} — livre`
       }
       className={`flex aspect-square min-w-0 items-center justify-center rounded-md border font-medium transition-transform hover:z-10 hover:scale-110 ${
         grande ? 'text-base' : 'text-xs'
-      } ${
-        destacado
-          ? 'border-green-400 bg-green-200 text-green-800 ring-2 ring-green-500 hover:bg-green-300'
-          : ocupado
-            ? 'border-blue-300 bg-blue-100 text-blue-800 hover:bg-blue-200'
-            : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200'
-      }`}
+      } ${destacado ? 'border-green-400 bg-green-200 text-green-800 ring-2 ring-green-500 hover:bg-green-300' : ocupado ? corOcupado : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
     >
       {posicao.posicao}
     </button>
