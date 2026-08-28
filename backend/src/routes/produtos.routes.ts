@@ -158,6 +158,19 @@ produtosRouter.get('/curva-abc', async (_req, res) => {
   res.json(curva);
 });
 
+// GET /api/produtos/codigo-barras/:codigo -> match exato por codigo_barras, usado pelo
+// scanner/coletor pra resolver o produto direto do codigo lido, sem digitar/buscar.
+produtosRouter.get('/codigo-barras/:codigo', async (req, res) => {
+  const codigo = String(req.params.codigo).trim();
+  const rs = await db.execute({ sql: `SELECT * FROM produtos WHERE codigo_barras = ?`, args: [codigo] });
+  const produto = rs.rows[0] as any;
+  if (!produto) {
+    return res.status(404).json({ erro: 'Produto nao encontrado para esse codigo de barras' });
+  }
+  const resultado: Produto = { id: Number(produto.id), codigo: produto.codigo, nome: produto.nome, codigo_barras: produto.codigo_barras };
+  res.json(resultado);
+});
+
 // GET /api/produtos/:id/sugestao-endereco -> endereco livre mais perto de onde o produto
 // ja tem estoque fisico hoje. Sem estoque atual, sem sugestao (null).
 produtosRouter.get('/:id/sugestao-endereco', async (req, res) => {
@@ -215,7 +228,7 @@ async function carregarPosicoes(produtoIds: number[]): Promise<Record<number, Pr
 
   const placeholders = produtoIds.map(() => '?').join(',');
   const rs = await db.execute({
-    sql: `SELECT ep.produto_id as produtoId, ep.endereco_id as enderecoId, ep.quantidade as quantidade, ep.validade as validade, e.codigo as codigoEndereco, pr.setor_id as setorId
+    sql: `SELECT ep.produto_id as produtoId, ep.endereco_id as enderecoId, ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, e.codigo as codigoEndereco, pr.setor_id as setorId
           FROM estoque_posicoes ep
           JOIN enderecos e ON e.id = ep.endereco_id
           JOIN prateleiras pr ON pr.id = e.prateleira_id
@@ -233,6 +246,7 @@ async function carregarPosicoes(produtoIds: number[]): Promise<Record<number, Pr
       quantidade: Number(row.quantidade),
       setor_id: Number(row.setorId),
       validade: row.validade,
+      lote: row.lote ?? null,
       status_validade: calcularStatusValidade(row.validade),
     });
   }

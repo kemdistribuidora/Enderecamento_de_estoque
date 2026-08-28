@@ -1,7 +1,7 @@
 // Controle de shelf life: classifica uma validade (ISO YYYY-MM-DD) em 3 estados.
 // Comparacao de string funciona direto pra data ISO (ordem lexicografica == ordem
 // cronologica), sem precisar parsear Date pra tudo.
-export const DIAS_ALERTA_VENCIMENTO = 7;
+export const DIAS_ALERTA_VENCIMENTO = 35;
 
 export type StatusValidade = 'vencido' | 'proximo' | 'normal';
 

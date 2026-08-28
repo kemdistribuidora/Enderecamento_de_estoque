@@ -110,9 +110,10 @@ async function seed() {
     const enderecoId = enderecosEmbaralhados[i];
     const produtoId = produtoIds[Math.floor(rand() * produtoIds.length)];
     const quantidade = Math.floor(rand() * 100) + 1;
+    const lote = `LOTE-${String(i + 1).padStart(4, '0')}`;
     await db.execute({
-      sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade) VALUES (?, ?, ?, ?)`,
-      args: [produtoId, enderecoId, quantidade, gerarValidade(i)],
+      sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade, lote) VALUES (?, ?, ?, ?, ?)`,
+      args: [produtoId, enderecoId, quantidade, gerarValidade(i), lote],
     });
   }
 

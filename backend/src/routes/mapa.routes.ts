@@ -45,7 +45,7 @@ mapaRouter.get('/:setorId', async (req, res) => {
       sql: `
         SELECT
           e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
-          ep.quantidade as quantidade, ep.validade as validade,
+          ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote,
           p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome
         FROM enderecos e
         LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
@@ -75,6 +75,7 @@ mapaRouter.get('/:setorId', async (req, res) => {
               nome: r.produto_nome,
               quantidade: Number(r.quantidade),
               validade: r.validade,
+              lote: r.lote ?? null,
               status_validade: calcularStatusValidade(r.validade),
             }
           : null,

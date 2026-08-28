@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS estoque_posicoes (
   produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
   endereco_id INTEGER NOT NULL UNIQUE REFERENCES enderecos(id) ON DELETE CASCADE,
   quantidade INTEGER NOT NULL DEFAULT 0,
-  validade TEXT NOT NULL
+  validade TEXT NOT NULL,
+  lote TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_produtos_nome ON produtos(nome);
@@ -84,6 +85,7 @@ CREATE TABLE IF NOT EXISTS movimentacoes (
   endereco_id INTEGER NOT NULL REFERENCES enderecos(id) ON DELETE CASCADE,
   quantidade INTEGER NOT NULL,
   validade TEXT NOT NULL,
+  lote TEXT,
   status TEXT NOT NULL DEFAULT 'confirmada' CHECK (status IN ('confirmada', 'standby', 'revertida')),
   criado_em TEXT NOT NULL
 );

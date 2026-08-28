@@ -4,9 +4,11 @@ import BuscaPage from './pages/BuscaPage';
 import CadastroPage from './pages/CadastroPage';
 import ImportacaoPage from './pages/ImportacaoPage';
 import PosicionamentoPage from './pages/PosicionamentoPage';
+import ColetorPage from './pages/ColetorPage';
 import HistoricoPage from './pages/HistoricoPage';
 import CurvaAbcPage from './pages/CurvaAbcPage';
 import ValidadePage from './pages/ValidadePage';
+import DashboardPage from './pages/DashboardPage';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -20,6 +22,9 @@ export default function App() {
         <div className="mx-auto flex max-w-[1600px] items-center gap-2 px-4 py-3">
           <span className="mr-4 font-semibold text-slate-800">Endereçamento de Estoque</span>
           <nav className="flex gap-2">
+            <NavLink to="/dashboard" className={linkClass}>
+              Dashboard
+            </NavLink>
             <NavLink to="/" end className={linkClass}>
               Mapa do Depósito
             </NavLink>
@@ -35,6 +40,9 @@ export default function App() {
             <NavLink to="/posicionamento" className={linkClass}>
               Posicionar Estoque
             </NavLink>
+            <NavLink to="/coletor" className={linkClass}>
+              Coletor
+            </NavLink>
             <NavLink to="/historico" className={linkClass}>
               Histórico
             </NavLink>
@@ -49,11 +57,13 @@ export default function App() {
       </header>
       <main className="mx-auto max-w-[1600px] px-4 py-6">
         <Routes>
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/" element={<MapaPage />} />
           <Route path="/busca" element={<BuscaPage />} />
           <Route path="/cadastro" element={<CadastroPage />} />
           <Route path="/importacao" element={<ImportacaoPage />} />
           <Route path="/posicionamento" element={<PosicionamentoPage />} />
+          <Route path="/coletor" element={<ColetorPage />} />
           <Route path="/historico" element={<HistoricoPage />} />
           <Route path="/curva-abc" element={<CurvaAbcPage />} />
           <Route path="/validade" element={<ValidadePage />} />

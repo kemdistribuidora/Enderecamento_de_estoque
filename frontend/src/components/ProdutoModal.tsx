@@ -55,6 +55,7 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
               <Row label="Código" value={endereco.produto.codigo} />
               <Row label="Quantidade" value={String(endereco.produto.quantidade)} />
               <Row label="Validade do lote" value={endereco.produto.validade} />
+              <Row label="Lote" value={endereco.produto.lote ?? '—'} />
             </dl>
 
             {endereco.produto.status_validade !== 'normal' && (

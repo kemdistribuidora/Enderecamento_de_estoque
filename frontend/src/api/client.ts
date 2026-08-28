@@ -41,12 +41,26 @@ export function criarProduto(dados: DadosNovoProduto): Promise<Produto> {
   }).then((r) => handleJson(r));
 }
 
-export function ocuparEndereco(enderecoId: number, produtoId: number, quantidade: number, validade: string): Promise<void> {
+export function ocuparEndereco(
+  enderecoId: number,
+  produtoId: number,
+  quantidade: number,
+  validade: string,
+  lote: string
+): Promise<void> {
   return fetch(`${BASE_URL}/enderecos/${enderecoId}/ocupar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ produto_id: produtoId, quantidade, validade }),
+    body: JSON.stringify({ produto_id: produtoId, quantidade, validade, lote }),
   }).then((r) => handleJson(r));
+}
+
+export function buscarProdutoPorCodigoBarras(codigo: string): Promise<Produto> {
+  return fetch(`${BASE_URL}/produtos/codigo-barras/${encodeURIComponent(codigo)}`).then((r) => handleJson(r));
+}
+
+export function buscarEnderecoPorCodigo(codigo: string): Promise<EnderecoComStatus> {
+  return fetch(`${BASE_URL}/enderecos/codigo/${encodeURIComponent(codigo)}`).then((r) => handleJson(r));
 }
 
 export function liberarEndereco(enderecoId: number): Promise<{ ok: true; movimentacao_id: number }> {
@@ -147,6 +161,7 @@ export interface Movimentacao {
   endereco_codigo: string;
   quantidade: number;
   validade: string;
+  lote: string | null;
   status: StatusMovimentacao;
   criado_em: string;
 }
@@ -168,9 +183,21 @@ export interface PosicaoAVencer {
   produto_nome: string;
   quantidade: number;
   validade: string;
+  lote: string | null;
   status_validade: StatusValidade;
 }
 
 export function buscarPosicoesAVencer(): Promise<PosicaoAVencer[]> {
   return fetch(`${BASE_URL}/enderecos/a-vencer`).then((r) => handleJson(r));
+}
+
+export interface KpisDashboard {
+  acuracia_estoque: { status: 'ok' | 'sem_dados'; percentual: number | null; total_produtos: number; produtos_com_divergencia: number };
+  ocupacao_por_setor: Array<{ setor_id: number; setor_nome: string; total_enderecos: number; ocupados: number; percentual: number | null }>;
+  giro_medio: { status: 'ok' | 'sem_dados'; valor: number | null; produtos_com_giro: number };
+  vencimento: { vencidos: number; proximos: number };
+}
+
+export function buscarDashboardKpis(): Promise<KpisDashboard> {
+  return fetch(`${BASE_URL}/dashboard/kpis`).then((r) => handleJson(r));
 }

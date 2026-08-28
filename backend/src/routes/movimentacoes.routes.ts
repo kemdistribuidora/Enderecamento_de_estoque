@@ -11,7 +11,7 @@ movimentacoesRouter.get('/', async (req, res) => {
   const rs = await db.execute({
     sql: `
       SELECT
-        m.id, m.tipo, m.produto_id, m.endereco_id, m.quantidade, m.validade, m.status, m.criado_em,
+        m.id, m.tipo, m.produto_id, m.endereco_id, m.quantidade, m.validade, m.lote, m.status, m.criado_em,
         p.codigo as produto_codigo, p.nome as produto_nome,
         e.codigo as endereco_codigo
       FROM movimentacoes m
@@ -33,6 +33,7 @@ movimentacoesRouter.get('/', async (req, res) => {
     endereco_codigo: r.endereco_codigo,
     quantidade: Number(r.quantidade),
     validade: r.validade,
+    lote: r.lote ?? null,
     status: r.status,
     criado_em: r.criado_em,
   }));
@@ -46,7 +47,7 @@ movimentacoesRouter.post('/:id/desfazer', async (req, res) => {
   const id = Number(req.params.id);
 
   const movRs = await db.execute({
-    sql: `SELECT tipo, produto_id, endereco_id, quantidade, validade, status FROM movimentacoes WHERE id = ?`,
+    sql: `SELECT tipo, produto_id, endereco_id, quantidade, validade, lote, status FROM movimentacoes WHERE id = ?`,
     args: [id],
   });
   const mov = movRs.rows[0] as any;
@@ -67,8 +68,8 @@ movimentacoesRouter.post('/:id/desfazer', async (req, res) => {
   }
 
   await db.execute({
-    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade) VALUES (?, ?, ?, ?)`,
-    args: [Number(mov.produto_id), Number(mov.endereco_id), Number(mov.quantidade), mov.validade],
+    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade, lote) VALUES (?, ?, ?, ?, ?)`,
+    args: [Number(mov.produto_id), Number(mov.endereco_id), Number(mov.quantidade), mov.validade, mov.lote ?? null],
   });
 
   await db.execute({ sql: `UPDATE movimentacoes SET status = 'revertida' WHERE id = ?`, args: [id] });

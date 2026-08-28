@@ -8,6 +8,7 @@ const FORM_INICIAL = {
   nome: '',
   codigo_barras: '',
   validade: '',
+  lote: '',
   enderecoId: '',
   quantidade: '',
 };
@@ -80,8 +81,8 @@ export default function CadastroPage() {
     const quantidade = Number(form.quantidade);
     const enderecoId = Number(form.enderecoId);
 
-    if (!form.enderecoId || !quantidade || quantidade <= 0 || !form.validade) {
-      setStatus({ tipo: 'erro', texto: 'Selecione um endereço, quantidade válida e validade do lote.' });
+    if (!form.enderecoId || !quantidade || quantidade <= 0 || !form.validade || !form.lote.trim()) {
+      setStatus({ tipo: 'erro', texto: 'Selecione um endereço, quantidade válida, validade e lote.' });
       return;
     }
 
@@ -112,7 +113,7 @@ export default function CadastroPage() {
         }
       }
 
-      await ocuparEndereco(enderecoId, produtoId, quantidade, form.validade);
+      await ocuparEndereco(enderecoId, produtoId, quantidade, form.validade, form.lote.trim());
 
       setStatus({ tipo: 'sucesso', texto: `Produto adicionado na posição ${enderecosLivres.find((e) => e.id === enderecoId)?.codigo}.` });
       setForm(FORM_INICIAL);
@@ -215,6 +216,16 @@ export default function CadastroPage() {
               value={form.validade}
               onChange={(e) => atualizarCampo('validade', e.target.value)}
               className="input"
+            />
+          </Campo>
+
+          <Campo label="Lote">
+            <input
+              required
+              value={form.lote}
+              onChange={(e) => atualizarCampo('lote', e.target.value)}
+              className="input"
+              placeholder="LOTE-0001"
             />
           </Campo>
 

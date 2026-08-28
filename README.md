@@ -1,6 +1,6 @@
 # Endereçamento de Estoque
 
-Sistema de endereçamento de estoque para armazém: mapa visual de posições ("cinema") + busca de produtos.
+Sistema de endereçamento de estoque para armazém: mapa visual de posições ("cinema"), busca de produtos, coletor via código de barras (USB/RF ou câmera), controle de validade/lote, curva ABC, histórico de movimentações, importação Winthor (CSV) e dashboard de KPIs.
 
 ## Stack
 
@@ -75,15 +75,15 @@ Ver [DEPLOY.md](DEPLOY.md) — passo a passo pra deixar sistema acessível em to
 /backend
   .env.example   TURSO_DATABASE_URL / TURSO_AUTH_TOKEN
   src/
-    db/          schema.sql, client.ts (conexao libsql), seed.ts (dados ficticios)
-    services/    endereco.service.ts -> parse/format do codigo de endereco
-    routes/      produtos.routes.ts, enderecos.routes.ts
+    db/          schema.sql, client.ts (conexao libsql + migracao de coluna em boot), seed.ts (dados ficticios)
+    services/    endereco.service.ts (parse/format do codigo de endereco), validade.service.ts (status vencido/proximo/normal)
+    routes/      produtos.routes.ts, enderecos.routes.ts, movimentacoes.routes.ts, mapa.routes.ts, importacao.routes.ts, dashboard.routes.ts
     types/
     index.ts
 /frontend
   src/
-    pages/       MapaPage.tsx, BuscaPage.tsx
-    components/  GridCorredor, PosicaoCell, ProdutoModal, SearchBar, ResultCard
+    pages/       MapaPage.tsx, BuscaPage.tsx, CadastroPage.tsx, ImportacaoPage.tsx, PosicionamentoPage.tsx, ColetorPage.tsx, HistoricoPage.tsx, CurvaAbcPage.tsx, ValidadePage.tsx, DashboardPage.tsx
+    components/  GridCorredor, PosicaoCell, ProdutoModal, SearchBar, ResultCard, ScannerInput, CameraScannerModal
     api/         client.ts (chamadas fetch)
     types/
 ```
@@ -92,7 +92,11 @@ Ver [DEPLOY.md](DEPLOY.md) — passo a passo pra deixar sistema acessível em to
 
 - **produtos**: id, codigo, nome, descricao, codigo_barras, validade
 - **enderecos**: id, corredor, andar, posicao, codigo (formatado, ex. `A204`)
-- **estoque_posicoes**: id, produto_id, endereco_id (UNIQUE), quantidade — relaciona produto <-> endereco. Um endereco so tem uma linha aqui por vez (ocupado por 1 produto); um produto pode ter varias linhas (varios enderecos).
+- **estoque_posicoes**: id, produto_id, endereco_id (UNIQUE), quantidade, validade, lote — relaciona produto <-> endereco. Um endereco so tem uma linha aqui por vez (ocupado por 1 produto); um produto pode ter varias linhas (varios enderecos).
+- **movimentacoes**: historico de entrada/saida, com lote, status (`confirmada`/`standby`/`revertida`) — desfazer restaura a posicao.
+- **estoque_erp_saldo**: saldo importado do Winthor (CSV), usado pra sugestao de endereco, pendencias de posicionamento, divergencias de sobra e acuracia do dashboard.
+
+Coluna `lote` foi adicionada depois do schema inicial — `backend/src/db/client.ts` roda `ALTER TABLE` condicional em boot pra bancos Turso remotos ja existentes (schema.sql sozinho so cobre banco novo).
 
 Status do endereco (livre/ocupado) **não é uma coluna** — é calculado via JOIN com `estoque_posicoes`, pra não correr risco de ficar dessincronizado.
 
@@ -107,11 +111,32 @@ Lógica de parse/formatação isolada em [backend/src/services/endereco.service.
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/api/produtos?search=termo` | Lista produtos, busca parcial por código OU nome (case-insensitive) |
+| POST | `/api/produtos` | Cria produto |
+| GET | `/api/produtos/pendencias-posicionamento` | Produtos com saldo Winthor maior que o alocado fisicamente |
+| GET | `/api/produtos/divergencias-sobra` | Produtos com alocado maior que o saldo Winthor |
+| GET | `/api/produtos/curva-abc` | Classificação ABC por giro (saída confirmada) |
+| GET | `/api/produtos/codigo-barras/:codigo` | Busca produto por código de barras (usado pelo coletor) |
+| GET | `/api/produtos/:id/sugestao-endereco` | Endereço livre mais próximo do estoque físico atual do produto |
 | GET | `/api/produtos/:id` | Detalhe do produto + todas as posições onde está armazenado |
 | GET | `/api/enderecos?corredor=A` | Mapa de endereços com status (livre/ocupado) e produto ocupante; `corredor` opcional |
 | GET | `/api/enderecos/corredores` | Lista de corredores existentes |
-| POST | `/api/enderecos/:id/ocupar` | Body `{ produto_id, quantidade }` — ocupa um endereço livre |
+| GET | `/api/enderecos/codigo/:codigo` | Busca endereço por código exato (usado pelo coletor) |
+| GET | `/api/enderecos/a-vencer` | Posições ocupadas vencidas ou próximas do vencimento |
+| POST | `/api/enderecos/:id/ocupar` | Body `{ produto_id, quantidade, validade, lote }` — ocupa um endereço livre |
 | POST | `/api/enderecos/:id/liberar` | Libera um endereço ocupado |
+| GET | `/api/movimentacoes` | Histórico de entradas/saídas |
+| POST | `/api/movimentacoes/:id/desfazer` | Reverte uma movimentação (restaura a posição) |
+| GET | `/api/mapa/setores` | Lista setores |
+| GET | `/api/mapa/:setorId` | Mapa de endereços de um setor |
+| POST | `/api/importacao/produtos` | Importa produtos via CSV do Winthor (D860) |
+| POST | `/api/importacao/saldo` | Importa saldo de estoque via CSV do Winthor |
+| GET | `/api/dashboard/kpis` | KPIs consolidados: acurácia de estoque, ocupação por setor, giro médio, vencimento |
+
+## Coletor (leitor de código de barras)
+
+Página `/coletor`: entrada e saída de estoque escaneando produto + endereço, via leitor USB/RF (digita e manda Enter, `frontend/src/components/ScannerInput.tsx`) ou câmera do celular/notebook (`CameraScannerModal.tsx`, biblioteca `@zxing/browser`). Fluxo guiado: escaneia produto → escaneia endereço → confirma quantidade/validade/lote.
+
+Alerta de vencimento (`DIAS_ALERTA_VENCIMENTO`, em `backend/src/services/validade.service.ts`) está em 35 dias.
 
 ## Seed
 

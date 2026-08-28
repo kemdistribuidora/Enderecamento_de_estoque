@@ -14,6 +14,7 @@ export interface ProdutoComPosicoes extends Produto {
     quantidade: number;
     setor_id: number;
     validade: string;
+    lote: string | null;
     status_validade: StatusValidade;
   }>;
 }
@@ -33,6 +34,7 @@ export interface EnderecoComStatus {
     nome: string;
     quantidade: number;
     validade: string;
+    lote: string | null;
     status_validade: StatusValidade;
   } | null;
 }
@@ -54,4 +56,11 @@ export interface MapaSetor {
   setor: Setor;
   corredores: string[];
   prateleiras: PrateleiraComPosicoes[];
+}
+
+export interface KpisDashboard {
+  acuracia_estoque: { status: 'ok' | 'sem_dados'; percentual: number | null; total_produtos: number; produtos_com_divergencia: number };
+  ocupacao_por_setor: Array<{ setor_id: number; setor_nome: string; total_enderecos: number; ocupados: number; percentual: number | null }>;
+  giro_medio: { status: 'ok' | 'sem_dados'; valor: number | null; produtos_com_giro: number };
+  vencimento: { vencidos: number; proximos: number };
 }

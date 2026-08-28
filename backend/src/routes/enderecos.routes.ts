@@ -12,7 +12,7 @@ enderecosRouter.get('/', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
       e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
-      ep.quantidade as quantidade, ep.validade as validade,
+      ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote,
       p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome
     FROM enderecos e
     LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
@@ -36,10 +36,62 @@ enderecosRouter.get('/', async (_req, res) => {
           nome: r.produto_nome,
           quantidade: Number(r.quantidade),
           validade: r.validade,
+          lote: r.lote ?? null,
           status_validade: calcularStatusValidade(r.validade),
         }
       : null,
   }));
+
+  res.json(resultado);
+});
+
+// GET /api/enderecos/codigo/:codigo -> match exato pelo codigo do endereco, usado pelo
+// scanner/coletor (le a etiqueta da posicao). Endereco livre e' 200 com produto: null;
+// so 404 se o codigo nao existir de jeito nenhum. 2 segmentos de path, entao nao colide
+// com nenhuma rota :id de 1 segmento independente de ordem de registro.
+enderecosRouter.get('/codigo/:codigo', async (req, res) => {
+  const codigo = String(req.params.codigo).trim();
+
+  const rs = await db.execute({
+    sql: `
+      SELECT
+        e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
+        ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote,
+        p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome
+      FROM enderecos e
+      LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
+      LEFT JOIN produtos p ON p.id = ep.produto_id
+      WHERE e.codigo = ?
+    `,
+    args: [codigo],
+  });
+
+  const r = rs.rows[0] as any;
+  if (!r) {
+    return res.status(404).json({ erro: 'Endereco nao encontrado' });
+  }
+
+  const resultado: EnderecoComStatus = {
+    id: Number(r.id),
+    prateleira_id: Number(r.prateleira_id),
+    corredor: r.corredor,
+    lado: r.lado,
+    andar: Number(r.andar),
+    posicao: Number(r.posicao),
+    codigo: r.codigo,
+    status: r.produto_id ? 'ocupado' : 'livre',
+    produto: r.produto_id
+      ? {
+          id: Number(r.produto_id),
+          codigo: r.produto_codigo,
+          nome: r.produto_nome,
+          quantidade: Number(r.quantidade),
+          validade: r.validade,
+          lote: r.lote ?? null,
+          status_validade: calcularStatusValidade(r.validade),
+        }
+      : null,
+  };
 
   res.json(resultado);
 });
@@ -50,7 +102,7 @@ enderecosRouter.get('/a-vencer', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
       e.id as endereco_id, e.codigo as endereco_codigo, pr.setor_id,
-      ep.produto_id, ep.quantidade, ep.validade,
+      ep.produto_id, ep.quantidade, ep.validade, ep.lote,
       p.codigo as produto_codigo, p.nome as produto_nome
     FROM estoque_posicoes ep
     JOIN enderecos e ON e.id = ep.endereco_id
@@ -69,6 +121,7 @@ enderecosRouter.get('/a-vencer', async (_req, res) => {
       produto_nome: r.produto_nome,
       quantidade: Number(r.quantidade),
       validade: r.validade,
+      lote: r.lote ?? null,
       status_validade: calcularStatusValidade(r.validade),
     }))
     .filter((p) => p.status_validade !== 'normal');
@@ -76,13 +129,13 @@ enderecosRouter.get('/a-vencer', async (_req, res) => {
   res.json(resultado);
 });
 
-// POST /api/enderecos/:id/ocupar { produto_id, quantidade, validade }
+// POST /api/enderecos/:id/ocupar { produto_id, quantidade, validade, lote }
 enderecosRouter.post('/:id/ocupar', async (req, res) => {
   const enderecoId = Number(req.params.id);
-  const { produto_id, quantidade, validade } = req.body ?? {};
+  const { produto_id, quantidade, validade, lote } = req.body ?? {};
 
-  if (!produto_id || !quantidade || quantidade <= 0 || !validade) {
-    return res.status(400).json({ erro: 'produto_id, quantidade (> 0) e validade sao obrigatorios' });
+  if (!produto_id || !quantidade || quantidade <= 0 || !validade || !String(lote ?? '').trim()) {
+    return res.status(400).json({ erro: 'produto_id, quantidade (> 0), validade e lote sao obrigatorios' });
   }
 
   const endereco = await db.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [enderecoId] });
@@ -101,13 +154,13 @@ enderecosRouter.post('/:id/ocupar', async (req, res) => {
   }
 
   await db.execute({
-    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade) VALUES (?, ?, ?, ?)`,
-    args: [produto_id, enderecoId, quantidade, validade],
+    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade, lote) VALUES (?, ?, ?, ?, ?)`,
+    args: [produto_id, enderecoId, quantidade, validade, lote],
   });
 
   await db.execute({
-    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, status, criado_em) VALUES ('entrada', ?, ?, ?, ?, 'confirmada', ?)`,
-    args: [produto_id, enderecoId, quantidade, validade, new Date().toISOString()],
+    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('entrada', ?, ?, ?, ?, ?, 'confirmada', ?)`,
+    args: [produto_id, enderecoId, quantidade, validade, lote, new Date().toISOString()],
   });
 
   res.status(201).json({ ok: true });
@@ -120,7 +173,7 @@ enderecosRouter.post('/:id/liberar', async (req, res) => {
   const enderecoId = Number(req.params.id);
 
   const ocupacaoRs = await db.execute({
-    sql: `SELECT produto_id, quantidade, validade FROM estoque_posicoes WHERE endereco_id = ?`,
+    sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
     args: [enderecoId],
   });
   const ocupacao = ocupacaoRs.rows[0] as any;
@@ -131,8 +184,8 @@ enderecosRouter.post('/:id/liberar', async (req, res) => {
   await db.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
 
   const movimentacaoInfo = await db.execute({
-    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, status, criado_em) VALUES ('saida', ?, ?, ?, ?, 'standby', ?)`,
-    args: [Number(ocupacao.produto_id), enderecoId, Number(ocupacao.quantidade), ocupacao.validade, new Date().toISOString()],
+    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('saida', ?, ?, ?, ?, ?, 'standby', ?)`,
+    args: [Number(ocupacao.produto_id), enderecoId, Number(ocupacao.quantidade), ocupacao.validade, ocupacao.lote ?? null, new Date().toISOString()],
   });
 
   res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid) });

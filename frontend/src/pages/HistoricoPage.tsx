@@ -57,6 +57,7 @@ export default function HistoricoPage() {
                 <th className="px-4 py-2">Tipo</th>
                 <th className="px-4 py-2">Produto</th>
                 <th className="px-4 py-2">Posição</th>
+                <th className="px-4 py-2">Lote</th>
                 <th className="px-4 py-2 text-right">Quantidade</th>
                 <th className="px-4 py-2">Status</th>
                 <th className="px-4 py-2"></th>
@@ -76,6 +77,7 @@ export default function HistoricoPage() {
                     <span className="text-slate-400">— {m.produto_codigo}</span>
                   </td>
                   <td className="px-4 py-2 text-slate-600">{m.endereco_codigo}</td>
+                  <td className="px-4 py-2 text-slate-600">{m.lote ?? '—'}</td>
                   <td className="px-4 py-2 text-right">{m.quantidade}</td>
                   <td className="px-4 py-2">
                     <StatusBadge status={m.status} />

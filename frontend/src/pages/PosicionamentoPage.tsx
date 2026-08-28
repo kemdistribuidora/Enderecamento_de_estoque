@@ -153,6 +153,7 @@ function PosicionarModal({
   const [enderecoEscolhido, setEnderecoEscolhido] = useState<EnderecoComStatus | null>(null);
   const [quantidade, setQuantidade] = useState(String(pendencia.pendente));
   const [validade, setValidade] = useState('');
+  const [lote, setLote] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
@@ -164,14 +165,14 @@ function PosicionarModal({
 
   async function handleConfirmar() {
     const qtd = Number(quantidade);
-    if (!enderecoEscolhido || !qtd || qtd <= 0 || !validade) {
-      setErro('Escolha um endereço no mapa, quantidade válida e validade.');
+    if (!enderecoEscolhido || !qtd || qtd <= 0 || !validade || !lote.trim()) {
+      setErro('Escolha um endereço no mapa, quantidade válida, validade e lote.');
       return;
     }
     setSalvando(true);
     setErro('');
     try {
-      await ocuparEndereco(enderecoEscolhido.id, pendencia.produto_id, qtd, validade);
+      await ocuparEndereco(enderecoEscolhido.id, pendencia.produto_id, qtd, validade, lote.trim());
       onPosicionado();
     } catch (err: any) {
       setErro(err.message ?? 'Erro ao posicionar.');
@@ -224,6 +225,11 @@ function PosicionarModal({
           <label className="block text-sm">
             <span className="mb-1 block font-medium text-slate-600">Validade do lote</span>
             <input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} className="input" />
+          </label>
+
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium text-slate-600">Lote</span>
+            <input value={lote} onChange={(e) => setLote(e.target.value)} className="input" placeholder="LOTE-0001" />
           </label>
         </div>
 
