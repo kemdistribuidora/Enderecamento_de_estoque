@@ -1,4 +1,6 @@
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { useState } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
 import MapaPage from './pages/MapaPage';
 import BuscaPage from './pages/BuscaPage';
 import CadastroPage from './pages/CadastroPage';
@@ -10,65 +12,49 @@ import CurvaAbcPage from './pages/CurvaAbcPage';
 import ValidadePage from './pages/ValidadePage';
 import DashboardPage from './pages/DashboardPage';
 
-const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-    isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-200'
-  }`;
-
 export default function App() {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-2 px-4 py-3">
-          <span className="mr-4 font-semibold text-slate-800">Endereçamento de Estoque</span>
-          <nav className="flex gap-2">
-            <NavLink to="/dashboard" className={linkClass}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/" end className={linkClass}>
-              Mapa do Depósito
-            </NavLink>
-            <NavLink to="/busca" className={linkClass}>
-              Busca
-            </NavLink>
-            <NavLink to="/cadastro" className={linkClass}>
-              Cadastro
-            </NavLink>
-            <NavLink to="/importacao" className={linkClass}>
-              Importar Winthor
-            </NavLink>
-            <NavLink to="/posicionamento" className={linkClass}>
-              Posicionar Estoque
-            </NavLink>
-            <NavLink to="/coletor" className={linkClass}>
-              Coletor
-            </NavLink>
-            <NavLink to="/historico" className={linkClass}>
-              Histórico
-            </NavLink>
-            <NavLink to="/curva-abc" className={linkClass}>
-              Curva ABC
-            </NavLink>
-            <NavLink to="/validade" className={linkClass}>
-              Validade
-            </NavLink>
-          </nav>
-        </div>
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <header className="flex items-center gap-3 border-b border-slate-800 bg-slate-900 px-3 py-2 text-slate-100">
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          className="rounded-md p-2 text-slate-300 hover:bg-slate-800 hover:text-white"
+          title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        >
+          <svg
+            className="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span className="font-semibold">Endereçamento de Estoque</span>
       </header>
-      <main className="mx-auto max-w-[1600px] px-4 py-6">
-        <Routes>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/" element={<MapaPage />} />
-          <Route path="/busca" element={<BuscaPage />} />
-          <Route path="/cadastro" element={<CadastroPage />} />
-          <Route path="/importacao" element={<ImportacaoPage />} />
-          <Route path="/posicionamento" element={<PosicionamentoPage />} />
-          <Route path="/coletor" element={<ColetorPage />} />
-          <Route path="/historico" element={<HistoricoPage />} />
-          <Route path="/curva-abc" element={<CurvaAbcPage />} />
-          <Route path="/validade" element={<ValidadePage />} />
-        </Routes>
-      </main>
+      <div className="flex flex-1">
+        <Sidebar collapsed={collapsed} onExpand={() => setCollapsed(false)} />
+        <main className="flex-1 px-4 py-6">
+          <Routes>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/" element={<MapaPage />} />
+            <Route path="/busca" element={<BuscaPage />} />
+            <Route path="/cadastro" element={<CadastroPage />} />
+            <Route path="/importacao" element={<ImportacaoPage />} />
+            <Route path="/posicionamento" element={<PosicionamentoPage />} />
+            <Route path="/coletor" element={<ColetorPage />} />
+            <Route path="/historico" element={<HistoricoPage />} />
+            <Route path="/curva-abc" element={<CurvaAbcPage />} />
+            <Route path="/validade" element={<ValidadePage />} />
+          </Routes>
+        </main>
+      </div>
     </div>
   );
 }
