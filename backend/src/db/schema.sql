@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS produtos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   codigo TEXT NOT NULL UNIQUE,
   nome TEXT NOT NULL,
-  codigo_barras TEXT NOT NULL
+  codigo_barras TEXT NOT NULL,
+  peso_caixa REAL
 );
 
 CREATE TABLE IF NOT EXISTS setores (
@@ -11,24 +12,35 @@ CREATE TABLE IF NOT EXISTS setores (
   ordem INTEGER NOT NULL UNIQUE
 );
 
+-- apos_prateleira_ordem = ordem da prateleira do mesmo setor logo antes deste corredor
+-- na sequencia fisica (prateleira/corredor/prateleira/...). Antes so dava pra derivar
+-- isso pelo indice (corredor[i] sempre depois de prateleira[i]), mas isso assumia
+-- N corredores -> N+1 prateleiras sempre alternadas; com prateleiras extras (2+ juntas,
+-- sem corredor entre elas) essa suposicao quebra, entao vira coluna explicita.
 CREATE TABLE IF NOT EXISTS corredores (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   setor_id INTEGER NOT NULL REFERENCES setores(id) ON DELETE CASCADE,
   letra TEXT NOT NULL,
   ordem INTEGER NOT NULL,
+  apos_prateleira_ordem INTEGER NOT NULL DEFAULT 0,
   UNIQUE (setor_id, letra),
   UNIQUE (setor_id, ordem)
 );
 
--- Prateleira fica entre corredor[ordem-1] e corredor[ordem] do mesmo setor.
--- Dona (quem da o endereco) eh sempre o corredor a esquerda, lado D; excecao a
--- prateleira ordem=0 (nao tem corredor a esquerda), dona = corredor[0], lado E.
--- Regra vive em endereco.service.ts (donoPrateleira) e eh so calculo, nao coluna,
--- pra nao duplicar fonte de verdade com a ordem dos corredores.
+-- ordem = posicao global da prateleira na sequencia fisica do setor (prateleira 0,
+-- prateleira 1, ...), usada tambem em custoDistancia (endereco.service.ts) pra saber
+-- o quao perto duas prateleiras estao. Nao assume mais 1 corredor entre cada par:
+-- duas prateleiras podem ficar lado a lado sem corredor entre elas (ver corredores.apos_prateleira_ordem).
+-- letra/lado = dona da prateleira (quem da o endereco). Pra prateleiras "padrao" (uma
+-- entre cada corredor) segue a regra antiga -- corredor a esquerda lado D, excecao a
+-- primeira (corredor[0] lado E) -- calculada e gravada na hora de criar (endereco.service.ts,
+-- donoPrateleira). Prateleiras extras tem letra/lado definidos direto, sem formula.
 CREATE TABLE IF NOT EXISTS prateleiras (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   setor_id INTEGER NOT NULL REFERENCES setores(id) ON DELETE CASCADE,
   ordem INTEGER NOT NULL,
+  letra TEXT NOT NULL DEFAULT '',
+  lado TEXT NOT NULL DEFAULT 'D' CHECK (lado IN ('E', 'D')),
   UNIQUE (setor_id, ordem)
 );
 
@@ -53,7 +65,8 @@ CREATE TABLE IF NOT EXISTS estoque_posicoes (
   endereco_id INTEGER NOT NULL UNIQUE REFERENCES enderecos(id) ON DELETE CASCADE,
   quantidade INTEGER NOT NULL DEFAULT 0,
   validade TEXT NOT NULL,
-  lote TEXT
+  lote TEXT,
+  criado_em TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_produtos_nome ON produtos(nome);

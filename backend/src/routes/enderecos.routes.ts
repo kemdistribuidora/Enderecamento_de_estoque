@@ -12,8 +12,8 @@ enderecosRouter.get('/', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
       e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
-      ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote,
-      p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome
+      ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
+      p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa
     FROM enderecos e
     LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
     LEFT JOIN produtos p ON p.id = ep.produto_id
@@ -34,9 +34,12 @@ enderecosRouter.get('/', async (_req, res) => {
           id: Number(r.produto_id),
           codigo: r.produto_codigo,
           nome: r.produto_nome,
+          codigo_barras: r.produto_codigo_barras,
+          peso_caixa: r.produto_peso_caixa != null ? Number(r.produto_peso_caixa) : null,
           quantidade: Number(r.quantidade),
           validade: r.validade,
           lote: r.lote ?? null,
+          criado_em: r.criado_em ?? null,
           status_validade: calcularStatusValidade(r.validade),
         }
       : null,
@@ -56,8 +59,8 @@ enderecosRouter.get('/codigo/:codigo', async (req, res) => {
     sql: `
       SELECT
         e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
-        ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote,
-        p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome
+        ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
+        p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa
       FROM enderecos e
       LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
       LEFT JOIN produtos p ON p.id = ep.produto_id
@@ -85,9 +88,12 @@ enderecosRouter.get('/codigo/:codigo', async (req, res) => {
           id: Number(r.produto_id),
           codigo: r.produto_codigo,
           nome: r.produto_nome,
+          codigo_barras: r.produto_codigo_barras,
+          peso_caixa: r.produto_peso_caixa != null ? Number(r.produto_peso_caixa) : null,
           quantidade: Number(r.quantidade),
           validade: r.validade,
           lote: r.lote ?? null,
+          criado_em: r.criado_em ?? null,
           status_validade: calcularStatusValidade(r.validade),
         }
       : null,
@@ -153,17 +159,19 @@ enderecosRouter.post('/:id/ocupar', async (req, res) => {
     return res.status(409).json({ erro: 'Endereco ja esta ocupado. Libere antes de ocupar novamente.' });
   }
 
+  const agora = new Date().toISOString();
+
   await db.execute({
-    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade, lote) VALUES (?, ?, ?, ?, ?)`,
-    args: [produto_id, enderecoId, quantidade, validade, lote],
+    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade, lote, criado_em) VALUES (?, ?, ?, ?, ?, ?)`,
+    args: [produto_id, enderecoId, quantidade, validade, lote, agora],
   });
 
   await db.execute({
     sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('entrada', ?, ?, ?, ?, ?, 'confirmada', ?)`,
-    args: [produto_id, enderecoId, quantidade, validade, lote, new Date().toISOString()],
+    args: [produto_id, enderecoId, quantidade, validade, lote, agora],
   });
 
-  res.status(201).json({ ok: true });
+  res.status(201).json({ ok: true, criado_em: agora });
 });
 
 // POST /api/enderecos/:id/liberar -> remove ocupacao do endereco. Nao apaga o rastro: fica

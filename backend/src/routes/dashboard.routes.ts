@@ -101,12 +101,12 @@ async function calcularGiroMedio(): Promise<KpisDashboard['giro_medio']> {
 // Mesma classificacao de GET /enderecos/a-vencer, so contando em vez de listar.
 async function calcularVencimento(): Promise<KpisDashboard['vencimento']> {
   const rs = await db.execute(`SELECT validade FROM estoque_posicoes`);
-  let vencidos = 0;
+  let emergencias = 0;
   let proximos = 0;
   for (const r of rs.rows as any[]) {
     const status = calcularStatusValidade(r.validade);
-    if (status === 'vencido') vencidos++;
+    if (status === 'emergencia') emergencias++;
     else if (status === 'proximo') proximos++;
   }
-  return { vencidos, proximos };
+  return { emergencias, proximos };
 }

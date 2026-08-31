@@ -8,16 +8,18 @@ export const produtosRouter = Router();
 
 // POST /api/produtos -> cadastra produto novo (dados mestre, sem posicao/estoque ainda)
 produtosRouter.post('/', async (req, res) => {
-  const { codigo, nome, codigo_barras } = req.body ?? {};
+  const { codigo, nome, codigo_barras, peso_caixa } = req.body ?? {};
 
   if (!codigo || !nome || !codigo_barras) {
     return res.status(400).json({ erro: 'codigo, nome e codigo_barras sao obrigatorios' });
   }
 
+  const pesoCaixa = peso_caixa != null && peso_caixa !== '' ? Number(peso_caixa) : null;
+
   try {
     const info = await db.execute({
-      sql: `INSERT INTO produtos (codigo, nome, codigo_barras) VALUES (?, ?, ?)`,
-      args: [codigo, nome, codigo_barras],
+      sql: `INSERT INTO produtos (codigo, nome, codigo_barras, peso_caixa) VALUES (?, ?, ?, ?)`,
+      args: [codigo, nome, codigo_barras, pesoCaixa],
     });
 
     const produto: Produto = {
@@ -25,6 +27,7 @@ produtosRouter.post('/', async (req, res) => {
       codigo,
       nome,
       codigo_barras,
+      peso_caixa: pesoCaixa,
     };
     res.status(201).json(produto);
   } catch (e: any) {
@@ -167,7 +170,13 @@ produtosRouter.get('/codigo-barras/:codigo', async (req, res) => {
   if (!produto) {
     return res.status(404).json({ erro: 'Produto nao encontrado para esse codigo de barras' });
   }
-  const resultado: Produto = { id: Number(produto.id), codigo: produto.codigo, nome: produto.nome, codigo_barras: produto.codigo_barras };
+  const resultado: Produto = {
+    id: Number(produto.id),
+    codigo: produto.codigo,
+    nome: produto.nome,
+    codigo_barras: produto.codigo_barras,
+    peso_caixa: produto.peso_caixa != null ? Number(produto.peso_caixa) : null,
+  };
   res.json(resultado);
 });
 

@@ -48,15 +48,15 @@ export default function DashboardPage() {
               cor="slate"
             />
             <Tile
-              titulo="Vencidos"
-              valor={String(kpis.vencimento.vencidos)}
-              legenda="posições ocupadas"
+              titulo="Emergência"
+              valor={String(kpis.vencimento.emergencias)}
+              legenda="vence em até 15 dias"
               cor="red"
             />
             <Tile
               titulo="Vencendo em breve"
               valor={String(kpis.vencimento.proximos)}
-              legenda="posições ocupadas"
+              legenda="vence em até 35 dias"
               cor="amber"
             />
           </div>

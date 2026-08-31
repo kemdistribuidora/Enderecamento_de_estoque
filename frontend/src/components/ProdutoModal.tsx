@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EnderecoComStatus } from '../types';
 import { liberarEndereco } from '../api/client';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
+import EtiquetaModal from './EtiquetaModal';
 
 interface Props {
   endereco: EnderecoComStatus | null;
@@ -12,6 +13,7 @@ interface Props {
 export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
   const [liberando, setLiberando] = useState(false);
   const [erro, setErro] = useState('');
+  const [etiquetaAberta, setEtiquetaAberta] = useState(false);
 
   if (!endereco) return null;
 
@@ -72,15 +74,40 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
 
             <button
               type="button"
+              onClick={() => setEtiquetaAberta(true)}
+              className="mt-4 w-full rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Imprimir etiqueta
+            </button>
+
+            <button
+              type="button"
               onClick={handleLiberar}
               disabled={liberando}
-              className="mt-4 w-full rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+              className="mt-2 w-full rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
               {liberando ? 'Liberando...' : 'Liberar posição'}
             </button>
           </>
         )}
       </div>
+
+      {etiquetaAberta && endereco.produto && (
+        <EtiquetaModal
+          dados={{
+            enderecoCodigo: endereco.codigo,
+            produtoNome: endereco.produto.nome,
+            produtoCodigo: endereco.produto.codigo,
+            codigoBarras: endereco.produto.codigo_barras,
+            pesoCaixa: endereco.produto.peso_caixa,
+            quantidade: endereco.produto.quantidade,
+            validade: endereco.produto.validade,
+            lote: endereco.produto.lote,
+            criadoEm: endereco.produto.criado_em,
+          }}
+          onClose={() => setEtiquetaAberta(false)}
+        />
+      )}
     </div>
   );
 }

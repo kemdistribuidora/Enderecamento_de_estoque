@@ -5,6 +5,7 @@ export interface Produto {
   codigo: string;
   nome: string;
   codigo_barras: string;
+  peso_caixa: number | null;
 }
 
 export interface Setor {
@@ -24,6 +25,8 @@ export interface Prateleira {
   id: number;
   setor_id: number;
   ordem: number;
+  letra: string;
+  lado: 'E' | 'D';
 }
 
 export interface Endereco {
@@ -43,6 +46,7 @@ export interface EstoquePosicao {
   quantidade: number;
   validade: string; // ISO date (YYYY-MM-DD) — validade do lote nessa posicao
   lote: string | null;
+  criado_em: string | null; // data/hora que a posicao foi ocupada -- usado na etiqueta (Dt Entrada)
 }
 
 // Endereco com status calculado (join) + produto ocupante, se houver
@@ -52,9 +56,12 @@ export interface EnderecoComStatus extends Endereco {
     id: number;
     codigo: string;
     nome: string;
+    codigo_barras: string;
+    peso_caixa: number | null;
     quantidade: number;
     validade: string;
     lote: string | null;
+    criado_em: string | null;
     status_validade: StatusValidade;
   } | null;
 }
@@ -83,7 +90,7 @@ export interface PrateleiraComPosicoes {
 
 export interface MapaSetor {
   setor: Setor;
-  corredores: string[]; // letras, na ordem
+  corredores: Array<{ letra: string; aposPrateleiraOrdem: number }>;
   prateleiras: PrateleiraComPosicoes[];
 }
 
@@ -165,5 +172,5 @@ export interface KpisDashboard {
   acuracia_estoque: { status: 'ok' | 'sem_dados'; percentual: number | null; total_produtos: number; produtos_com_divergencia: number };
   ocupacao_por_setor: Array<{ setor_id: number; setor_nome: string; total_enderecos: number; ocupados: number; percentual: number | null }>;
   giro_medio: { status: 'ok' | 'sem_dados'; valor: number | null; produtos_com_giro: number };
-  vencimento: { vencidos: number; proximos: number };
+  vencimento: { emergencias: number; proximos: number };
 }

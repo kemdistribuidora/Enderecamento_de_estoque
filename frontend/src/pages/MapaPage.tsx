@@ -75,7 +75,7 @@ export default function MapaPage() {
           <span className="h-3 w-3 rounded-sm border border-amber-300 bg-amber-100" /> vence em breve
         </span>
         <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm border border-red-300 bg-red-100" /> vencido
+          <span className="h-3 w-3 rounded-sm border border-red-300 bg-red-100" /> emergência
         </span>
         <span className="flex items-center gap-1">
           <span className="h-3 w-3 rounded-sm border border-dashed border-amber-300 bg-amber-50" /> corredor (passagem)

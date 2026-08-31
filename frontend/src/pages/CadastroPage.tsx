@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { buscarMapaEnderecos, buscarProdutos, criarProduto, ocuparEndereco } from '../api/client';
 import { EnderecoComStatus, ProdutoComPosicoes } from '../types';
 import ModalEscolherNoMapa from '../components/ModalEscolherNoMapa';
+import EtiquetaModal, { DadosEtiqueta } from '../components/EtiquetaModal';
 
 const FORM_INICIAL = {
   codigo: '',
   nome: '',
   codigo_barras: '',
+  peso_caixa: '',
   validade: '',
   lote: '',
   enderecoId: '',
@@ -25,6 +27,8 @@ export default function CadastroPage() {
   const [buscaProduto, setBuscaProduto] = useState('');
   const [sugestoes, setSugestoes] = useState<ProdutoComPosicoes[]>([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoComPosicoes | null>(null);
+  const [dadosEtiqueta, setDadosEtiqueta] = useState<DadosEtiqueta | null>(null);
+  const [etiquetaAberta, setEtiquetaAberta] = useState(false);
 
   useEffect(() => {
     carregarEnderecosLivres();
@@ -44,14 +48,20 @@ export default function CadastroPage() {
 
   function selecionarProduto(p: ProdutoComPosicoes) {
     setProdutoSelecionado(p);
-    setForm((f) => ({ ...f, codigo: p.codigo, nome: p.nome, codigo_barras: p.codigo_barras }));
+    setForm((f) => ({
+      ...f,
+      codigo: p.codigo,
+      nome: p.nome,
+      codigo_barras: p.codigo_barras,
+      peso_caixa: p.peso_caixa != null ? String(p.peso_caixa) : '',
+    }));
     setBuscaProduto('');
     setSugestoes([]);
   }
 
   function limparSelecao() {
     setProdutoSelecionado(null);
-    setForm((f) => ({ ...f, codigo: '', nome: '', codigo_barras: '' }));
+    setForm((f) => ({ ...f, codigo: '', nome: '', codigo_barras: '', peso_caixa: '' }));
   }
 
   function carregarEnderecosLivres() {
@@ -90,6 +100,8 @@ export default function CadastroPage() {
     try {
       let produtoId: number;
 
+      const pesoCaixa = form.peso_caixa.trim() ? Number(form.peso_caixa) : null;
+
       if (produtoSelecionado) {
         produtoId = produtoSelecionado.id;
       } else {
@@ -98,6 +110,7 @@ export default function CadastroPage() {
             codigo: form.codigo,
             nome: form.nome,
             codigo_barras: form.codigo_barras,
+            peso_caixa: pesoCaixa,
           });
           produtoId = produtoCriado.id;
         } catch (err: any) {
@@ -113,9 +126,22 @@ export default function CadastroPage() {
         }
       }
 
-      await ocuparEndereco(enderecoId, produtoId, quantidade, form.validade, form.lote.trim());
+      const enderecoOcupado = enderecosLivres.find((e) => e.id === enderecoId);
+      const resultado = await ocuparEndereco(enderecoId, produtoId, quantidade, form.validade, form.lote.trim());
 
-      setStatus({ tipo: 'sucesso', texto: `Produto adicionado na posição ${enderecosLivres.find((e) => e.id === enderecoId)?.codigo}.` });
+      setStatus({ tipo: 'sucesso', texto: `Produto adicionado na posição ${enderecoOcupado?.codigo}.` });
+      setDadosEtiqueta({
+        enderecoCodigo: enderecoOcupado?.codigo ?? '',
+        produtoNome: form.nome,
+        produtoCodigo: form.codigo,
+        codigoBarras: form.codigo_barras,
+        pesoCaixa: produtoSelecionado?.peso_caixa ?? pesoCaixa,
+        quantidade,
+        validade: form.validade,
+        lote: form.lote.trim(),
+        criadoEm: resultado.criado_em,
+      });
+      setEtiquetaAberta(true);
       setForm(FORM_INICIAL);
       setProdutoSelecionado(null);
       carregarEnderecosLivres();
@@ -204,6 +230,19 @@ export default function CadastroPage() {
               placeholder="7890000000001"
             />
           </Campo>
+
+          <Campo label="Peso por caixa (kg) — usado na etiqueta de pallet">
+            <input
+              type="number"
+              step="0.01"
+              min={0}
+              readOnly={!!produtoSelecionado}
+              value={form.peso_caixa}
+              onChange={(e) => atualizarCampo('peso_caixa', e.target.value)}
+              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
+              placeholder="12.5"
+            />
+          </Campo>
         </fieldset>
 
         <fieldset className="space-y-3 border-t border-slate-100 pt-4">
@@ -282,6 +321,16 @@ export default function CadastroPage() {
           </p>
         )}
 
+        {status?.tipo === 'sucesso' && dadosEtiqueta && !etiquetaAberta && (
+          <button
+            type="button"
+            onClick={() => setEtiquetaAberta(true)}
+            className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Imprimir etiqueta desse pallet
+          </button>
+        )}
+
         <button
           type="submit"
           disabled={salvando}
@@ -299,6 +348,10 @@ export default function CadastroPage() {
             setMapaAberto(false);
           }}
         />
+      )}
+
+      {etiquetaAberta && dadosEtiqueta && (
+        <EtiquetaModal dados={dadosEtiqueta} onClose={() => setEtiquetaAberta(false)} />
       )}
     </div>
   );

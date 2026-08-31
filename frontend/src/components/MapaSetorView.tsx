@@ -23,7 +23,7 @@ function CelulaPosicao({
   const statusValidade = posicao.produto?.status_validade;
 
   const corOcupado =
-    statusValidade === 'vencido'
+    statusValidade === 'emergencia'
       ? 'border-red-300 bg-red-100 text-red-800 hover:bg-red-200'
       : statusValidade === 'proximo'
         ? 'border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200'
@@ -35,7 +35,11 @@ function CelulaPosicao({
       title={
         ocupado
           ? `${posicao.codigo} — ${posicao.produto?.nome} (vence ${posicao.produto?.validade}${
-              statusValidade === 'vencido' ? ' — VENCIDO' : statusValidade === 'proximo' ? ' — vence em breve' : ''
+              statusValidade === 'emergencia'
+                ? ' — EMERGÊNCIA'
+                : statusValidade === 'proximo'
+                  ? ' — vence em breve'
+                  : ''
             })`
           : `${posicao.codigo} — livre`
       }
@@ -188,7 +192,7 @@ export default function MapaSetorView({ mapa, onSelect, termoBusca, enderecoDest
         </span>
       </div>
       <div className="flex flex-col gap-4">
-        {mapa.prateleiras.map((prateleira, idx) => (
+        {mapa.prateleiras.map((prateleira) => (
           <div key={prateleira.id} className="flex flex-col gap-4">
             <BlocoPrateleira
               posicoes={prateleira.posicoes}
@@ -198,7 +202,11 @@ export default function MapaSetorView({ mapa, onSelect, termoBusca, enderecoDest
               onExpandir={() => setPrateleiraExpandida(prateleira)}
               idsDestacados={idsDestacados}
             />
-            {idx < mapa.corredores.length && <FaixaCorredor letra={mapa.corredores[idx]} />}
+            {mapa.corredores
+              .filter((c) => c.aposPrateleiraOrdem === prateleira.ordem)
+              .map((c) => (
+                <FaixaCorredor key={c.letra} letra={c.letra} />
+              ))}
           </div>
         ))}
       </div>

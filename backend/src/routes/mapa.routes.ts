@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { db } from '../db/client';
-import { donoPrateleira } from '../services/endereco.service';
 import { calcularStatusValidade } from '../services/validade.service';
 import { EnderecoComStatus, MapaSetor, Setor } from '../types';
 
@@ -26,13 +25,16 @@ mapaRouter.get('/:setorId', async (req, res) => {
   const setor: Setor = { id: Number(setorRow.id), nome: setorRow.nome, ordem: Number(setorRow.ordem) };
 
   const corredoresRs = await db.execute({
-    sql: `SELECT letra FROM corredores WHERE setor_id = ? ORDER BY ordem`,
+    sql: `SELECT letra, apos_prateleira_ordem FROM corredores WHERE setor_id = ? ORDER BY ordem`,
     args: [setorId],
   });
-  const corredores = (corredoresRs.rows as any[]).map((r) => ({ letra: r.letra as string }));
+  const corredores = (corredoresRs.rows as any[]).map((r) => ({
+    letra: r.letra as string,
+    aposPrateleiraOrdem: Number(r.apos_prateleira_ordem),
+  }));
 
   const prateleirasRs = await db.execute({
-    sql: `SELECT id, ordem FROM prateleiras WHERE setor_id = ? ORDER BY ordem`,
+    sql: `SELECT id, ordem, letra, lado FROM prateleiras WHERE setor_id = ? ORDER BY ordem`,
     args: [setorId],
   });
   const prateleirasRows = prateleirasRs.rows as any[];
@@ -45,8 +47,8 @@ mapaRouter.get('/:setorId', async (req, res) => {
       sql: `
         SELECT
           e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
-          ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote,
-          p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome
+          ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
+          p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa
         FROM enderecos e
         LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
         LEFT JOIN produtos p ON p.id = ep.produto_id
@@ -73,9 +75,12 @@ mapaRouter.get('/:setorId', async (req, res) => {
               id: Number(r.produto_id),
               codigo: r.produto_codigo,
               nome: r.produto_nome,
+              codigo_barras: r.produto_codigo_barras,
+              peso_caixa: r.produto_peso_caixa != null ? Number(r.produto_peso_caixa) : null,
               quantidade: Number(r.quantidade),
               validade: r.validade,
               lote: r.lote ?? null,
+              criado_em: r.criado_em ?? null,
               status_validade: calcularStatusValidade(r.validade),
             }
           : null,
@@ -85,16 +90,13 @@ mapaRouter.get('/:setorId', async (req, res) => {
 
   const mapa: MapaSetor = {
     setor,
-    corredores: corredores.map((c) => c.letra),
-    prateleiras: prateleirasRows.map((r) => {
-      const ordem = Number(r.ordem);
-      return {
-        id: Number(r.id),
-        ordem,
-        dono: donoPrateleira(corredores, ordem),
-        posicoes: enderecosPorPrateleira[Number(r.id)] ?? [],
-      };
-    }),
+    corredores,
+    prateleiras: prateleirasRows.map((r) => ({
+      id: Number(r.id),
+      ordem: Number(r.ordem),
+      dono: { letra: r.letra as string, lado: r.lado as 'E' | 'D' },
+      posicoes: enderecosPorPrateleira[Number(r.id)] ?? [],
+    })),
   };
 
   res.json(mapa);

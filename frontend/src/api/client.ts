@@ -31,6 +31,7 @@ export interface DadosNovoProduto {
   codigo: string;
   nome: string;
   codigo_barras: string;
+  peso_caixa?: number | null;
 }
 
 export function criarProduto(dados: DadosNovoProduto): Promise<Produto> {
@@ -47,7 +48,7 @@ export function ocuparEndereco(
   quantidade: number,
   validade: string,
   lote: string
-): Promise<void> {
+): Promise<{ ok: true; criado_em: string }> {
   return fetch(`${BASE_URL}/enderecos/${enderecoId}/ocupar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -195,7 +196,7 @@ export interface KpisDashboard {
   acuracia_estoque: { status: 'ok' | 'sem_dados'; percentual: number | null; total_produtos: number; produtos_com_divergencia: number };
   ocupacao_por_setor: Array<{ setor_id: number; setor_nome: string; total_enderecos: number; ocupados: number; percentual: number | null }>;
   giro_medio: { status: 'ok' | 'sem_dados'; valor: number | null; produtos_com_giro: number };
-  vencimento: { vencidos: number; proximos: number };
+  vencimento: { emergencias: number; proximos: number };
 }
 
 export function buscarDashboardKpis(): Promise<KpisDashboard> {

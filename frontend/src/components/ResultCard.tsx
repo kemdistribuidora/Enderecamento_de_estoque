@@ -41,7 +41,7 @@ export default function ResultCard({ produto }: { produto: ProdutoComPosicoes })
                 {p.codigo_endereco} · {p.quantidade}un · vence {p.validade}
                 {p.status_validade !== 'normal' && (
                   <span className={`rounded-full px-1.5 py-0.5 ${BADGE_STATUS_VALIDADE[p.status_validade]}`}>
-                    {p.status_validade === 'vencido' ? 'vencido' : 'em breve'}
+                    {p.status_validade === 'emergencia' ? 'emergência' : 'em breve'}
                   </span>
                 )}
               </button>
