@@ -68,7 +68,6 @@ const groups: NavGroup[] = [
       { to: '/', label: 'Mapa do Depósito', end: true },
       { to: '/busca', label: 'Busca' },
       { to: '/posicionamento', label: 'Posicionar Estoque' },
-      { to: '/coletor', label: 'Coletor' },
       { to: '/historico', label: 'Histórico' },
       { to: '/validade', label: 'Validade' },
     ],

@@ -6,7 +6,6 @@ import BuscaPage from './pages/BuscaPage';
 import CadastroPage from './pages/CadastroPage';
 import ImportacaoPage from './pages/ImportacaoPage';
 import PosicionamentoPage from './pages/PosicionamentoPage';
-import ColetorPage from './pages/ColetorPage';
 import HistoricoPage from './pages/HistoricoPage';
 import CurvaAbcPage from './pages/CurvaAbcPage';
 import ValidadePage from './pages/ValidadePage';
@@ -48,7 +47,6 @@ export default function App() {
             <Route path="/cadastro" element={<CadastroPage />} />
             <Route path="/importacao" element={<ImportacaoPage />} />
             <Route path="/posicionamento" element={<PosicionamentoPage />} />
-            <Route path="/coletor" element={<ColetorPage />} />
             <Route path="/historico" element={<HistoricoPage />} />
             <Route path="/curva-abc" element={<CurvaAbcPage />} />
             <Route path="/validade" element={<ValidadePage />} />

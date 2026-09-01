@@ -1,9 +1,14 @@
-import { useNavigate } from 'react-router-dom';
 import { ProdutoComPosicoes } from '../types';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 
-export default function ResultCard({ produto }: { produto: ProdutoComPosicoes }) {
-  const navigate = useNavigate();
+type Posicao = ProdutoComPosicoes['posicoes'][number];
+
+interface Props {
+  produto: ProdutoComPosicoes;
+  onSeparar: (produto: ProdutoComPosicoes, posicao: Posicao) => void;
+}
+
+export default function ResultCard({ produto, onSeparar }: Props) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-2 flex items-start justify-between">
@@ -30,8 +35,13 @@ export default function ResultCard({ produto }: { produto: ProdutoComPosicoes })
             {produto.posicoes.map((p, idx) => (
               <button
                 key={p.endereco_id}
-                onClick={() => navigate(`/?setor=${p.setor_id}&endereco=${p.endereco_id}`)}
-                title={p.status_validade !== 'normal' ? ROTULO_STATUS_VALIDADE[p.status_validade] : 'Ver no mapa'}
+                type="button"
+                onClick={() => onSeparar(produto, p)}
+                title={
+                  p.status_validade !== 'normal'
+                    ? ROTULO_STATUS_VALIDADE[p.status_validade]
+                    : 'Ver no mapa e separar'
+                }
                 className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium hover:opacity-80 ${
                   idx === 0
                     ? 'border-amber-300 bg-amber-50 text-amber-800'

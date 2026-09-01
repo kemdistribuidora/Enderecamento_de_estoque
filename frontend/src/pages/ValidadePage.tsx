@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { PosicaoAVencer, buscarPosicoesAVencer } from '../api/client';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
+import PainelSeparacao from '../components/PainelSeparacao';
 
 export default function ValidadePage() {
   const [posicoes, setPosicoes] = useState<PosicaoAVencer[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const navigate = useNavigate();
+  const [separando, setSeparando] = useState<PosicaoAVencer | null>(null);
 
-  useEffect(() => {
-    buscarPosicoesAVencer()
+  function carregar() {
+    return buscarPosicoesAVencer()
       .then(setPosicoes)
       .finally(() => setCarregando(false));
+  }
+
+  useEffect(() => {
+    carregar();
   }, []);
 
   return (
@@ -22,6 +26,25 @@ export default function ValidadePage() {
           Posições ocupadas com validade vencida ou próxima do vencimento, mais urgente primeiro.
         </p>
       </div>
+
+      {separando && (
+        <PainelSeparacao
+          produtoId={separando.produto_id}
+          produtoNome={separando.produto_nome}
+          produtoCodigo={separando.produto_codigo}
+          enderecoId={separando.endereco_id}
+          codigoEndereco={separando.endereco_codigo}
+          setorId={separando.setor_id}
+          quantidade={separando.quantidade}
+          validade={separando.validade}
+          lote={separando.lote}
+          onFechar={() => setSeparando(null)}
+          onConcluido={() => {
+            setSeparando(null);
+            carregar();
+          }}
+        />
+      )}
 
       {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
 
@@ -64,10 +87,10 @@ export default function ValidadePage() {
                   <td className="px-4 py-2 text-right">
                     <button
                       type="button"
-                      onClick={() => navigate(`/?setor=${p.setor_id}&endereco=${p.endereco_id}`)}
-                      className="rounded-md border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                      onClick={() => setSeparando(p)}
+                      className="rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
                     >
-                      Ver no mapa
+                      Separar
                     </button>
                   </td>
                 </tr>
