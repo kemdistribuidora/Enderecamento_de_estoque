@@ -198,3 +198,50 @@ enderecosRouter.post('/:id/liberar', async (req, res) => {
 
   res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid) });
 });
+
+// POST /api/enderecos/:id/baixar-parcial { quantidade } -> retira uma quantidade especifica
+// da posicao (peso e quantidade da posicao ficam menores), sem liberar o endereco. Se a
+// quantidade retirada esgotar o saldo, o endereco fica livre igual ao /liberar. Registrada
+// como movimentacao 'saida' ja 'confirmada' (nao entra no fluxo de desfazer de /liberar,
+// que so reverte liberacao total).
+enderecosRouter.post('/:id/baixar-parcial', async (req, res) => {
+  const enderecoId = Number(req.params.id);
+  const qtdRetirada = Number((req.body ?? {}).quantidade);
+
+  if (!qtdRetirada || qtdRetirada <= 0) {
+    return res.status(400).json({ erro: 'quantidade (> 0) e obrigatoria' });
+  }
+
+  const ocupacaoRs = await db.execute({
+    sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
+    args: [enderecoId],
+  });
+  const ocupacao = ocupacaoRs.rows[0] as any;
+  if (!ocupacao) {
+    return res.status(404).json({ erro: 'Endereco esta livre' });
+  }
+
+  const qtdAtual = Number(ocupacao.quantidade);
+  if (qtdRetirada > qtdAtual) {
+    return res.status(400).json({ erro: `Quantidade retirada (${qtdRetirada}) maior que a quantidade na posicao (${qtdAtual})` });
+  }
+
+  const qtdRestante = qtdAtual - qtdRetirada;
+  const agora = new Date().toISOString();
+
+  if (qtdRestante === 0) {
+    await db.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
+  } else {
+    await db.execute({
+      sql: `UPDATE estoque_posicoes SET quantidade = ? WHERE endereco_id = ?`,
+      args: [qtdRestante, enderecoId],
+    });
+  }
+
+  const movimentacaoInfo = await db.execute({
+    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('saida', ?, ?, ?, ?, ?, 'confirmada', ?)`,
+    args: [Number(ocupacao.produto_id), enderecoId, qtdRetirada, ocupacao.validade, ocupacao.lote ?? null, agora],
+  });
+
+  res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid), quantidade_restante: qtdRestante });
+});

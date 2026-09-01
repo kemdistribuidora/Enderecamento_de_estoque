@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EnderecoComStatus } from '../types';
-import { liberarEndereco } from '../api/client';
+import { baixarParcialEndereco } from '../api/client';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 import EtiquetaModal from './EtiquetaModal';
 
@@ -11,27 +11,37 @@ interface Props {
 }
 
 export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
-  const [liberando, setLiberando] = useState(false);
+  const [retirando, setRetirando] = useState(false);
+  const [qtdRetirar, setQtdRetirar] = useState('');
   const [erro, setErro] = useState('');
   const [etiquetaAberta, setEtiquetaAberta] = useState(false);
 
   if (!endereco) return null;
 
-  async function handleLiberar() {
-    if (!endereco) return;
-    if (!confirm(`Liberar posição ${endereco.codigo}? Dá pra desfazer depois na tela Histórico, enquanto ninguém ocupar essa posição de novo.`)) {
+  async function handleRetirarParcial() {
+    if (!endereco || !endereco.produto) return;
+    const qtd = Number(qtdRetirar);
+    if (!qtd || qtd <= 0) {
+      setErro('Informe uma quantidade válida.');
       return;
     }
-    setLiberando(true);
+    if (qtd > endereco.produto.quantidade) {
+      setErro(`Quantidade maior que a disponível na posição (${endereco.produto.quantidade}).`);
+      return;
+    }
+    if (qtd === endereco.produto.quantidade && !confirm(`Isso vai liberar a posição ${endereco.codigo} inteira. Confirma?`)) {
+      return;
+    }
+    setRetirando(true);
     setErro('');
     try {
-      await liberarEndereco(endereco.id);
+      await baixarParcialEndereco(endereco.id, qtd);
       onLiberado?.();
       onClose();
     } catch (err: any) {
-      setErro(err.message ?? 'Erro ao liberar posição.');
+      setErro(err.message ?? 'Erro ao retirar quantidade.');
     } finally {
-      setLiberando(false);
+      setRetirando(false);
     }
   }
 
@@ -80,14 +90,30 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
               Imprimir etiqueta
             </button>
 
-            <button
-              type="button"
-              onClick={handleLiberar}
-              disabled={liberando}
-              className="mt-2 w-full rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
-            >
-              {liberando ? 'Liberando...' : 'Liberar posição'}
-            </button>
+            <div className="mt-3 rounded-md border border-slate-200 p-3">
+              <label className="mb-1 block text-xs font-medium text-slate-500">
+                Retirar quantidade (máx. {endereco.produto.quantidade}, digite tudo pra liberar a posição)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={endereco.produto.quantidade}
+                  value={qtdRetirar}
+                  onChange={(e) => setQtdRetirar(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  placeholder="Qtd"
+                />
+                <button
+                  type="button"
+                  onClick={handleRetirarParcial}
+                  disabled={retirando || !qtdRetirar}
+                  className="shrink-0 rounded-md border border-amber-300 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+                >
+                  {retirando ? 'Retirando...' : 'Retirar'}
+                </button>
+              </div>
+            </div>
           </>
         )}
       </div>
