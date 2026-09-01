@@ -60,6 +60,10 @@ export function buscarProdutoPorCodigoBarras(codigo: string): Promise<Produto> {
   return fetch(`${BASE_URL}/produtos/codigo-barras/${encodeURIComponent(codigo)}`).then((r) => handleJson(r));
 }
 
+export function buscarProdutoDetalhe(produtoId: number): Promise<ProdutoComPosicoes> {
+  return fetch(`${BASE_URL}/produtos/${produtoId}`).then((r) => handleJson(r));
+}
+
 export function buscarEnderecoPorCodigo(codigo: string): Promise<EnderecoComStatus> {
   return fetch(`${BASE_URL}/enderecos/codigo/${encodeURIComponent(codigo)}`).then((r) => handleJson(r));
 }

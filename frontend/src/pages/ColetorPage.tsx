@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import {
   buscarEnderecoPorCodigo,
+  buscarProdutoDetalhe,
   buscarProdutoPorCodigoBarras,
   liberarEndereco,
   ocuparEndereco,
 } from '../api/client';
-import { EnderecoComStatus, Produto } from '../types';
+import { EnderecoComStatus, Produto, ProdutoComPosicoes } from '../types';
 import ScannerInput from '../components/ScannerInput';
 
 type Modo = 'entrada' | 'saida';
@@ -177,19 +178,21 @@ function ColetorEntrada() {
 }
 
 function ColetorSaida() {
+  const [posicoes, setPosicoes] = useState<ProdutoComPosicoes['posicoes'] | null>(null);
   const [endereco, setEndereco] = useState<EnderecoComStatus | null>(null);
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
 
   function reiniciar() {
+    setPosicoes(null);
     setEndereco(null);
     setErro('');
   }
 
-  async function handleScanEndereco(codigo: string) {
+  async function selecionarPosicao(codigoEndereco: string) {
     setErro('');
     try {
-      const e = await buscarEnderecoPorCodigo(codigo);
+      const e = await buscarEnderecoPorCodigo(codigoEndereco);
       if (e.status === 'livre') {
         setErro(`Endereço ${e.codigo} já está livre.`);
         return;
@@ -197,6 +200,25 @@ function ColetorSaida() {
       setEndereco(e);
     } catch (err: any) {
       setErro(err.message ?? 'Endereço não encontrado para esse código.');
+    }
+  }
+
+  async function handleScanProduto(codigo: string) {
+    setErro('');
+    try {
+      const produto = await buscarProdutoPorCodigoBarras(codigo);
+      const detalhe = await buscarProdutoDetalhe(produto.id);
+      if (detalhe.posicoes.length === 0) {
+        setErro(`${produto.nome} não está ocupando nenhuma posição.`);
+        return;
+      }
+      if (detalhe.posicoes.length === 1) {
+        await selecionarPosicao(detalhe.posicoes[0].codigo_endereco);
+        return;
+      }
+      setPosicoes(detalhe.posicoes);
+    } catch (err: any) {
+      setErro(err.message ?? 'Produto não encontrado para esse código.');
     }
   }
 
@@ -216,10 +238,34 @@ function ColetorSaida() {
 
   return (
     <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
-      {!endereco && (
-        <Campo label="Escaneie o endereço">
-          <ScannerInput onScan={handleScanEndereco} placeholder="Código do endereço..." />
+      {!posicoes && !endereco && (
+        <Campo label="Escaneie o código de barras do produto">
+          <ScannerInput onScan={handleScanProduto} placeholder="Código de barras..." />
         </Campo>
+      )}
+
+      {posicoes && !endereco && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-slate-600">
+            Produto encontrado em {posicoes.length} posições — escolha qual dar saída:
+          </p>
+          {posicoes.map((p) => (
+            <button
+              key={p.endereco_id}
+              type="button"
+              onClick={() => selecionarPosicao(p.codigo_endereco)}
+              className="flex w-full items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-left text-sm hover:bg-slate-50"
+            >
+              <span className="font-medium text-slate-800">{p.codigo_endereco}</span>
+              <span className="text-slate-500">
+                qtd {p.quantidade} · lote {p.lote ?? '—'} · val. {p.validade}
+              </span>
+            </button>
+          ))}
+          <button type="button" onClick={reiniciar} className="text-sm text-slate-500 underline">
+            cancelar
+          </button>
+        </div>
       )}
 
       {endereco && endereco.produto && (
@@ -255,7 +301,7 @@ function ColetorSaida() {
         </>
       )}
 
-      {erro && !endereco && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && !endereco && !posicoes && <p className="text-sm text-red-600">{erro}</p>}
     </div>
   );
 }
