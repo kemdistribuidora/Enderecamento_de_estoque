@@ -10,6 +10,7 @@ import {
 } from '../api/client';
 import { EnderecoComStatus } from '../types';
 import ModalEscolherNoMapa from '../components/ModalEscolherNoMapa';
+import EtiquetaModal, { DadosEtiqueta } from '../components/EtiquetaModal';
 
 export default function PosicionamentoPage() {
   const [pendencias, setPendencias] = useState<PendenciaPosicionamento[]>([]);
@@ -156,6 +157,7 @@ function PosicionarModal({
   const [lote, setLote] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
+  const [dadosEtiqueta, setDadosEtiqueta] = useState<DadosEtiqueta | null>(null);
 
   useEffect(() => {
     buscarSugestaoEndereco(pendencia.produto_id)
@@ -172,13 +174,27 @@ function PosicionarModal({
     setSalvando(true);
     setErro('');
     try {
-      await ocuparEndereco(enderecoEscolhido.id, pendencia.produto_id, qtd, validade, lote.trim());
-      onPosicionado();
+      const resultado = await ocuparEndereco(enderecoEscolhido.id, pendencia.produto_id, qtd, validade, lote.trim());
+      setDadosEtiqueta({
+        enderecoCodigo: enderecoEscolhido.codigo,
+        produtoNome: pendencia.nome,
+        produtoCodigo: pendencia.codigo,
+        codigoBarras: pendencia.codigo_barras,
+        pesoCaixa: pendencia.peso_caixa,
+        quantidade: qtd,
+        validade,
+        lote: lote.trim(),
+        criadoEm: resultado.criado_em,
+      });
     } catch (err: any) {
       setErro(err.message ?? 'Erro ao posicionar.');
     } finally {
       setSalvando(false);
     }
+  }
+
+  if (dadosEtiqueta) {
+    return <EtiquetaModal dados={dadosEtiqueta} onClose={onPosicionado} />;
   }
 
   if (carregandoSugestao) {

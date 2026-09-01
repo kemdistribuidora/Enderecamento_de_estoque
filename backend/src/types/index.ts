@@ -100,6 +100,8 @@ export interface PendenciaPosicionamento {
   produto_id: number;
   codigo: string;
   nome: string;
+  codigo_barras: string;
+  peso_caixa: number | null;
   saldo_total: number;
   alocado_total: number;
   pendente: number;

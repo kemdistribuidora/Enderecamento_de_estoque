@@ -68,7 +68,7 @@ produtosRouter.get('/', async (req, res) => {
 produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
-      p.id as produto_id, p.codigo, p.nome,
+      p.id as produto_id, p.codigo, p.nome, p.codigo_barras, p.peso_caixa,
       COALESCE(saldo.total, 0) as saldo_total,
       COALESCE(alocado.total, 0) as alocado_total
     FROM produtos p
@@ -82,6 +82,8 @@ produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
     produto_id: Number(r.produto_id),
     codigo: r.codigo,
     nome: r.nome,
+    codigo_barras: r.codigo_barras,
+    peso_caixa: r.peso_caixa != null ? Number(r.peso_caixa) : null,
     saldo_total: Number(r.saldo_total),
     alocado_total: Number(r.alocado_total),
     pendente: Number(r.saldo_total) - Number(r.alocado_total),
