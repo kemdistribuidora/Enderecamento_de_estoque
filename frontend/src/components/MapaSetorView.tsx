@@ -4,8 +4,8 @@ import { EnderecoComStatus, MapaSetor, PrateleiraComPosicoes } from '../types';
 interface Props {
   mapa: MapaSetor;
   onSelect: (endereco: EnderecoComStatus) => void;
-  termoBusca?: string;
   enderecoDestacadoId?: number | null;
+  idsCandidatos?: Set<number>;
 }
 
 function CelulaPosicao({
@@ -13,11 +13,15 @@ function CelulaPosicao({
   onClick,
   grande,
   destacado,
+  candidato,
+  candidatoPontilhado,
 }: {
   posicao: EnderecoComStatus;
   onClick: (e: EnderecoComStatus) => void;
   grande?: boolean;
   destacado?: boolean;
+  candidato?: boolean;
+  candidatoPontilhado?: boolean;
 }) {
   const ocupado = posicao.status === 'ocupado';
   const statusValidade = posicao.produto?.status_validade;
@@ -28,6 +32,14 @@ function CelulaPosicao({
       : statusValidade === 'proximo'
         ? 'border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200'
         : 'border-blue-300 bg-blue-100 text-blue-800 hover:bg-blue-200';
+
+  const corCandidato = destacado
+    ? 'border-green-400 bg-green-200 text-green-800 ring-2 ring-green-500 hover:bg-green-300'
+    : candidato
+      ? `border-green-400 bg-green-200 text-green-800 hover:bg-green-300 ${candidatoPontilhado ? 'border-dashed' : ''}`
+      : ocupado
+        ? corOcupado
+        : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200';
 
   return (
     <button
@@ -45,7 +57,7 @@ function CelulaPosicao({
       }
       className={`flex aspect-square min-w-0 items-center justify-center rounded-md border font-medium transition-transform hover:z-10 hover:scale-110 ${
         grande ? 'text-base' : 'text-xs'
-      } ${destacado ? 'border-green-400 bg-green-200 text-green-800 ring-2 ring-green-500 hover:bg-green-300' : ocupado ? corOcupado : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+      } ${corCandidato}`}
     >
       {posicao.posicao}
     </button>
@@ -60,6 +72,8 @@ function BlocoPrateleira({
   onExpandir,
   grande,
   idsDestacados,
+  idsCandidatos,
+  candidatoPontilhado,
 }: {
   posicoes: EnderecoComStatus[];
   letraDono: string;
@@ -68,6 +82,8 @@ function BlocoPrateleira({
   onExpandir?: () => void;
   grande?: boolean;
   idsDestacados?: Set<number>;
+  idsCandidatos?: Set<number>;
+  candidatoPontilhado?: boolean;
 }) {
   const andares = Array.from(new Set(posicoes.map((p) => p.andar))).sort((a, b) => b - a);
   const colunas = Math.max(...andares.map((andar) => posicoes.filter((p) => p.andar === andar).length));
@@ -107,6 +123,8 @@ function BlocoPrateleira({
                     onClick={onSelect}
                     grande={grande}
                     destacado={idsDestacados?.has(p.id)}
+                    candidato={idsCandidatos?.has(p.id)}
+                    candidatoPontilhado={candidatoPontilhado}
                   />
                 ))}
             </div>
@@ -122,11 +140,15 @@ function ModalPrateleiraExpandida({
   onClose,
   onSelect,
   idsDestacados,
+  idsCandidatos,
+  candidatoPontilhado,
 }: {
   prateleira: PrateleiraComPosicoes;
   onClose: () => void;
   onSelect: (e: EnderecoComStatus) => void;
   idsDestacados?: Set<number>;
+  idsCandidatos?: Set<number>;
+  candidatoPontilhado?: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -152,6 +174,8 @@ function ModalPrateleiraExpandida({
               onSelect={onSelect}
               grande
               idsDestacados={idsDestacados}
+              idsCandidatos={idsCandidatos}
+              candidatoPontilhado={candidatoPontilhado}
             />
           </div>
         </div>
@@ -168,20 +192,13 @@ function FaixaCorredor({ letra }: { letra: string }) {
   );
 }
 
-export default function MapaSetorView({ mapa, onSelect, termoBusca, enderecoDestacadoId }: Props) {
+export default function MapaSetorView({ mapa, onSelect, enderecoDestacadoId, idsCandidatos }: Props) {
   const todasPosicoes = mapa.prateleiras.flatMap((p) => p.posicoes);
   const ocupados = todasPosicoes.filter((p) => p.status === 'ocupado').length;
   const [prateleiraExpandida, setPrateleiraExpandida] = useState<PrateleiraComPosicoes | null>(null);
 
-  const termo = termoBusca?.trim().toLowerCase();
-  const idsDestacados = new Set(
-    termo
-      ? todasPosicoes
-          .filter((p) => p.produto && (p.produto.nome.toLowerCase().includes(termo) || p.produto.codigo.toLowerCase().includes(termo)))
-          .map((p) => p.id)
-      : []
-  );
-  if (enderecoDestacadoId != null) idsDestacados.add(enderecoDestacadoId);
+  const idsDestacados = new Set<number>(enderecoDestacadoId != null ? [enderecoDestacadoId] : []);
+  const candidatoPontilhado = enderecoDestacadoId != null;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -201,6 +218,8 @@ export default function MapaSetorView({ mapa, onSelect, termoBusca, enderecoDest
               onSelect={onSelect}
               onExpandir={() => setPrateleiraExpandida(prateleira)}
               idsDestacados={idsDestacados}
+              idsCandidatos={idsCandidatos}
+              candidatoPontilhado={candidatoPontilhado}
             />
             {mapa.corredores
               .filter((c) => c.aposPrateleiraOrdem === prateleira.ordem)
@@ -216,6 +235,8 @@ export default function MapaSetorView({ mapa, onSelect, termoBusca, enderecoDest
           onClose={() => setPrateleiraExpandida(null)}
           onSelect={onSelect}
           idsDestacados={idsDestacados}
+          idsCandidatos={idsCandidatos}
+          candidatoPontilhado={candidatoPontilhado}
         />
       )}
     </div>

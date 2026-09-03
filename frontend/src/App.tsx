@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import MapaPage from './pages/MapaPage';
-import BuscaPage from './pages/BuscaPage';
 import CadastroPage from './pages/CadastroPage';
 import ImportacaoPage from './pages/ImportacaoPage';
 import PosicionamentoPage from './pages/PosicionamentoPage';
@@ -43,7 +42,6 @@ export default function App() {
           <Routes>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/" element={<MapaPage />} />
-            <Route path="/busca" element={<BuscaPage />} />
             <Route path="/cadastro" element={<CadastroPage />} />
             <Route path="/importacao" element={<ImportacaoPage />} />
             <Route path="/posicionamento" element={<PosicionamentoPage />} />

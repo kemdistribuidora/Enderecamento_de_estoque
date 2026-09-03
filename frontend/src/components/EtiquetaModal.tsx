@@ -38,8 +38,8 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
     try {
       JsBarcode(svgRef.current, valor, {
         format: 'CODE128',
-        width: 4.2,
-        height: 140,
+        width: 2,
+        height: 60,
         displayValue: false,
         margin: 0,
       });
@@ -101,14 +101,14 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
                   <div className="etq-data-valor text-6xl font-bold">{formatarData(dados.validade)}</div>
                 </div>
 
+                <div className="text-center leading-tight">
+                  <div className="etq-data-label text-xs font-semibold text-slate-500">Produto</div>
+                  <div className="etq-data-valor text-3xl font-bold leading-snug">{`${dados.produtoNome} (${dados.produtoCodigo})`}</div>
+                </div>
+
                 <svg ref={svgRef} className="etq-barcode w-full" />
                 <div className="etq-num-barras text-center text-xl font-bold tracking-wider">
                   {dados.codigoBarras?.trim() || dados.produtoCodigo}
-                </div>
-
-                <div className="text-center leading-tight">
-                  <div className="etq-data-label text-xs font-semibold text-slate-500">Produto</div>
-                  <div className="etq-data-valor text-3xl font-bold">{`${dados.produtoNome} (${dados.produtoCodigo})`}</div>
                 </div>
               </div>
             </div>

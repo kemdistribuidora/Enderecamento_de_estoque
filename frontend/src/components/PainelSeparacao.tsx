@@ -16,6 +16,7 @@ interface Props {
   lote: string | null;
   onFechar: () => void;
   onConcluido: () => void;
+  exibirMapa?: boolean;
 }
 
 export default function PainelSeparacao({
@@ -30,6 +31,7 @@ export default function PainelSeparacao({
   lote,
   onFechar,
   onConcluido,
+  exibirMapa = true,
 }: Props) {
   const [mapa, setMapa] = useState<MapaSetor | null>(null);
   const [bipado, setBipado] = useState(false);
@@ -37,8 +39,9 @@ export default function PainelSeparacao({
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
+    if (!exibirMapa) return;
     buscarMapaSetor(setorId).then(setMapa);
-  }, [setorId]);
+  }, [setorId, exibirMapa]);
 
   async function handleBipar(codigo: string) {
     setErro('');
@@ -83,11 +86,12 @@ export default function PainelSeparacao({
         </button>
       </div>
 
-      {mapa ? (
-        <MapaSetorView mapa={mapa} onSelect={() => {}} enderecoDestacadoId={enderecoId} />
-      ) : (
-        <p className="text-sm text-slate-400">Carregando mapa...</p>
-      )}
+      {exibirMapa &&
+        (mapa ? (
+          <MapaSetorView mapa={mapa} onSelect={() => {}} enderecoDestacadoId={enderecoId} />
+        ) : (
+          <p className="text-sm text-slate-400">Carregando mapa...</p>
+        ))}
 
       <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
         {!bipado ? (
