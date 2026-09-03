@@ -33,13 +33,10 @@ export default function PosicionamentoPage() {
   }, []);
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="max-w-5xl space-y-4">
       <div>
         <h1 className="text-lg font-semibold text-slate-800">Posicionar estoque</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Produtos com saldo importado do Winthor ainda maior que o alocado fisicamente. Posicione todos agora ou só
-          alguns — o que ficar de fora continua aqui pra depois.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Saldo importado do Winthor ainda pendente de posição física.</p>
       </div>
 
       {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
@@ -63,7 +60,7 @@ export default function PosicionamentoPage() {
             <tbody className="divide-y divide-slate-100">
               {pendencias.map((p) => (
                 <tr key={p.produto_id}>
-                  <td className="px-4 py-2">
+                  <td className="whitespace-nowrap px-4 py-2">
                     <span className="font-medium text-slate-800">{p.nome}</span>{' '}
                     <span className="text-slate-400">— {p.codigo}</span>
                   </td>
@@ -88,10 +85,7 @@ export default function PosicionamentoPage() {
 
       <div className="border-t border-slate-200 pt-4">
         <h2 className="text-base font-semibold text-slate-800">Possível saída não registrada</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Estoque físico maior que o saldo do Winthor. O Winthor manda — provavelmente uma saída aconteceu e ninguém
-          liberou a posição aqui no sistema ainda. Só alerta, não mexe em nada sozinho.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Estoque físico maior que o saldo do Winthor. Apenas alerta.</p>
 
         {!carregando && sobras.length === 0 && (
           <p className="mt-3 rounded-md bg-slate-50 p-4 text-sm text-slate-500">Nenhuma divergência desse tipo.</p>
@@ -111,7 +105,7 @@ export default function PosicionamentoPage() {
               <tbody className="divide-y divide-slate-100">
                 {sobras.map((s) => (
                   <tr key={s.produto_id}>
-                    <td className="px-4 py-2">
+                    <td className="whitespace-nowrap px-4 py-2">
                       <span className="font-medium text-slate-800">{s.nome}</span>{' '}
                       <span className="text-slate-400">— {s.codigo}</span>
                     </td>

@@ -12,17 +12,14 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-800">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-500">Indicadores consolidados de estoque e ocupação do depósito.</p>
-      </div>
+    <div className="max-w-6xl space-y-6">
+      <h1 className="text-lg font-semibold text-slate-800">Dashboard</h1>
 
       {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
 
       {kpis && (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:grid-cols-4">
             <Tile
               titulo="Acurácia de estoque"
               valor={
@@ -110,9 +107,11 @@ function Tile({
   };
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <p className="text-xs font-medium uppercase text-slate-500">{titulo}</p>
+      <p className="whitespace-nowrap text-xs font-medium uppercase text-slate-500">{titulo}</p>
       <p className={`mt-1 text-2xl font-semibold ${cores[cor]}`}>{valor}</p>
-      <p className="mt-1 text-xs text-slate-400">{legenda}</p>
+      <p className="mt-1 truncate text-xs text-slate-400" title={legenda}>
+        {legenda}
+      </p>
     </div>
   );
 }

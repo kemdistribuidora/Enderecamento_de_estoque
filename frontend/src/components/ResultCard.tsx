@@ -42,7 +42,7 @@ export default function ResultCard({ produto, onSeparar }: Props) {
                     ? ROTULO_STATUS_VALIDADE[p.status_validade]
                     : 'Ver no mapa e separar'
                 }
-                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium hover:opacity-80 ${
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-1 text-xs font-medium hover:opacity-80 ${
                   idx === 0
                     ? 'border-amber-300 bg-amber-50 text-amber-800'
                     : 'border-blue-200 bg-blue-50 text-blue-800'

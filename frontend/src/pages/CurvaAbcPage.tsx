@@ -14,13 +14,10 @@ export default function CurvaAbcPage() {
   const semGiro = curva.every((i) => i.total_saida === 0);
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="max-w-5xl space-y-4">
       <div>
         <h1 className="text-lg font-semibold text-slate-800">Curva ABC (giro de estoque)</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Produtos ordenados por saída total. Classe A = até 80% do volume acumulado, B = até 95%, C = resto. Baseado
-          no histórico de saída registrado no sistema — quanto mais movimentação passar por aqui, mais precisa fica.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Ordenado por saída total. A = 80% do volume, B = 95%, C = resto.</p>
       </div>
 
       {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
@@ -48,13 +45,13 @@ export default function CurvaAbcPage() {
               {curva.map((item, i) => (
                 <tr key={item.produto_id}>
                   <td className="px-4 py-2 text-slate-400">{i + 1}</td>
-                  <td className="px-4 py-2">
+                  <td className="whitespace-nowrap px-4 py-2">
                     <span className="font-medium text-slate-800">{item.nome}</span>{' '}
                     <span className="text-slate-400">— {item.codigo}</span>
                   </td>
                   <td className="px-4 py-2 text-right">{item.total_saida}</td>
                   <td className="px-4 py-2 text-right">{item.percentual_acumulado.toFixed(1)}%</td>
-                  <td className="px-4 py-2">
+                  <td className="whitespace-nowrap px-4 py-2">
                     <ClasseBadge classe={item.classe} />
                   </td>
                 </tr>

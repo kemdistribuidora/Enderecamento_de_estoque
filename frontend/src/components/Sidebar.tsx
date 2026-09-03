@@ -87,7 +87,7 @@ const groups: NavGroup[] = [
 ];
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+  `block whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
     isActive ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
   }`;
 
@@ -111,8 +111,8 @@ export default function Sidebar({ collapsed, onExpand }: SidebarProps) {
 
   return (
     <aside
-      className={`shrink-0 border-r border-slate-800 bg-slate-900 transition-all ${
-        collapsed ? 'w-14' : 'w-60'
+      className={`h-full shrink-0 overflow-y-auto border-r border-slate-800 bg-slate-900 transition-all ${
+        collapsed ? 'w-14' : 'w-56'
       }`}
     >
       <nav className="flex flex-col gap-1 px-2 py-3">
@@ -132,10 +132,10 @@ export default function Sidebar({ collapsed, onExpand }: SidebarProps) {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.label)}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-slate-200"
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-200"
                 >
                   {group.icon}
-                  <span className="flex-1 text-left">{group.label}</span>
+                  <span className="flex-1 whitespace-nowrap text-left">{group.label}</span>
                   <span>{openGroups[group.label] ? '−' : '+'}</span>
                 </button>
                 {openGroups[group.label] && (

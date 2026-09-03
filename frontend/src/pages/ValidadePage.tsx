@@ -19,12 +19,10 @@ export default function ValidadePage() {
   }, []);
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="max-w-5xl space-y-4">
       <div>
         <h1 className="text-lg font-semibold text-slate-800">Controle de validade</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Posições ocupadas com validade vencida ou próxima do vencimento, mais urgente primeiro.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Posições vencidas ou próximas do vencimento, mais urgente primeiro.</p>
       </div>
 
       {separando && (
@@ -71,24 +69,24 @@ export default function ValidadePage() {
             <tbody className="divide-y divide-slate-100">
               {posicoes.map((p) => (
                 <tr key={p.endereco_id}>
-                  <td className="px-4 py-2">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${BADGE_STATUS_VALIDADE[p.status_validade]}`}>
+                  <td className="whitespace-nowrap px-4 py-2">
+                    <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${BADGE_STATUS_VALIDADE[p.status_validade]}`}>
                       {ROTULO_STATUS_VALIDADE[p.status_validade]}
                     </span>
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="whitespace-nowrap px-4 py-2">
                     <span className="font-medium text-slate-800">{p.produto_nome}</span>{' '}
                     <span className="text-slate-400">— {p.produto_codigo}</span>
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{p.endereco_codigo}</td>
-                  <td className="px-4 py-2 text-slate-600">{p.lote ?? '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-slate-600">{p.endereco_codigo}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-slate-600">{p.lote ?? '—'}</td>
                   <td className="px-4 py-2 text-right">{p.quantidade}</td>
-                  <td className="px-4 py-2 text-slate-600">{p.validade}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-slate-600">{p.validade}</td>
                   <td className="px-4 py-2 text-right">
                     <button
                       type="button"
                       onClick={() => setSeparando(p)}
-                      className="rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                      className="whitespace-nowrap rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
                     >
                       Separar
                     </button>

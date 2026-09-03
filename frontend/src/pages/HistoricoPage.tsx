@@ -32,13 +32,10 @@ export default function HistoricoPage() {
   }
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="max-w-6xl space-y-4">
       <div>
         <h1 className="text-lg font-semibold text-slate-800">Histórico de movimentação</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Entradas e saídas registradas. Saída recém-feita fica em <em>standby</em> — dá pra desfazer enquanto ninguém
-          ocupar a posição de novo.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Saída recente fica em standby e pode ser desfeita.</p>
       </div>
 
       {erro && <p className="text-sm text-red-600">{erro}</p>}
@@ -66,20 +63,22 @@ export default function HistoricoPage() {
             <tbody className="divide-y divide-slate-100">
               {movimentacoes.map((m) => (
                 <tr key={m.id}>
-                  <td className="px-4 py-2 text-slate-500">{new Date(m.criado_em).toLocaleString('pt-BR')}</td>
-                  <td className="px-4 py-2">
+                  <td className="whitespace-nowrap px-4 py-2 text-slate-500">
+                    {new Date(m.criado_em).toLocaleString('pt-BR')}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2">
                     <span className={m.tipo === 'entrada' ? 'text-green-700' : 'text-slate-700'}>
                       {m.tipo === 'entrada' ? 'Entrada' : 'Saída'}
                     </span>
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="whitespace-nowrap px-4 py-2">
                     <span className="font-medium text-slate-800">{m.produto_nome}</span>{' '}
                     <span className="text-slate-400">— {m.produto_codigo}</span>
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{m.endereco_codigo}</td>
-                  <td className="px-4 py-2 text-slate-600">{m.lote ?? '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-slate-600">{m.endereco_codigo}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-slate-600">{m.lote ?? '—'}</td>
                   <td className="px-4 py-2 text-right">{m.quantidade}</td>
-                  <td className="px-4 py-2">
+                  <td className="whitespace-nowrap px-4 py-2">
                     <StatusBadge status={m.status} />
                   </td>
                   <td className="px-4 py-2 text-right">
@@ -115,5 +114,9 @@ function StatusBadge({ status }: { status: Movimentacao['status'] }) {
     standby: 'Standby',
     revertida: 'Revertida',
   };
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${estilos[status]}`}>{rotulos[status]}</span>;
+  return (
+    <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${estilos[status]}`}>
+      {rotulos[status]}
+    </span>
+  );
 }

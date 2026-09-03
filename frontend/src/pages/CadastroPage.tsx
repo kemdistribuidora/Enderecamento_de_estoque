@@ -153,8 +153,8 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="max-w-lg">
-      <h1 className="mb-4 text-lg font-semibold text-slate-800">Cadastro de Produto / Entrada em Estoque</h1>
+    <div className="max-w-xl">
+      <h1 className="mb-4 text-lg font-semibold text-slate-800">Cadastro de produto / entrada em estoque</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
         <fieldset className="space-y-3">

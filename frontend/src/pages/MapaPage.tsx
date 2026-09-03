@@ -152,47 +152,35 @@ export default function MapaPage() {
         />
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {setores.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => {
-              setSetorAtivoId(s.id);
-              setSearchParams({});
-            }}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              setorAtivoId === s.id
-                ? 'bg-slate-900 text-white'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            {s.nome}
-          </button>
-        ))}
-      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div className="flex flex-wrap gap-1.5">
+          {setores.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => {
+                setSetorAtivoId(s.id);
+                setSearchParams({});
+              }}
+              className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                setorAtivoId === s.id
+                  ? 'bg-slate-900 text-white'
+                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {s.nome}
+            </button>
+          ))}
+        </div>
 
-      <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-        <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm border border-slate-200 bg-slate-100" /> livre
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm border border-blue-300 bg-blue-100" /> ocupado
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm border border-amber-300 bg-amber-100" /> vence em breve
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm border border-red-300 bg-red-100" /> emergência
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm border border-dashed border-amber-300 bg-amber-50" /> corredor (passagem)
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm border border-dashed border-green-400 bg-green-200" /> posição do produto buscado
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm border border-green-400 bg-green-200" /> selecionado
-        </span>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+          <Legenda cor="border-slate-200 bg-slate-100" texto="Livre" />
+          <Legenda cor="border-blue-300 bg-blue-100" texto="Ocupado" />
+          <Legenda cor="border-amber-300 bg-amber-100" texto="Vence em breve" />
+          <Legenda cor="border-red-300 bg-red-100" texto="Emergência" />
+          <Legenda cor="border-dashed border-amber-300 bg-amber-50" texto="Corredor" />
+          <Legenda cor="border-dashed border-green-400 bg-green-200" texto="Produto buscado" />
+          <Legenda cor="border-green-400 bg-green-200" texto="Selecionado" />
+        </div>
       </div>
 
       {carregando || !mapa ? (
@@ -203,5 +191,13 @@ export default function MapaPage() {
 
       <ProdutoModal endereco={selecionado} onClose={() => setSelecionado(null)} onLiberado={recarregarMapa} />
     </div>
+  );
+}
+
+function Legenda({ cor, texto }: { cor: string; texto: string }) {
+  return (
+    <span className="flex items-center gap-1 whitespace-nowrap">
+      <span className={`h-3 w-3 shrink-0 rounded-sm border ${cor}`} /> {texto}
+    </span>
   );
 }

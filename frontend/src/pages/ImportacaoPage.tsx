@@ -57,18 +57,13 @@ export default function ImportacaoPage() {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-lg font-semibold text-slate-800">Importar dados do Winthor</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Anexe os arquivos exportados pela rotina D860. Não precisa abrir os arquivos no Excel — só selecionar e
-          importar.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Arquivos exportados pela rotina D860, sem precisar abrir no Excel.</p>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="font-medium text-slate-800">Produtos + saldo</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Selecione o arquivo de produtos (colunas <code>codigo;nome;codigo_barras</code>) e, se tiver, o arquivo de
-          saldo (colunas <code>filial;codigo;saldo</code>). O saldo é opcional, mas precisa dos produtos já
-          importados nesse mesmo passo ou anteriormente.
+          Produtos: <code>codigo;nome;codigo_barras</code>. Saldo (opcional): <code>filial;codigo;saldo</code>.
         </p>
 
         <div className="mt-3 space-y-3">
