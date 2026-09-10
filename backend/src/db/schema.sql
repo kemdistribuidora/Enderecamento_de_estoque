@@ -3,7 +3,11 @@ CREATE TABLE IF NOT EXISTS produtos (
   codigo TEXT NOT NULL UNIQUE,
   nome TEXT NOT NULL,
   codigo_barras TEXT NOT NULL,
-  peso_caixa REAL
+  peso_caixa REAL,
+  -- unidades por caixa fechada, vindo do Winthor; NULL = produto sem embalagem em
+  -- caixa conhecida. Saldo (estoque_erp_saldo.saldo / estoque_posicoes.quantidade)
+  -- SEMPRE fica em UN -- qt_por_cx e so pra converter em CX na exibicao.
+  qt_por_cx INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS setores (

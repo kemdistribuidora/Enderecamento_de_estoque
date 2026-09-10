@@ -20,7 +20,10 @@ export interface ResultadoImportacao {
   produtosComSaldo: ProdutoComSaldoImportado[];
 }
 
-// produtos: sem cabecalho, separador ';', colunas: codigo;nome;codigo_barras
+// produtos: sem cabecalho, separador ';', colunas: codigo;nome;codigo_barras[;qt_por_cx]
+// qt_por_cx e opcional (4o campo) -- se vier vazio ou a linha so tiver 3 campos,
+// mantem o valor ja gravado (nao apaga um qt_por_cx existente por causa de um
+// arquivo antigo sem essa coluna).
 export async function importarProdutosCsv(conteudo: string): Promise<ResultadoImportacao> {
   const linhas = conteudo.split(/\r?\n/).filter((l) => l.trim().length > 0);
   const avisos: string[] = [];
@@ -28,24 +31,35 @@ export async function importarProdutosCsv(conteudo: string): Promise<ResultadoIm
 
   for (const [i, linha] of linhas.entries()) {
     const campos = linha.split(';').map((c) => c.trim());
-    while (campos.length > 3 && campos[campos.length - 1] === '') campos.pop();
-    if (campos.length !== 3) {
-      avisos.push(`Linha ${i + 1} ignorada (esperado 3 campos, veio ${campos.length}): ${linha}`);
+    if (campos.length !== 3 && campos.length !== 4) {
+      avisos.push(`Linha ${i + 1} ignorada (esperado 3 ou 4 campos, veio ${campos.length}): ${linha}`);
       continue;
     }
 
-    const [codigo, nome, codigo_barras] = campos;
+    const [codigo, nome, codigo_barras, qtPorCxStr] = campos;
     if (!codigo || !nome) {
       avisos.push(`Linha ${i + 1} ignorada (codigo ou nome vazio): ${linha}`);
       continue;
     }
 
+    let qtPorCx: number | null = null;
+    if (qtPorCxStr) {
+      qtPorCx = Number(qtPorCxStr);
+      if (Number.isNaN(qtPorCx)) {
+        avisos.push(`Linha ${i + 1} ignorada (qt_por_cx invalido): ${linha}`);
+        continue;
+      }
+    }
+
     await db.execute({
       sql: `
-        INSERT INTO produtos (codigo, nome, codigo_barras) VALUES (?, ?, ?)
-        ON CONFLICT(codigo) DO UPDATE SET nome = excluded.nome, codigo_barras = excluded.codigo_barras
+        INSERT INTO produtos (codigo, nome, codigo_barras, qt_por_cx) VALUES (?, ?, ?, ?)
+        ON CONFLICT(codigo) DO UPDATE SET
+          nome = excluded.nome,
+          codigo_barras = excluded.codigo_barras,
+          qt_por_cx = COALESCE(excluded.qt_por_cx, produtos.qt_por_cx)
       `,
-      args: [codigo, nome, codigo_barras ?? ''],
+      args: [codigo, nome, codigo_barras ?? '', qtPorCx],
     });
     ok++;
   }

@@ -24,8 +24,9 @@ function juntarResultados(a: ResultadoImportacao, b: ResultadoImportacao): Resul
 }
 
 // Query unica no Winthor faz LEFT JOIN produto+saldo: 1 linha por produto com
-// codigo;nome;codigo_barras;filial;codigo;saldo (ultimos 3 vazios se nao tem saldo
-// na filial 1). Separa aqui pros dois formatos que os endpoints ja esperam.
+// codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo (ultimos 3 vazios se nao
+// tem saldo na filial 1; qt_por_cx vazio se produto nao vende em caixa fechada).
+// Separa aqui pros dois formatos que os endpoints ja esperam.
 function separarCsvMisto(conteudo: string): { produtos: string; saldo: string } {
   const linhasProdutos: string[] = [];
   const linhasSaldo: string[] = [];
@@ -34,8 +35,8 @@ function separarCsvMisto(conteudo: string): { produtos: string; saldo: string } 
     const linha = linhaCrua.trim();
     if (!linha) continue;
 
-    const [codigo, nome, codigoBarras, filial, , saldo] = linha.split(';').map((c) => c.trim());
-    linhasProdutos.push(`${codigo};${nome};${codigoBarras}`);
+    const [codigo, nome, codigoBarras, qtPorCx, filial, , saldo] = linha.split(';').map((c) => c.trim());
+    linhasProdutos.push(`${codigo};${nome};${codigoBarras};${qtPorCx}`);
     if (filial && saldo) linhasSaldo.push(`${filial};${codigo};${saldo}`);
   }
 
@@ -81,8 +82,8 @@ export default function ImportacaoPage() {
       <div className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="font-medium text-slate-800">Produtos + saldo</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Arquivo unico: <code>codigo;nome;codigo_barras;filial;codigo;saldo</code> (ultimos 3 vazios se produto nao tem
-          saldo).
+          Arquivo unico: <code>codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo</code> (qt_por_cx e os ultimos 3
+          vazios se nao se aplicar).
         </p>
 
         <div className="mt-3 space-y-3">
