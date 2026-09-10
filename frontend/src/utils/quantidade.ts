@@ -8,5 +8,5 @@ export function formatarQtdCx(unidades: number, qtPorCx: number | null): string 
   const avulso = unidades % qtPorCx;
 
   if (avulso === 0) return `${caixas} CX`;
-  return `${caixas} CX + ${avulso} UN`;
+  return `${caixas} CX (${avulso} UN)`;
 }
