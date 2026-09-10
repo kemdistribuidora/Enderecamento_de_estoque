@@ -27,13 +27,14 @@ export async function importarProdutosCsv(conteudo: string): Promise<ResultadoIm
   let ok = 0;
 
   for (const [i, linha] of linhas.entries()) {
-    const campos = linha.split(';');
+    const campos = linha.split(';').map((c) => c.trim());
+    while (campos.length > 3 && campos[campos.length - 1] === '') campos.pop();
     if (campos.length !== 3) {
       avisos.push(`Linha ${i + 1} ignorada (esperado 3 campos, veio ${campos.length}): ${linha}`);
       continue;
     }
 
-    const [codigo, nome, codigo_barras] = campos.map((c) => c.trim());
+    const [codigo, nome, codigo_barras] = campos;
     if (!codigo || !nome) {
       avisos.push(`Linha ${i + 1} ignorada (codigo ou nome vazio): ${linha}`);
       continue;
@@ -63,13 +64,14 @@ export async function importarSaldoCsv(conteudo: string): Promise<ResultadoImpor
   let ok = 0;
 
   for (const [i, linha] of linhas.entries()) {
-    const campos = linha.split(';');
+    const campos = linha.split(';').map((c) => c.trim());
+    while (campos.length > 3 && campos[campos.length - 1] === '') campos.pop();
     if (campos.length !== 3) {
       avisos.push(`Linha ${i + 1} ignorada (esperado 3 campos, veio ${campos.length}): ${linha}`);
       continue;
     }
 
-    const [filial, codigo, saldoStr] = campos.map((c) => c.trim());
+    const [filial, codigo, saldoStr] = campos;
     const saldo = Number(saldoStr);
     if (!filial || !codigo || Number.isNaN(saldo)) {
       avisos.push(`Linha ${i + 1} ignorada (campo invalido): ${linha}`);

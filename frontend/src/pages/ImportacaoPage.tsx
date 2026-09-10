@@ -23,25 +23,43 @@ function juntarResultados(a: ResultadoImportacao, b: ResultadoImportacao): Resul
   };
 }
 
+// Query unica no Winthor faz LEFT JOIN produto+saldo: 1 linha por produto com
+// codigo;nome;codigo_barras;filial;codigo;saldo (ultimos 3 vazios se nao tem saldo
+// na filial 1). Separa aqui pros dois formatos que os endpoints ja esperam.
+function separarCsvMisto(conteudo: string): { produtos: string; saldo: string } {
+  const linhasProdutos: string[] = [];
+  const linhasSaldo: string[] = [];
+
+  for (const linhaCrua of conteudo.split(/\r?\n/)) {
+    const linha = linhaCrua.trim();
+    if (!linha) continue;
+
+    const [codigo, nome, codigoBarras, filial, , saldo] = linha.split(';').map((c) => c.trim());
+    linhasProdutos.push(`${codigo};${nome};${codigoBarras}`);
+    if (filial && saldo) linhasSaldo.push(`${filial};${codigo};${saldo}`);
+  }
+
+  return { produtos: linhasProdutos.join('\n'), saldo: linhasSaldo.join('\n') };
+}
+
 export default function ImportacaoPage() {
-  const [arquivoProdutos, setArquivoProdutos] = useState<File | null>(null);
-  const [arquivoSaldo, setArquivoSaldo] = useState<File | null>(null);
+  const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState('');
   const [resultado, setResultado] = useState<ResultadoImportacao | null>(null);
 
   async function handleImportar() {
-    if (!arquivoProdutos) return;
+    if (!arquivo) return;
     setEnviando(true);
     setErro('');
     setResultado(null);
     try {
-      const conteudoProdutos = await lerArquivoTexto(arquivoProdutos);
-      let combinado = await importarProdutosCsv(conteudoProdutos);
+      const conteudo = await lerArquivoTexto(arquivo);
+      const { produtos, saldo } = separarCsvMisto(conteudo);
 
-      if (arquivoSaldo) {
-        const conteudoSaldo = await lerArquivoTexto(arquivoSaldo);
-        const resultadoSaldo = await importarSaldoCsv(conteudoSaldo);
+      let combinado = await importarProdutosCsv(produtos);
+      if (saldo) {
+        const resultadoSaldo = await importarSaldoCsv(saldo);
         combinado = juntarResultados(combinado, resultadoSaldo);
       }
 
@@ -63,18 +81,18 @@ export default function ImportacaoPage() {
       <div className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="font-medium text-slate-800">Produtos + saldo</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Produtos: <code>codigo;nome;codigo_barras</code>. Saldo (opcional): <code>filial;codigo;saldo</code>.
+          Arquivo unico: <code>codigo;nome;codigo_barras;filial;codigo;saldo</code> (ultimos 3 vazios se produto nao tem
+          saldo).
         </p>
 
         <div className="mt-3 space-y-3">
-          <CampoArquivo label="Arquivo de produtos (obrigatório)" onSelecionar={setArquivoProdutos} arquivo={arquivoProdutos} />
-          <CampoArquivo label="Arquivo de saldo (opcional)" onSelecionar={setArquivoSaldo} arquivo={arquivoSaldo} />
+          <CampoArquivo label="Arquivo Winthor" onSelecionar={setArquivo} arquivo={arquivo} />
         </div>
 
         <button
           type="button"
           onClick={handleImportar}
-          disabled={!arquivoProdutos || enviando}
+          disabled={!arquivo || enviando}
           className="mt-3 rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {enviando ? 'Importando...' : 'Importar'}
