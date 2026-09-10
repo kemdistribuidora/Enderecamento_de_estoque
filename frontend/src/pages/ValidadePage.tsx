@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PosicaoAVencer, buscarPosicoesAVencer } from '../api/client';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
+import { formatarQtdCx } from '../utils/quantidade';
 import PainelSeparacao from '../components/PainelSeparacao';
 
 export default function ValidadePage() {
@@ -34,6 +35,7 @@ export default function ValidadePage() {
           codigoEndereco={separando.endereco_codigo}
           setorId={separando.setor_id}
           quantidade={separando.quantidade}
+          qtPorCx={separando.produto_qt_por_cx}
           validade={separando.validade}
           lote={separando.lote}
           onFechar={() => setSeparando(null)}
@@ -80,7 +82,7 @@ export default function ValidadePage() {
                   </td>
                   <td className="whitespace-nowrap px-4 py-2 text-slate-600">{p.endereco_codigo}</td>
                   <td className="whitespace-nowrap px-4 py-2 text-slate-600">{p.lote ?? '—'}</td>
-                  <td className="px-4 py-2 text-right">{p.quantidade}</td>
+                  <td className="px-4 py-2 text-right">{formatarQtdCx(p.quantidade, p.produto_qt_por_cx)}</td>
                   <td className="whitespace-nowrap px-4 py-2 text-slate-600">{p.validade}</td>
                   <td className="px-4 py-2 text-right">
                     <button

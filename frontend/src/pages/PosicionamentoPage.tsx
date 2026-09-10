@@ -9,6 +9,7 @@ import {
   ocuparEndereco,
 } from '../api/client';
 import { EnderecoComStatus } from '../types';
+import { formatarQtdCx } from '../utils/quantidade';
 import ModalEscolherNoMapa from '../components/ModalEscolherNoMapa';
 import EtiquetaModal, { DadosEtiqueta } from '../components/EtiquetaModal';
 
@@ -64,9 +65,11 @@ export default function PosicionamentoPage() {
                     <span className="font-medium text-slate-800">{p.nome}</span>{' '}
                     <span className="text-slate-400">— {p.codigo}</span>
                   </td>
-                  <td className="px-4 py-2 text-right">{p.saldo_total}</td>
-                  <td className="px-4 py-2 text-right">{p.alocado_total}</td>
-                  <td className="px-4 py-2 text-right font-medium text-amber-700">{p.pendente}</td>
+                  <td className="px-4 py-2 text-right">{formatarQtdCx(p.saldo_total, p.qt_por_cx)}</td>
+                  <td className="px-4 py-2 text-right">{formatarQtdCx(p.alocado_total, p.qt_por_cx)}</td>
+                  <td className="px-4 py-2 text-right font-medium text-amber-700">
+                    {formatarQtdCx(p.pendente, p.qt_por_cx)}
+                  </td>
                   <td className="px-4 py-2 text-right">
                     <button
                       type="button"
@@ -109,9 +112,11 @@ export default function PosicionamentoPage() {
                       <span className="font-medium text-slate-800">{s.nome}</span>{' '}
                       <span className="text-slate-400">— {s.codigo}</span>
                     </td>
-                    <td className="px-4 py-2 text-right">{s.saldo_total}</td>
-                    <td className="px-4 py-2 text-right">{s.alocado_total}</td>
-                    <td className="px-4 py-2 text-right font-medium text-red-700">{s.excesso}</td>
+                    <td className="px-4 py-2 text-right">{formatarQtdCx(s.saldo_total, s.qt_por_cx)}</td>
+                    <td className="px-4 py-2 text-right">{formatarQtdCx(s.alocado_total, s.qt_por_cx)}</td>
+                    <td className="px-4 py-2 text-right font-medium text-red-700">
+                      {formatarQtdCx(s.excesso, s.qt_por_cx)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -175,6 +180,7 @@ function PosicionarModal({
         produtoCodigo: pendencia.codigo,
         codigoBarras: pendencia.codigo_barras,
         pesoCaixa: pendencia.peso_caixa,
+        qtPorCx: pendencia.qt_por_cx,
         quantidade: qtd,
         validade,
         lote: lote.trim(),
@@ -222,7 +228,9 @@ function PosicionarModal({
 
         <div className="mt-3 space-y-3">
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-slate-600">Quantidade (pendente: {pendencia.pendente})</span>
+            <span className="mb-1 block font-medium text-slate-600">
+              Quantidade em UN (pendente: {pendencia.pendente} = {formatarQtdCx(pendencia.pendente, pendencia.qt_por_cx)})
+            </span>
             <input
               type="number"
               min={1}

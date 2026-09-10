@@ -8,18 +8,19 @@ export const produtosRouter = Router();
 
 // POST /api/produtos -> cadastra produto novo (dados mestre, sem posicao/estoque ainda)
 produtosRouter.post('/', async (req, res) => {
-  const { codigo, nome, codigo_barras, peso_caixa } = req.body ?? {};
+  const { codigo, nome, codigo_barras, peso_caixa, qt_por_cx } = req.body ?? {};
 
   if (!codigo || !nome || !codigo_barras) {
     return res.status(400).json({ erro: 'codigo, nome e codigo_barras sao obrigatorios' });
   }
 
   const pesoCaixa = peso_caixa != null && peso_caixa !== '' ? Number(peso_caixa) : null;
+  const qtPorCx = qt_por_cx != null && qt_por_cx !== '' ? Number(qt_por_cx) : null;
 
   try {
     const info = await db.execute({
-      sql: `INSERT INTO produtos (codigo, nome, codigo_barras, peso_caixa) VALUES (?, ?, ?, ?)`,
-      args: [codigo, nome, codigo_barras, pesoCaixa],
+      sql: `INSERT INTO produtos (codigo, nome, codigo_barras, peso_caixa, qt_por_cx) VALUES (?, ?, ?, ?, ?)`,
+      args: [codigo, nome, codigo_barras, pesoCaixa, qtPorCx],
     });
 
     const produto: Produto = {
@@ -28,6 +29,7 @@ produtosRouter.post('/', async (req, res) => {
       nome,
       codigo_barras,
       peso_caixa: pesoCaixa,
+      qt_por_cx: qtPorCx,
     };
     res.status(201).json(produto);
   } catch (e: any) {
@@ -68,7 +70,7 @@ produtosRouter.get('/', async (req, res) => {
 produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
-      p.id as produto_id, p.codigo, p.nome, p.codigo_barras, p.peso_caixa,
+      p.id as produto_id, p.codigo, p.nome, p.codigo_barras, p.peso_caixa, p.qt_por_cx,
       COALESCE(saldo.total, 0) as saldo_total,
       COALESCE(alocado.total, 0) as alocado_total
     FROM produtos p
@@ -84,6 +86,7 @@ produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
     nome: r.nome,
     codigo_barras: r.codigo_barras,
     peso_caixa: r.peso_caixa != null ? Number(r.peso_caixa) : null,
+    qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
     saldo_total: Number(r.saldo_total),
     alocado_total: Number(r.alocado_total),
     pendente: Number(r.saldo_total) - Number(r.alocado_total),
@@ -98,7 +101,7 @@ produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
 produtosRouter.get('/divergencias-sobra', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
-      p.id as produto_id, p.codigo, p.nome,
+      p.id as produto_id, p.codigo, p.nome, p.qt_por_cx,
       COALESCE(saldo.total, 0) as saldo_total,
       COALESCE(alocado.total, 0) as alocado_total
     FROM produtos p
@@ -112,6 +115,7 @@ produtosRouter.get('/divergencias-sobra', async (_req, res) => {
     produto_id: Number(r.produto_id),
     codigo: r.codigo,
     nome: r.nome,
+    qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
     saldo_total: Number(r.saldo_total),
     alocado_total: Number(r.alocado_total),
     excesso: Number(r.alocado_total) - Number(r.saldo_total),
@@ -178,6 +182,7 @@ produtosRouter.get('/codigo-barras/:codigo', async (req, res) => {
     nome: produto.nome,
     codigo_barras: produto.codigo_barras,
     peso_caixa: produto.peso_caixa != null ? Number(produto.peso_caixa) : null,
+    qt_por_cx: produto.qt_por_cx != null ? Number(produto.qt_por_cx) : null,
   };
   res.json(resultado);
 });

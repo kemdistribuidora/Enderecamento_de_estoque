@@ -48,7 +48,7 @@ mapaRouter.get('/:setorId', async (req, res) => {
         SELECT
           e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
           ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
-          p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa
+          p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa, p.qt_por_cx as produto_qt_por_cx
         FROM enderecos e
         LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
         LEFT JOIN produtos p ON p.id = ep.produto_id
@@ -77,6 +77,7 @@ mapaRouter.get('/:setorId', async (req, res) => {
               nome: r.produto_nome,
               codigo_barras: r.produto_codigo_barras,
               peso_caixa: r.produto_peso_caixa != null ? Number(r.produto_peso_caixa) : null,
+              qt_por_cx: r.produto_qt_por_cx != null ? Number(r.produto_qt_por_cx) : null,
               quantidade: Number(r.quantidade),
               validade: r.validade,
               lote: r.lote ?? null,

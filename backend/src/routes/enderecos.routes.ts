@@ -13,7 +13,7 @@ enderecosRouter.get('/', async (_req, res) => {
     SELECT
       e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
       ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
-      p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa
+      p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa, p.qt_por_cx as produto_qt_por_cx
     FROM enderecos e
     LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
     LEFT JOIN produtos p ON p.id = ep.produto_id
@@ -36,6 +36,7 @@ enderecosRouter.get('/', async (_req, res) => {
           nome: r.produto_nome,
           codigo_barras: r.produto_codigo_barras,
           peso_caixa: r.produto_peso_caixa != null ? Number(r.produto_peso_caixa) : null,
+          qt_por_cx: r.produto_qt_por_cx != null ? Number(r.produto_qt_por_cx) : null,
           quantidade: Number(r.quantidade),
           validade: r.validade,
           lote: r.lote ?? null,
@@ -60,7 +61,7 @@ enderecosRouter.get('/codigo/:codigo', async (req, res) => {
       SELECT
         e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
         ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
-        p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa
+        p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa, p.qt_por_cx as produto_qt_por_cx
       FROM enderecos e
       LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
       LEFT JOIN produtos p ON p.id = ep.produto_id
@@ -90,6 +91,7 @@ enderecosRouter.get('/codigo/:codigo', async (req, res) => {
           nome: r.produto_nome,
           codigo_barras: r.produto_codigo_barras,
           peso_caixa: r.produto_peso_caixa != null ? Number(r.produto_peso_caixa) : null,
+          qt_por_cx: r.produto_qt_por_cx != null ? Number(r.produto_qt_por_cx) : null,
           quantidade: Number(r.quantidade),
           validade: r.validade,
           lote: r.lote ?? null,
@@ -109,7 +111,7 @@ enderecosRouter.get('/a-vencer', async (_req, res) => {
     SELECT
       e.id as endereco_id, e.codigo as endereco_codigo, pr.setor_id,
       ep.produto_id, ep.quantidade, ep.validade, ep.lote,
-      p.codigo as produto_codigo, p.nome as produto_nome
+      p.codigo as produto_codigo, p.nome as produto_nome, p.qt_por_cx as produto_qt_por_cx
     FROM estoque_posicoes ep
     JOIN enderecos e ON e.id = ep.endereco_id
     JOIN prateleiras pr ON pr.id = e.prateleira_id
@@ -125,6 +127,7 @@ enderecosRouter.get('/a-vencer', async (_req, res) => {
       produto_id: Number(r.produto_id),
       produto_codigo: r.produto_codigo,
       produto_nome: r.produto_nome,
+      produto_qt_por_cx: r.produto_qt_por_cx != null ? Number(r.produto_qt_por_cx) : null,
       quantidade: Number(r.quantidade),
       validade: r.validade,
       lote: r.lote ?? null,

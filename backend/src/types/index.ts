@@ -6,6 +6,7 @@ export interface Produto {
   nome: string;
   codigo_barras: string;
   peso_caixa: number | null;
+  qt_por_cx: number | null;
 }
 
 export interface Setor {
@@ -58,6 +59,7 @@ export interface EnderecoComStatus extends Endereco {
     nome: string;
     codigo_barras: string;
     peso_caixa: number | null;
+    qt_por_cx: number | null;
     quantidade: number;
     validade: string;
     lote: string | null;
@@ -102,6 +104,7 @@ export interface PendenciaPosicionamento {
   nome: string;
   codigo_barras: string;
   peso_caixa: number | null;
+  qt_por_cx: number | null;
   saldo_total: number;
   alocado_total: number;
   pendente: number;
@@ -120,6 +123,7 @@ export interface DivergenciaSobra {
   produto_id: number;
   codigo: string;
   nome: string;
+  qt_por_cx: number | null;
   saldo_total: number;
   alocado_total: number;
   excesso: number;
@@ -163,6 +167,7 @@ export interface PosicaoAVencer {
   produto_id: number;
   produto_codigo: string;
   produto_nome: string;
+  produto_qt_por_cx: number | null;
   quantidade: number;
   validade: string;
   lote: string | null;

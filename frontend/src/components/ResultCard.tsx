@@ -1,5 +1,6 @@
 import { ProdutoComPosicoes } from '../types';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
+import { formatarQtdCx } from '../utils/quantidade';
 
 type Posicao = ProdutoComPosicoes['posicoes'][number];
 
@@ -48,7 +49,7 @@ export default function ResultCard({ produto, onSeparar }: Props) {
                     : 'border-blue-200 bg-blue-50 text-blue-800'
                 }`}
               >
-                {p.codigo_endereco} · {p.quantidade}un · vence {p.validade}
+                {p.codigo_endereco} · {formatarQtdCx(p.quantidade, produto.qt_por_cx)} · vence {p.validade}
                 {p.status_validade !== 'normal' && (
                   <span className={`rounded-full px-1.5 py-0.5 ${BADGE_STATUS_VALIDADE[p.status_validade]}`}>
                     {p.status_validade === 'emergencia' ? 'emergência' : 'em breve'}

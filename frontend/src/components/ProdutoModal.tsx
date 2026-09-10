@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EnderecoComStatus } from '../types';
 import { baixarParcialEndereco } from '../api/client';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
+import { formatarQtdCx } from '../utils/quantidade';
 import EtiquetaModal from './EtiquetaModal';
 
 interface Props {
@@ -65,7 +66,7 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
             <dl className="space-y-2 text-sm">
               <Row label="Produto" value={endereco.produto.nome} />
               <Row label="Código" value={endereco.produto.codigo} />
-              <Row label="Quantidade" value={String(endereco.produto.quantidade)} />
+              <Row label="Quantidade" value={formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx)} />
               <Row label="Validade do lote" value={endereco.produto.validade} />
               <Row label="Lote" value={endereco.produto.lote ?? '—'} />
             </dl>
@@ -92,7 +93,8 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
 
             <div className="mt-3 rounded-md border border-slate-200 p-3">
               <label className="mb-1 block text-xs font-medium text-slate-500">
-                Retirar quantidade (máx. {endereco.produto.quantidade}, digite tudo pra liberar a posição)
+                Retirar quantidade em UN (máx. {endereco.produto.quantidade} ={' '}
+                {formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx)}, digite tudo pra liberar a posição)
               </label>
               <div className="flex gap-2">
                 <input
@@ -126,6 +128,7 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
             produtoCodigo: endereco.produto.codigo,
             codigoBarras: endereco.produto.codigo_barras,
             pesoCaixa: endereco.produto.peso_caixa,
+            qtPorCx: endereco.produto.qt_por_cx,
             quantidade: endereco.produto.quantidade,
             validade: endereco.produto.validade,
             lote: endereco.produto.lote,

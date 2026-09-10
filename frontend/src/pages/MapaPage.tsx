@@ -140,6 +140,7 @@ export default function MapaPage() {
           codigoEndereco={separando.posicao.codigo_endereco}
           setorId={separando.posicao.setor_id}
           quantidade={separando.posicao.quantidade}
+          qtPorCx={separando.produto.qt_por_cx}
           validade={separando.posicao.validade}
           lote={separando.posicao.lote}
           onFechar={() => setSeparando(null)}

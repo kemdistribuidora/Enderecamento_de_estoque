@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EnderecoComStatus, MapaSetor, PrateleiraComPosicoes } from '../types';
+import { formatarQtdCx } from '../utils/quantidade';
 
 interface Props {
   mapa: MapaSetor;
@@ -46,7 +47,10 @@ function CelulaPosicao({
       onClick={() => onClick(posicao)}
       title={
         ocupado
-          ? `${posicao.codigo} — ${posicao.produto?.nome} (vence ${posicao.produto?.validade}${
+          ? `${posicao.codigo} — ${posicao.produto?.nome} · ${formatarQtdCx(
+              posicao.produto?.quantidade ?? 0,
+              posicao.produto?.qt_por_cx ?? null
+            )} (vence ${posicao.produto?.validade}${
               statusValidade === 'emergencia'
                 ? ' — EMERGÊNCIA'
                 : statusValidade === 'proximo'

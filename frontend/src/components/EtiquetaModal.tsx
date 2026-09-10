@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import JsBarcode from 'jsbarcode';
+import { formatarQtdCx } from '../utils/quantidade';
 
 export interface DadosEtiqueta {
   enderecoCodigo: string;
@@ -8,6 +9,7 @@ export interface DadosEtiqueta {
   produtoCodigo: string;
   codigoBarras: string;
   pesoCaixa: number | null;
+  qtPorCx: number | null;
   quantidade: number;
   validade: string;
   lote: string | null;
@@ -30,7 +32,10 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [observacao, setObservacao] = useState('');
 
-  const pesoTotal = dados.pesoCaixa != null ? dados.quantidade * dados.pesoCaixa : null;
+  // quantidade e' sempre UN; peso_caixa e' peso de 1 caixa fechada -- so da pra converter
+  // pra peso total sabendo quantas UN cabem numa caixa (qtPorCx).
+  const pesoTotal =
+    dados.pesoCaixa != null && dados.qtPorCx ? (dados.quantidade / dados.qtPorCx) * dados.pesoCaixa : null;
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -91,8 +96,12 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
                 <LinhaEtiqueta label="Endereço" valor={dados.enderecoCodigo} />
                 <LinhaEtiqueta label="Dt Entrada" valor={formatarData(dados.criadoEm)} />
                 <LinhaEtiqueta label="Lote" valor={dados.lote ?? '—'} />
-                <LinhaEtiqueta label="Qtd caixas" valor={String(dados.quantidade)} />
-                <LinhaEtiqueta label="Peso" valor={pesoTotal != null ? `${pesoTotal.toFixed(2)} KG` : 'cadastrar peso da caixa'} ultima />
+                <LinhaEtiqueta label="Quantidade" valor={formatarQtdCx(dados.quantidade, dados.qtPorCx)} />
+                <LinhaEtiqueta
+                  label="Peso"
+                  valor={pesoTotal != null ? `${pesoTotal.toFixed(2)} KG` : 'cadastrar peso e qtd/caixa'}
+                  ultima
+                />
               </div>
 
               <div className="flex flex-1 flex-col items-center justify-between p-3">

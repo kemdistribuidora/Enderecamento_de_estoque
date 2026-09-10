@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { buscarMapaEnderecos, buscarProdutos, criarProduto, ocuparEndereco } from '../api/client';
 import { EnderecoComStatus, ProdutoComPosicoes } from '../types';
+import { formatarQtdCx } from '../utils/quantidade';
 import ModalEscolherNoMapa from '../components/ModalEscolherNoMapa';
 import EtiquetaModal, { DadosEtiqueta } from '../components/EtiquetaModal';
 
@@ -9,6 +10,7 @@ const FORM_INICIAL = {
   nome: '',
   codigo_barras: '',
   peso_caixa: '',
+  qt_por_cx: '',
   validade: '',
   lote: '',
   enderecoId: '',
@@ -54,6 +56,7 @@ export default function CadastroPage() {
       nome: p.nome,
       codigo_barras: p.codigo_barras,
       peso_caixa: p.peso_caixa != null ? String(p.peso_caixa) : '',
+      qt_por_cx: p.qt_por_cx != null ? String(p.qt_por_cx) : '',
     }));
     setBuscaProduto('');
     setSugestoes([]);
@@ -61,7 +64,7 @@ export default function CadastroPage() {
 
   function limparSelecao() {
     setProdutoSelecionado(null);
-    setForm((f) => ({ ...f, codigo: '', nome: '', codigo_barras: '', peso_caixa: '' }));
+    setForm((f) => ({ ...f, codigo: '', nome: '', codigo_barras: '', peso_caixa: '', qt_por_cx: '' }));
   }
 
   function carregarEnderecosLivres() {
@@ -101,6 +104,7 @@ export default function CadastroPage() {
       let produtoId: number;
 
       const pesoCaixa = form.peso_caixa.trim() ? Number(form.peso_caixa) : null;
+      const qtPorCx = form.qt_por_cx.trim() ? Number(form.qt_por_cx) : null;
 
       if (produtoSelecionado) {
         produtoId = produtoSelecionado.id;
@@ -111,6 +115,7 @@ export default function CadastroPage() {
             nome: form.nome,
             codigo_barras: form.codigo_barras,
             peso_caixa: pesoCaixa,
+            qt_por_cx: qtPorCx,
           });
           produtoId = produtoCriado.id;
         } catch (err: any) {
@@ -136,6 +141,7 @@ export default function CadastroPage() {
         produtoCodigo: form.codigo,
         codigoBarras: form.codigo_barras,
         pesoCaixa: produtoSelecionado?.peso_caixa ?? pesoCaixa,
+        qtPorCx: produtoSelecionado?.qt_por_cx ?? qtPorCx,
         quantidade,
         validade: form.validade,
         lote: form.lote.trim(),
@@ -243,6 +249,18 @@ export default function CadastroPage() {
               placeholder="12.5"
             />
           </Campo>
+
+          <Campo label="Unidades por caixa fechada — usado pra mostrar em CX no mapa/etiqueta">
+            <input
+              type="number"
+              min={1}
+              readOnly={!!produtoSelecionado}
+              value={form.qt_por_cx}
+              onChange={(e) => atualizarCampo('qt_por_cx', e.target.value)}
+              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
+              placeholder="6"
+            />
+          </Campo>
         </fieldset>
 
         <fieldset className="space-y-3 border-t border-slate-100 pt-4">
@@ -299,7 +317,7 @@ export default function CadastroPage() {
             </div>
           </Campo>
 
-          <Campo label="Quantidade">
+          <Campo label="Quantidade em UN">
             <input
               required
               type="number"
@@ -308,6 +326,15 @@ export default function CadastroPage() {
               onChange={(e) => atualizarCampo('quantidade', e.target.value)}
               className="input"
             />
+            {form.quantidade.trim() && (
+              <span className="mt-1 block text-xs text-slate-400">
+                ={' '}
+                {formatarQtdCx(
+                  Number(form.quantidade),
+                  produtoSelecionado?.qt_por_cx ?? (form.qt_por_cx.trim() ? Number(form.qt_por_cx) : null)
+                )}
+              </span>
+            )}
           </Campo>
         </fieldset>
 

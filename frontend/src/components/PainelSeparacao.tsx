@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { buscarMapaSetor, buscarProdutoPorCodigoBarras, liberarEndereco } from '../api/client';
 import { MapaSetor } from '../types';
+import { formatarQtdCx } from '../utils/quantidade';
 import MapaSetorView from './MapaSetorView';
 import ScannerInput from './ScannerInput';
 
@@ -12,6 +13,7 @@ interface Props {
   codigoEndereco: string;
   setorId: number;
   quantidade: number;
+  qtPorCx?: number | null;
   validade: string;
   lote: string | null;
   onFechar: () => void;
@@ -27,6 +29,7 @@ export default function PainelSeparacao({
   codigoEndereco,
   setorId,
   quantidade,
+  qtPorCx = null,
   validade,
   lote,
   onFechar,
@@ -78,7 +81,8 @@ export default function PainelSeparacao({
             Separando {produtoNome} <span className="font-normal text-slate-400">— {produtoCodigo}</span>
           </h3>
           <p className="mt-0.5 text-sm text-slate-500">
-            Posição <strong>{codigoEndereco}</strong> · {quantidade}un · lote {lote ?? '—'} · vence {validade}
+            Posição <strong>{codigoEndereco}</strong> · {formatarQtdCx(quantidade, qtPorCx)} · lote {lote ?? '—'} · vence{' '}
+            {validade}
           </p>
         </div>
         <button type="button" onClick={onFechar} className="text-slate-400 hover:text-slate-600">
