@@ -159,10 +159,11 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-5xl">
       <h1 className="mb-4 text-lg font-semibold text-slate-800">Cadastro de produto / entrada em estoque</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+      <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 bg-white p-5">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
         <fieldset className="space-y-3">
           <legend className="mb-1 text-sm font-medium text-slate-600">Dados do produto</legend>
 
@@ -263,7 +264,7 @@ export default function CadastroPage() {
           </Campo>
         </fieldset>
 
-        <fieldset className="space-y-3 border-t border-slate-100 pt-4">
+        <fieldset className="space-y-3 border-t border-slate-100 pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-8">
           <legend className="mb-1 text-sm font-medium text-slate-600">Entrada em estoque</legend>
 
           <Campo label="Validade do lote">
@@ -337,34 +338,37 @@ export default function CadastroPage() {
             )}
           </Campo>
         </fieldset>
+        </div>
 
-        {status && (
-          <p
-            className={`text-sm ${
-              status.tipo === 'sucesso' ? 'text-green-700' : status.tipo === 'info' ? 'text-blue-700' : 'text-red-600'
-            }`}
-          >
-            {status.texto}
-          </p>
-        )}
+        <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
+          {status && (
+            <p
+              className={`text-sm ${
+                status.tipo === 'sucesso' ? 'text-green-700' : status.tipo === 'info' ? 'text-blue-700' : 'text-red-600'
+              }`}
+            >
+              {status.texto}
+            </p>
+          )}
 
-        {status?.tipo === 'sucesso' && dadosEtiqueta && !etiquetaAberta && (
+          {status?.tipo === 'sucesso' && dadosEtiqueta && !etiquetaAberta && (
+            <button
+              type="button"
+              onClick={() => setEtiquetaAberta(true)}
+              className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Imprimir etiqueta desse pallet
+            </button>
+          )}
+
           <button
-            type="button"
-            onClick={() => setEtiquetaAberta(true)}
-            className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            type="submit"
+            disabled={salvando}
+            className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
           >
-            Imprimir etiqueta desse pallet
+            {salvando ? 'Salvando...' : 'Salvar'}
           </button>
-        )}
-
-        <button
-          type="submit"
-          disabled={salvando}
-          className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-        >
-          {salvando ? 'Salvando...' : 'Salvar'}
-        </button>
+        </div>
       </form>
 
       {mapaAberto && (
