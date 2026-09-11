@@ -284,7 +284,7 @@ function PosicionarModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onFechar}>
-      <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-2xl rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-base font-semibold text-slate-800">
           {pendencia.nome} <span className="font-normal text-slate-400"> {pendencia.codigo}</span>
         </h3>
@@ -292,8 +292,8 @@ function PosicionarModal({
           Posição escolhida: <strong>{enderecoEscolhido.codigo}</strong>
         </p>
 
-        <div className="mt-3 space-y-3">
-          <label className="block text-sm">
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <label className="col-span-3 block text-sm sm:col-span-1">
             <span className="mb-1 block font-medium text-slate-600">
               Quantidade em UN (pendente: {pendencia.pendente} = {formatarQtdCx(pendencia.pendente, pendencia.qt_por_cx)})
             </span>
