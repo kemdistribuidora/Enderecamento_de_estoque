@@ -19,6 +19,17 @@ export default function PosicionamentoPage() {
   const [sobras, setSobras] = useState<DivergenciaSobra[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [emEdicao, setEmEdicao] = useState<PendenciaPosicionamento | null>(null);
+  const [busca, setBusca] = useState('');
+
+  const buscaNormalizada = busca.trim().toLowerCase();
+  const pendenciasFiltradas = buscaNormalizada
+    ? pendencias.filter(
+        (p) =>
+          p.nome.toLowerCase().includes(buscaNormalizada) ||
+          p.codigo.toLowerCase().includes(buscaNormalizada) ||
+          (p.codigo_barras ?? '').toLowerCase().includes(buscaNormalizada)
+      )
+    : pendencias;
 
   function carregar() {
     setCarregando(true);
@@ -48,6 +59,20 @@ export default function PosicionamentoPage() {
       )}
 
       {pendencias.length > 0 && (
+        <input
+          type="text"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar produto por nome, código ou código de barras..."
+          className="input w-full max-w-md"
+        />
+      )}
+
+      {pendencias.length > 0 && pendenciasFiltradas.length === 0 && (
+        <p className="rounded-md bg-slate-50 p-4 text-sm text-slate-500">Nenhum produto encontrado para "{busca}".</p>
+      )}
+
+      {pendenciasFiltradas.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
           <table className="w-full table-fixed text-sm">
             <colgroup>
@@ -69,7 +94,7 @@ export default function PosicionamentoPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {pendencias.map((p) => (
+              {pendenciasFiltradas.map((p) => (
                 <tr key={p.produto_id}>
                   <td className="truncate px-4 py-2" title={`${p.nome} ${p.codigo}`}>
                     <span className="font-medium text-slate-800">{p.nome}</span>{' '}
