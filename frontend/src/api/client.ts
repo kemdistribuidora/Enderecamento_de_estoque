@@ -131,6 +131,14 @@ export function buscarPendenciasPosicionamento(): Promise<PendenciaPosicionament
   return fetch(`${BASE_URL}/produtos/pendencias-posicionamento`).then((r) => handleJson(r));
 }
 
+export function atualizarPesoCaixa(produtoId: number, pesoCaixa: number | null): Promise<{ ok: true; peso_caixa: number | null }> {
+  return fetch(`${BASE_URL}/produtos/${produtoId}/peso-caixa`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ peso_caixa: pesoCaixa }),
+  }).then((r) => handleJson(r));
+}
+
 export interface SugestaoEndereco {
   endereco_id: number;
   codigo: string;

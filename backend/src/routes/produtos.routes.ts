@@ -40,6 +40,29 @@ produtosRouter.post('/', async (req, res) => {
   }
 });
 
+// PUT /api/produtos/:id/peso-caixa -> edicao inline do peso (Winthor nao traz esse dado,
+// entao fica so por aqui mesmo, digitado na tela de Posicionar estoque).
+produtosRouter.put('/:id/peso-caixa', async (req, res) => {
+  const id = Number(req.params.id);
+  const { peso_caixa } = req.body ?? {};
+  const pesoCaixa = peso_caixa != null && peso_caixa !== '' ? Number(peso_caixa) : null;
+
+  if (pesoCaixa != null && Number.isNaN(pesoCaixa)) {
+    return res.status(400).json({ erro: 'peso_caixa invalido' });
+  }
+
+  const info = await db.execute({
+    sql: `UPDATE produtos SET peso_caixa = ? WHERE id = ?`,
+    args: [pesoCaixa, id],
+  });
+
+  if (info.rowsAffected === 0) {
+    return res.status(404).json({ erro: 'Produto nao encontrado' });
+  }
+
+  res.json({ ok: true, peso_caixa: pesoCaixa });
+});
+
 // GET /api/produtos?search=termo -> busca parcial por codigo OU nome, case-insensitive
 produtosRouter.get('/', async (req, res) => {
   const search = String(req.query.search ?? '').trim();

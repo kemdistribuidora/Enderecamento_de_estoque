@@ -3,6 +3,7 @@ import {
   DivergenciaSobra,
   PendenciaPosicionamento,
   SugestaoEndereco,
+  atualizarPesoCaixa,
   buscarDivergenciasSobra,
   buscarPendenciasPosicionamento,
   buscarSugestaoEndereco,
@@ -47,34 +48,53 @@ export default function PosicionamentoPage() {
       )}
 
       {pendencias.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              <col />
+              <col className="w-32" />
+              <col className="w-32" />
+              <col className="w-32" />
+              <col className="w-28" />
+              <col className="w-28" />
+            </colgroup>
             <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2">Produto</th>
-                <th className="px-4 py-2 text-right">Saldo Winthor</th>
-                <th className="px-4 py-2 text-right">Já alocado</th>
-                <th className="px-4 py-2 text-right">Pendente</th>
+                <th className="px-4 py-2">Saldo</th>
+                <th className="px-4 py-2">Alocado</th>
+                <th className="px-4 py-2">Pendente</th>
+                <th className="px-4 py-2">Peso cx (kg)</th>
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {pendencias.map((p) => (
                 <tr key={p.produto_id}>
-                  <td className="whitespace-nowrap px-4 py-2">
+                  <td className="truncate px-4 py-2" title={`${p.nome} ${p.codigo}`}>
                     <span className="font-medium text-slate-800">{p.nome}</span>{' '}
-                    <span className="text-slate-400">— {p.codigo}</span>
+                    <span className="text-slate-400"> ({p.codigo})</span>
                   </td>
-                  <td className="px-4 py-2 text-right">{formatarQtdCx(p.saldo_total, p.qt_por_cx)}</td>
-                  <td className="px-4 py-2 text-right">{formatarQtdCx(p.alocado_total, p.qt_por_cx)}</td>
-                  <td className="px-4 py-2 text-right font-medium text-amber-700">
+                  <td className="whitespace-nowrap px-4 py-2">{formatarQtdCx(p.saldo_total, p.qt_por_cx)}</td>
+                  <td className="whitespace-nowrap px-4 py-2">{formatarQtdCx(p.alocado_total, p.qt_por_cx)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 font-medium text-amber-700">
                     {formatarQtdCx(p.pendente, p.qt_por_cx)}
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-2">
+                    <PesoCaixaInput
+                      pendencia={p}
+                      onSalvo={(pesoCaixa) =>
+                        setPendencias((atual) =>
+                          atual.map((item) => (item.produto_id === p.produto_id ? { ...item, peso_caixa: pesoCaixa } : item))
+                        )
+                      }
+                    />
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2">
                     <button
                       type="button"
                       onClick={() => setEmEdicao(p)}
-                      className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                      className="rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
                     >
                       Posicionar
                     </button>
@@ -100,9 +120,9 @@ export default function PosicionamentoPage() {
               <thead className="bg-red-50 text-left text-xs font-medium uppercase text-red-700">
                 <tr>
                   <th className="px-4 py-2">Produto</th>
-                  <th className="px-4 py-2 text-right">Saldo Winthor</th>
-                  <th className="px-4 py-2 text-right">Alocado aqui</th>
-                  <th className="px-4 py-2 text-right">Excesso</th>
+                  <th className="px-4 py-2">Saldo Winthor</th>
+                  <th className="px-4 py-2">Alocado aqui</th>
+                  <th className="px-4 py-2">Excesso</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -110,11 +130,11 @@ export default function PosicionamentoPage() {
                   <tr key={s.produto_id}>
                     <td className="whitespace-nowrap px-4 py-2">
                       <span className="font-medium text-slate-800">{s.nome}</span>{' '}
-                      <span className="text-slate-400">— {s.codigo}</span>
+                      <span className="text-slate-400"> ({s.codigo})</span>
                     </td>
-                    <td className="px-4 py-2 text-right">{formatarQtdCx(s.saldo_total, s.qt_por_cx)}</td>
-                    <td className="px-4 py-2 text-right">{formatarQtdCx(s.alocado_total, s.qt_por_cx)}</td>
-                    <td className="px-4 py-2 text-right font-medium text-red-700">
+                    <td className="px-4 py-2">{formatarQtdCx(s.saldo_total, s.qt_por_cx)}</td>
+                    <td className="px-4 py-2">{formatarQtdCx(s.alocado_total, s.qt_por_cx)}</td>
+                    <td className="px-4 py-2 font-medium text-red-700">
                       {formatarQtdCx(s.excesso, s.qt_por_cx)}
                     </td>
                   </tr>
@@ -136,6 +156,52 @@ export default function PosicionamentoPage() {
         />
       )}
     </div>
+  );
+}
+
+function PesoCaixaInput({
+  pendencia,
+  onSalvo,
+}: {
+  pendencia: PendenciaPosicionamento;
+  onSalvo: (pesoCaixa: number | null) => void;
+}) {
+  const [valor, setValor] = useState(pendencia.peso_caixa != null ? String(pendencia.peso_caixa) : '');
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    setValor(pendencia.peso_caixa != null ? String(pendencia.peso_caixa) : '');
+  }, [pendencia.peso_caixa]);
+
+  async function handleBlur() {
+    const texto = valor.trim();
+    const novoPeso = texto ? Number(texto) : null;
+    if (texto && Number.isNaN(novoPeso)) return;
+    if (novoPeso === pendencia.peso_caixa) return;
+
+    setSalvando(true);
+    try {
+      await atualizarPesoCaixa(pendencia.produto_id, novoPeso);
+      onSalvo(novoPeso);
+    } catch {
+      setValor(pendencia.peso_caixa != null ? String(pendencia.peso_caixa) : '');
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <input
+      type="number"
+      step="0.001"
+      min={0}
+      value={valor}
+      onChange={(e) => setValor(e.target.value)}
+      onBlur={handleBlur}
+      disabled={salvando}
+      placeholder=""
+      className="input w-20 disabled:opacity-50"
+    />
   );
 }
 
@@ -220,7 +286,7 @@ function PosicionarModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onFechar}>
       <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-base font-semibold text-slate-800">
-          {pendencia.nome} <span className="font-normal text-slate-400">— {pendencia.codigo}</span>
+          {pendencia.nome} <span className="font-normal text-slate-400"> {pendencia.codigo}</span>
         </h3>
         <p className="mt-1 text-sm text-slate-500">
           Posição escolhida: <strong>{enderecoEscolhido.codigo}</strong>

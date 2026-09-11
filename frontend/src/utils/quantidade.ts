@@ -5,7 +5,7 @@ export function formatarQtdCx(unidades: number, qtPorCx: number | null): string 
   if (!qtPorCx || qtPorCx <= 0) return `${unidades} UN`;
 
   const caixas = Math.floor(unidades / qtPorCx);
-  const avulso = unidades % qtPorCx;
+  const avulso = Math.round((unidades % qtPorCx) * 1000) / 1000;
 
   if (avulso === 0) return `${caixas} CX`;
   return `${caixas} CX (${avulso} UN)`;
