@@ -31,6 +31,7 @@ export async function initSchema(): Promise<void> {
   if (prateleirasNovas) await preencherDonoPrateleirasExistentes();
   if (corredoresNovo) await db.execute(`UPDATE corredores SET apos_prateleira_ordem = ordem`);
   await garantirPrateleiraBeCamaraResfriados();
+  await garantirSetorAreaEspera();
 }
 
 // schema.sql so cria tabela nova (CREATE TABLE IF NOT EXISTS); pra coluna em tabela que ja
@@ -164,5 +165,42 @@ async function garantirPrateleiraBeCamaraResfriados(): Promise<void> {
         args: [bePrateleiraId, andar, posicao, codigo],
       });
     }
+  }
+}
+
+// Setor generico "Area de Espera" -- buffer temporario pra produto que chegou do
+// fornecedor mas ainda nao foi formalmente posicionado (nao e' cross-docking classico,
+// e' so um 3o estado alem de "numa posicao real" / "fora do sistema"). Nao tem
+// corredor/prateleira fisica de verdade -- 1 prateleira sintetica com 20 posicoes
+// genericas (ESP-01..ESP-20), ocupar/liberar funciona igual a qualquer endereco, sem
+// codigo novo. Fica de fora da % de ocupacao do dashboard (ver calcularOcupacaoPorSetor).
+async function garantirSetorAreaEspera(): Promise<void> {
+  const NOME_SETOR = 'Área de Espera';
+  const TOTAL_VAGAS = 20;
+
+  const existeRs = await db.execute({ sql: `SELECT id FROM setores WHERE nome = ?`, args: [NOME_SETOR] });
+  if (existeRs.rows.length > 0) return;
+
+  const maxOrdemRs = await db.execute(`SELECT COALESCE(MAX(ordem), -1) as max_ordem FROM setores`);
+  const novaOrdem = Number((maxOrdemRs.rows[0] as any).max_ordem) + 1;
+
+  const setorInfo = await db.execute({
+    sql: `INSERT INTO setores (nome, ordem) VALUES (?, ?)`,
+    args: [NOME_SETOR, novaOrdem],
+  });
+  const setorId = Number(setorInfo.lastInsertRowid);
+
+  const prateleiraInfo = await db.execute({
+    sql: `INSERT INTO prateleiras (setor_id, ordem, letra, lado) VALUES (?, 0, 'E', 'D')`,
+    args: [setorId],
+  });
+  const prateleiraId = Number(prateleiraInfo.lastInsertRowid);
+
+  for (let posicao = 1; posicao <= TOTAL_VAGAS; posicao++) {
+    const codigo = `ESP-${String(posicao).padStart(2, '0')}`;
+    await db.execute({
+      sql: `INSERT INTO enderecos (prateleira_id, corredor, lado, andar, posicao, codigo) VALUES (?, 'E', 'D', 1, ?, ?)`,
+      args: [prateleiraId, posicao, codigo],
+    });
   }
 }

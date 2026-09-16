@@ -249,6 +249,7 @@ export interface KpisDashboard {
   ocupacao_por_setor: Array<{ setor_id: number; setor_nome: string; total_enderecos: number; ocupados: number; percentual: number | null }>;
   giro_medio: { status: 'ok' | 'sem_dados'; valor: number | null; produtos_com_giro: number };
   vencimento: { emergencias: number; proximos: number };
+  bloqueios: { total: number };
 }
 
 export function buscarDashboardKpis(): Promise<KpisDashboard> {

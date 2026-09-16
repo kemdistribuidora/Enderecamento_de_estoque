@@ -14,6 +14,7 @@ dashboardRouter.get('/kpis', async (_req, res) => {
     ocupacao_por_setor: await calcularOcupacaoPorSetor(),
     giro_medio: await calcularGiroMedio(),
     vencimento: await calcularVencimento(),
+    bloqueios: await calcularBloqueios(),
   };
   res.json(resultado);
 });
@@ -49,6 +50,8 @@ async function calcularAcuraciaEstoque(): Promise<KpisDashboard['acuracia_estoqu
 
 // LEFT JOIN em toda a cadeia -- um setor sem prateleiras/enderecos ainda cadastrados
 // continua aparecendo na lista, com 0/0, em vez de sumir (INNER JOIN o excluiria).
+// 'Área de Espera' fica de fora: nao e' armazenagem real, so buffer temporario, entao
+// nao faz sentido entrar na % de ocupacao do deposito.
 async function calcularOcupacaoPorSetor(): Promise<KpisDashboard['ocupacao_por_setor']> {
   const rs = await db.execute(`
     SELECT s.id as setor_id, s.nome as setor_nome, s.ordem,
@@ -57,6 +60,7 @@ async function calcularOcupacaoPorSetor(): Promise<KpisDashboard['ocupacao_por_s
     LEFT JOIN prateleiras pr ON pr.setor_id = s.id
     LEFT JOIN enderecos e ON e.prateleira_id = pr.id
     LEFT JOIN estoque_posicoes ep ON ep.endereco_id = e.id
+    WHERE s.nome != 'Área de Espera'
     GROUP BY s.id
     ORDER BY s.ordem
   `);
@@ -109,4 +113,9 @@ async function calcularVencimento(): Promise<KpisDashboard['vencimento']> {
     else if (status === 'proximo') proximos++;
   }
   return { emergencias, proximos };
+}
+
+async function calcularBloqueios(): Promise<KpisDashboard['bloqueios']> {
+  const rs = await db.execute(`SELECT COUNT(*) as total FROM enderecos WHERE bloqueado = 1`);
+  return { total: Number((rs.rows[0] as any).total) };
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import AlertaBell from './components/AlertaBell';
 import MapaPage from './pages/MapaPage';
 import CadastroPage from './pages/CadastroPage';
 import ImportacaoPage from './pages/ImportacaoPage';
@@ -36,6 +37,9 @@ export default function App() {
           </svg>
         </button>
         <span className="whitespace-nowrap text-sm font-semibold tracking-wide">Endereçamento de Estoque</span>
+        <div className="ml-auto">
+          <AlertaBell />
+        </div>
       </header>
       <div className="flex min-h-0 flex-1">
         <Sidebar collapsed={collapsed} onExpand={() => setCollapsed(false)} />
