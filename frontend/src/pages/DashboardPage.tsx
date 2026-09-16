@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { KpisDashboard, buscarDashboardKpis } from '../api/client';
+import { exportarCsv } from '../utils/exportCsv';
 
 export default function DashboardPage() {
   const [kpis, setKpis] = useState<KpisDashboard | null>(null);
@@ -11,9 +12,49 @@ export default function DashboardPage() {
       .finally(() => setCarregando(false));
   }, []);
 
+  function handleExportar() {
+    if (!kpis) return;
+    exportarCsv('dashboard-kpis.csv', [
+      ['Indicador', 'Valor', 'Detalhe'],
+      [
+        'Acurácia de estoque',
+        kpis.acuracia_estoque.status === 'ok' ? `${kpis.acuracia_estoque.percentual!.toFixed(1)}%` : 'Sem dados',
+        kpis.acuracia_estoque.status === 'ok'
+          ? `${kpis.acuracia_estoque.total_produtos - kpis.acuracia_estoque.produtos_com_divergencia}/${kpis.acuracia_estoque.total_produtos} produtos sem divergência`
+          : 'Importe o saldo do Winthor',
+      ],
+      [
+        'Giro médio',
+        kpis.giro_medio.status === 'ok' ? kpis.giro_medio.valor!.toFixed(1) : 'Sem dados',
+        kpis.giro_medio.status === 'ok' ? `${kpis.giro_medio.produtos_com_giro} produtos com saída` : 'Nenhuma saída registrada',
+      ],
+      ['Emergência (vence em até 15 dias)', kpis.vencimento.emergencias, ''],
+      ['Vencendo em breve (vence em até 35 dias)', kpis.vencimento.proximos, ''],
+      [],
+      ['Setor', 'Ocupados', 'Total endereços', '% Ocupação'],
+      ...kpis.ocupacao_por_setor.map((s) => [
+        s.setor_nome,
+        s.ocupados,
+        s.total_enderecos,
+        s.percentual === null ? 'Sem posições cadastradas' : `${s.percentual.toFixed(0)}%`,
+      ]),
+    ]);
+  }
+
   return (
     <div className="max-w-6xl space-y-6">
-      <h1 className="text-lg font-semibold text-slate-800">Dashboard</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-lg font-semibold text-slate-800">Dashboard</h1>
+        {kpis && (
+          <button
+            type="button"
+            onClick={handleExportar}
+            className="shrink-0 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Exportar CSV
+          </button>
+        )}
+      </div>
 
       {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
 

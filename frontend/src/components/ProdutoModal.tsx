@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { EnderecoComStatus } from '../types';
 import { baixarParcialEndereco } from '../api/client';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
-import { formatarQtdCx } from '../utils/quantidade';
+import { calcularPesoTotal, formatarQtdCx } from '../utils/quantidade';
 import EtiquetaModal from './EtiquetaModal';
 
 interface Props {
@@ -67,6 +67,13 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
               <Row label="Produto" value={endereco.produto.nome} />
               <Row label="Código" value={endereco.produto.codigo} />
               <Row label="Quantidade" value={formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx)} />
+              <Row
+                label="Peso do pallet"
+                value={(() => {
+                  const peso = calcularPesoTotal(endereco.produto.quantidade, endereco.produto.qt_por_cx, endereco.produto.peso_caixa);
+                  return peso != null ? `${peso.toFixed(2)} KG` : 'cadastrar peso e qtd/caixa';
+                })()}
+              />
               <Row label="Validade do lote" value={endereco.produto.validade} />
               <Row label="Lote" value={endereco.produto.lote ?? '—'} />
             </dl>

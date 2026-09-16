@@ -10,3 +10,10 @@ export function formatarQtdCx(unidades: number, qtPorCx: number | null): string 
   if (avulso === 0) return `${caixas} CX`;
   return `${caixas} CX (${avulso} UN)`;
 }
+
+// quantidade e' sempre UN; peso_caixa e' peso de 1 caixa fechada -- so da pra converter
+// pra peso total sabendo quantas UN cabem numa caixa (qtPorCx). Sem os dois cadastrados, null.
+export function calcularPesoTotal(unidades: number, qtPorCx: number | null, pesoCaixa: number | null): number | null {
+  if (pesoCaixa == null || !qtPorCx) return null;
+  return (unidades / qtPorCx) * pesoCaixa;
+}

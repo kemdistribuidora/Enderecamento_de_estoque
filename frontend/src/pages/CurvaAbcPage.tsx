@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ItemCurvaAbc, buscarCurvaAbc } from '../api/client';
+import { exportarCsv } from '../utils/exportCsv';
 
 type CampoOrdenavel = 'total_saida' | 'percentual_acumulado';
 
@@ -42,11 +43,36 @@ export default function CurvaAbcPage() {
       })
     : curvaFiltrada;
 
+  function handleExportar() {
+    exportarCsv('curva-abc.csv', [
+      ['#', 'Produto', 'Código', 'Total saída', '% Acumulado', 'Classe'],
+      ...curvaOrdenada.map(({ item, posicao }) => [
+        posicao,
+        item.nome,
+        item.codigo,
+        item.total_saida,
+        item.percentual_acumulado.toFixed(1),
+        item.classe,
+      ]),
+    ]);
+  }
+
   return (
     <div className="max-w-5xl space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-800">Curva ABC (giro de estoque)</h1>
-        <p className="mt-1 text-sm text-slate-500">Ordenado por saída total. A = 80% do volume, B = 95%, C = resto.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-800">Curva ABC (giro de estoque)</h1>
+          <p className="mt-1 text-sm text-slate-500">Ordenado por saída total. A = 80% do volume, B = 95%, C = resto.</p>
+        </div>
+        {!carregando && curva.length > 0 && (
+          <button
+            type="button"
+            onClick={handleExportar}
+            className="shrink-0 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Exportar CSV
+          </button>
+        )}
       </div>
 
       {carregando && <p className="text-sm text-slate-400">Carregando...</p>}

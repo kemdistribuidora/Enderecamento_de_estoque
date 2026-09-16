@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Movimentacao, buscarMovimentacoes, desfazerMovimentacao } from '../api/client';
+import { exportarCsv } from '../utils/exportCsv';
 
 export default function HistoricoPage() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
@@ -31,11 +32,44 @@ export default function HistoricoPage() {
     }
   }
 
+  const rotulosStatus: Record<Movimentacao['status'], string> = {
+    confirmada: 'Confirmada',
+    standby: 'Standby',
+    revertida: 'Revertida',
+  };
+
+  function handleExportar() {
+    exportarCsv('historico-movimentacao.csv', [
+      ['Quando', 'Tipo', 'Produto', 'Código', 'Posição', 'Lote', 'Quantidade', 'Status'],
+      ...movimentacoes.map((m) => [
+        new Date(m.criado_em).toLocaleString('pt-BR'),
+        m.tipo === 'entrada' ? 'Entrada' : 'Saída',
+        m.produto_nome,
+        m.produto_codigo,
+        m.endereco_codigo,
+        m.lote ?? '',
+        m.quantidade,
+        rotulosStatus[m.status],
+      ]),
+    ]);
+  }
+
   return (
     <div className="max-w-6xl space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-800">Histórico de movimentação</h1>
-        <p className="mt-1 text-sm text-slate-500">Saída recente fica em standby e pode ser desfeita.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-800">Histórico de movimentação</h1>
+          <p className="mt-1 text-sm text-slate-500">Saída recente fica em standby e pode ser desfeita.</p>
+        </div>
+        {movimentacoes.length > 0 && (
+          <button
+            type="button"
+            onClick={handleExportar}
+            className="shrink-0 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Exportar CSV
+          </button>
+        )}
       </div>
 
       {erro && <p className="text-sm text-red-600">{erro}</p>}

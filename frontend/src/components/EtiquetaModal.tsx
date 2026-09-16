@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import JsBarcode from 'jsbarcode';
-import { formatarQtdCx } from '../utils/quantidade';
+import { calcularPesoTotal, formatarQtdCx } from '../utils/quantidade';
 
 export interface DadosEtiqueta {
   enderecoCodigo: string;
@@ -32,10 +32,7 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [observacao, setObservacao] = useState('');
 
-  // quantidade e' sempre UN; peso_caixa e' peso de 1 caixa fechada -- so da pra converter
-  // pra peso total sabendo quantas UN cabem numa caixa (qtPorCx).
-  const pesoTotal =
-    dados.pesoCaixa != null && dados.qtPorCx ? (dados.quantidade / dados.qtPorCx) * dados.pesoCaixa : null;
+  const pesoTotal = calcularPesoTotal(dados.quantidade, dados.qtPorCx, dados.pesoCaixa);
 
   useEffect(() => {
     if (!svgRef.current) return;
