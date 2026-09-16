@@ -64,22 +64,22 @@ export default function ContagemPage() {
 
   return (
     <div className="max-w-4xl space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-800">Contagem cíclica</h1>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="border-b-2 border-steel-600/25 pb-4">
+        <h1 className="page-title">Contagem cíclica</h1>
+        <p className="mt-1 text-sm text-ink-600">
           Escolha um setor, conte cada posição ocupada. Diferença ajusta o estoque na hora e fica registrada no histórico.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 border-b border-slate-200 pb-3">
+      <div className="flex flex-wrap gap-1.5 border-b-2 border-steel-600/25 pb-3">
         {setores.map((s) => (
           <button
             key={s.id}
             onClick={() => setSetorAtivoId(s.id)}
-            className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-tag px-3 py-1.5 text-sm font-medium transition-colors ${
               setorAtivoId === s.id
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+                ? 'bg-steel-900 text-white'
+                : 'border border-steel-600/25 bg-white text-ink-600 hover:bg-concrete-200'
             }`}
           >
             {s.nome}
@@ -87,75 +87,78 @@ export default function ContagemPage() {
         ))}
       </div>
 
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-signal-red600">{erro}</p>}
 
-      {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
+      {carregando && <p className="text-sm text-steel-400">Carregando...</p>}
 
       {!carregando && posicoesOcupadas.length === 0 && (
-        <p className="rounded-md bg-slate-50 p-4 text-sm text-slate-500">Nenhuma posição ocupada nesse setor.</p>
+        <p className="panel p-4 text-sm text-ink-600">Nenhuma posição ocupada nesse setor.</p>
       )}
 
       {!carregando && posicoesOcupadas.length > 0 && (
         <>
-          <p className="text-sm text-slate-500">
-            {totalContadas}/{posicoesOcupadas.length} posições contadas nessa sessão.
+          <p className="text-sm text-ink-600">
+            <span className="data-code">
+              {totalContadas}/{posicoesOcupadas.length}
+            </span>{' '}
+            posições contadas nessa sessão.
           </p>
 
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
+          <div className="panel overflow-hidden">
+            <table className="table-plate">
+              <thead>
                 <tr>
-                  <th className="px-4 py-2">Posição</th>
-                  <th className="px-4 py-2">Produto</th>
-                  <th className="px-4 py-2">Sistema</th>
-                  <th className="px-4 py-2">Contado (UN)</th>
-                  <th className="px-4 py-2"></th>
-                  <th className="px-4 py-2">Resultado</th>
+                  <th>Posição</th>
+                  <th>Produto</th>
+                  <th>Sistema</th>
+                  <th>Contado (UN)</th>
+                  <th></th>
+                  <th>Resultado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {posicoesOcupadas.map((posicao) => {
                   const resultado = resultados[posicao.id];
                   return (
                     <tr key={posicao.id}>
-                      <td className="whitespace-nowrap px-4 py-2 text-slate-600">
+                      <td className="data-code whitespace-nowrap text-ink-600">
                         {posicao.codigo}
-                        {posicao.bloqueado && <span className="ml-1 text-red-500" title={posicao.bloqueio_motivo ?? ''}>⚠</span>}
+                        {posicao.bloqueado && <span className="ml-1 text-signal-red600" title={posicao.bloqueio_motivo ?? ''}>⚠</span>}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2">
-                        <span className="font-medium text-slate-800">{posicao.produto?.nome}</span>{' '}
-                        <span className="text-slate-400">— {posicao.produto?.codigo}</span>
+                      <td className="whitespace-nowrap">
+                        <span className="font-medium text-ink-900">{posicao.produto?.nome}</span>{' '}
+                        <span className="data-code text-steel-400">— {posicao.produto?.codigo}</span>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2 text-slate-600">
+                      <td className="data-code whitespace-nowrap text-ink-600">
                         {formatarQtdCx(posicao.produto?.quantidade ?? 0, posicao.produto?.qt_por_cx ?? null)}
                       </td>
-                      <td className="px-4 py-2">
+                      <td>
                         <input
                           type="number"
                           min={0}
                           value={quantidades[posicao.id] ?? ''}
                           onChange={(e) => setQuantidades((prev) => ({ ...prev, [posicao.id]: e.target.value }))}
                           disabled={!!resultado}
-                          className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-50 disabled:text-slate-400"
+                          className="input w-24 disabled:bg-concrete-100 disabled:text-steel-400"
                           placeholder="Qtd"
                         />
                       </td>
-                      <td className="px-4 py-2">
+                      <td>
                         <button
                           type="button"
                           onClick={() => handleContar(posicao)}
                           disabled={contando === posicao.id || !!resultado}
-                          className="rounded-md border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                          className="btn-secondary"
                         >
                           {contando === posicao.id ? 'Confirmando...' : resultado ? 'Confirmado' : 'Confirmar'}
                         </button>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2">
+                      <td className="whitespace-nowrap">
                         {resultado && (
                           resultado.divergencia === 0 ? (
-                            <span className="text-xs font-medium text-green-700">Bateu</span>
+                            <span className="text-xs font-medium text-signal-green600">Bateu</span>
                           ) : (
-                            <span className="text-xs font-medium text-amber-700">
+                            <span className="text-xs font-medium text-signal-amber600">
                               Ajustado: sistema tinha {resultado.quantidadeSistema}, diferença {resultado.divergencia > 0 ? '+' : ''}
                               {resultado.divergencia}
                             </span>

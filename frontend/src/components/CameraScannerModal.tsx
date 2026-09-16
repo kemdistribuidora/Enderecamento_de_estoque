@@ -26,15 +26,15 @@ export default function CameraScannerModal({ onDecode, onClose }: { onDecode: (c
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-sm rounded-soft border border-steel-600 bg-white p-4 shadow-lg shadow-steel-900/20" onClick={(e) => e.stopPropagation()}>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-700">Escanear com a câmera</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <h3 className="font-display text-xl font-bold text-steel-900">Escanear com a câmera</h3>
+          <button onClick={onClose} className="text-steel-400 hover:text-steel-900">
             ✕
           </button>
         </div>
-        {erro && <p className="text-sm text-red-600">{erro}</p>}
-        <video ref={videoRef} className="w-full rounded-md bg-black" muted playsInline />
+        {erro && <p className="text-sm text-signal-red600">{erro}</p>}
+        <video ref={videoRef} className="w-full rounded-tag bg-black" muted playsInline />
       </div>
     </div>
   );

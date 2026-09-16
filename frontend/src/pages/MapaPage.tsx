@@ -103,10 +103,10 @@ export default function MapaPage() {
         />
 
         {gavetaAberta && (
-          <div className="absolute z-20 mt-1 w-full max-h-80 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
-            {buscandoProdutos && <p className="p-3 text-sm text-slate-400">Buscando...</p>}
+          <div className="panel absolute z-20 mt-1 w-full max-h-80 overflow-y-auto">
+            {buscandoProdutos && <p className="p-3 text-sm text-steel-400">Buscando...</p>}
             {!buscandoProdutos && resultados.length === 0 && (
-              <p className="p-3 text-sm text-slate-400">Nenhum produto encontrado para "{termoBusca}".</p>
+              <p className="p-3 text-sm text-steel-400">Nenhum produto encontrado para "{termoBusca}".</p>
             )}
             {!buscandoProdutos &&
               resultados.map((p) => (
@@ -117,10 +117,10 @@ export default function MapaPage() {
                     e.preventDefault();
                     handleSelecionarProduto(p);
                   }}
-                  className="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 text-left text-sm last:border-0 hover:bg-slate-50"
+                  className="flex w-full items-center justify-between gap-3 border-b border-steel-100 px-3 py-2 text-left text-sm last:border-0 hover:bg-concrete-100"
                 >
-                  <span className="font-medium text-slate-800">{p.nome}</span>
-                  <span className="shrink-0 rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{p.codigo}</span>
+                  <span className="font-medium text-ink-900">{p.nome}</span>
+                  <span className="tag-neutral shrink-0">{p.codigo}</span>
                 </button>
               ))}
           </div>
@@ -153,7 +153,7 @@ export default function MapaPage() {
         />
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-steel-600/25 pb-3">
         <div className="flex flex-wrap gap-1.5">
           {setores.map((s) => (
             <button
@@ -162,10 +162,10 @@ export default function MapaPage() {
                 setSetorAtivoId(s.id);
                 setSearchParams({});
               }}
-              className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`whitespace-nowrap rounded-tag px-3 py-1.5 text-sm font-medium transition-colors ${
                 setorAtivoId === s.id
-                  ? 'bg-slate-900 text-white'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+                  ? 'bg-steel-900 text-white'
+                  : 'border border-steel-300 bg-white text-ink-600 hover:bg-concrete-200'
               }`}
             >
               {s.nome}
@@ -173,19 +173,19 @@ export default function MapaPage() {
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-          <Legenda cor="border-slate-200 bg-slate-100" texto="Livre" />
-          <Legenda cor="border-blue-300 bg-blue-100" texto="Ocupado" />
-          <Legenda cor="border-amber-300 bg-amber-100" texto="Vence em breve" />
-          <Legenda cor="border-red-300 bg-red-100" texto="Emergência" />
-          <Legenda cor="border-dashed border-amber-300 bg-amber-50" texto="Corredor" />
-          <Legenda cor="border-dashed border-green-400 bg-green-200" texto="Produto buscado" />
-          <Legenda cor="border-green-400 bg-green-200" texto="Selecionado" />
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-600">
+          <Legenda cor="border-steel-300 bg-white" texto="Livre" />
+          <Legenda cor="border-steel-600 bg-concrete-200" texto="Ocupado" />
+          <Legenda cor="border-signal-amber600 bg-signal-amber100" texto="Vence em breve" />
+          <Legenda cor="border-signal-red600 bg-signal-red100" texto="Emergência" />
+          <Legenda cor="border-dashed border-signal-amber600 bg-signal-amber100" texto="Corredor" />
+          <Legenda cor="border-dashed border-signal-green600 bg-signal-green100" texto="Produto buscado" />
+          <Legenda cor="border-signal-green600 bg-signal-green100" texto="Selecionado" />
         </div>
       </div>
 
       {carregando || !mapa ? (
-        <p className="text-sm text-slate-400">Carregando mapa...</p>
+        <p className="text-sm text-steel-400">Carregando mapa...</p>
       ) : (
         <MapaSetorView mapa={mapa} onSelect={setSelecionado} enderecoDestacadoId={enderecoDestacadoId} idsCandidatos={idsCandidatos} />
       )}
@@ -198,7 +198,7 @@ export default function MapaPage() {
 function Legenda({ cor, texto }: { cor: string; texto: string }) {
   return (
     <span className="flex items-center gap-1 whitespace-nowrap">
-      <span className={`h-3 w-3 shrink-0 rounded-sm border ${cor}`} /> {texto}
+      <span className={`h-3 w-3 shrink-0 rounded-tag border ${cor}`} /> {texto}
     </span>
   );
 }

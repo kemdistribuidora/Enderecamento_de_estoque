@@ -24,7 +24,7 @@ export default function SearchBar({ onChange, onFocus, onBlur }: Props) {
       onBlur={onBlur}
       placeholder="Buscar por código ou nome do produto..."
       autoFocus
-      className="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+      className="input w-full"
     />
   );
 }

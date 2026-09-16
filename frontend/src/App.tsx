@@ -16,12 +16,12 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-slate-800 bg-slate-900 px-3 text-slate-100">
+    <div className="flex h-screen flex-col overflow-hidden bg-concrete-100">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b-4 border-rust-600 bg-steel-900 px-4 text-concrete-100">
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
-          className="rounded-md p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white"
+          className="rounded-tag p-1.5 text-steel-300 hover:bg-steel-700 hover:text-white"
           title={collapsed ? 'Expandir menu' : 'Recolher menu'}
         >
           <svg
@@ -36,7 +36,9 @@ export default function App() {
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <span className="whitespace-nowrap text-sm font-semibold tracking-wide">Endereçamento de Estoque</span>
+        <span className="whitespace-nowrap font-display text-xl font-bold">
+          Endereçamento de Estoque
+        </span>
         <div className="ml-auto">
           <AlertaBell />
         </div>

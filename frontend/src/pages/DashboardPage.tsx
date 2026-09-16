@@ -43,25 +43,21 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="text-lg font-semibold text-slate-800">Dashboard</h1>
+      <div className="flex items-start justify-between gap-4 border-b-2 border-steel-600/25 pb-4">
+        <h1 className="page-title">Dashboard</h1>
         {kpis && (
-          <button
-            type="button"
-            onClick={handleExportar}
-            className="shrink-0 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
+          <button type="button" onClick={handleExportar} className="btn-secondary shrink-0">
             Exportar CSV
           </button>
         )}
       </div>
 
-      {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
+      {carregando && <p className="text-sm text-steel-400">Carregando...</p>}
 
       {kpis && (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:grid-cols-4">
-            <Tile
+          <div className="grid grid-cols-12 gap-4">
+            <HeroTile
               titulo="Acurácia de estoque"
               valor={
                 kpis.acuracia_estoque.status === 'ok'
@@ -73,51 +69,51 @@ export default function DashboardPage() {
                   ? `${kpis.acuracia_estoque.total_produtos - kpis.acuracia_estoque.produtos_com_divergencia}/${kpis.acuracia_estoque.total_produtos} produtos sem divergência`
                   : 'Importe o saldo do Winthor'
               }
-              cor="blue"
             />
-            <Tile
-              titulo="Giro médio"
-              valor={kpis.giro_medio.status === 'ok' ? kpis.giro_medio.valor!.toFixed(1) : 'Sem dados'}
-              legenda={
-                kpis.giro_medio.status === 'ok'
-                  ? `${kpis.giro_medio.produtos_com_giro} produtos com saída`
-                  : 'Nenhuma saída registrada'
-              }
-              cor="slate"
-            />
-            <Tile
-              titulo="Emergência"
-              valor={String(kpis.vencimento.emergencias)}
-              legenda="vence em até 15 dias"
-              cor="red"
-            />
-            <Tile
-              titulo="Vencendo em breve"
-              valor={String(kpis.vencimento.proximos)}
-              legenda="vence em até 35 dias"
-              cor="amber"
-            />
+            <div className="col-span-12 grid grid-cols-3 gap-4 md:col-span-7">
+              <Tile
+                titulo="Giro médio"
+                valor={kpis.giro_medio.status === 'ok' ? kpis.giro_medio.valor!.toFixed(1) : 'Sem dados'}
+                legenda={
+                  kpis.giro_medio.status === 'ok'
+                    ? `${kpis.giro_medio.produtos_com_giro} produtos com saída`
+                    : 'Nenhuma saída registrada'
+                }
+                cor="neutral"
+              />
+              <Tile
+                titulo="Emergência"
+                valor={String(kpis.vencimento.emergencias)}
+                legenda="vence em até 15 dias"
+                cor="red"
+              />
+              <Tile
+                titulo="Vencendo em breve"
+                valor={String(kpis.vencimento.proximos)}
+                legenda="vence em até 35 dias"
+                cor="amber"
+              />
+            </div>
           </div>
 
           <div>
-            <h2 className="mb-2 text-base font-semibold text-slate-800">Ocupação por setor</h2>
-            <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+            <h2 className="mb-2 font-display text-lg font-bold text-steel-900">
+              Ocupação por setor
+            </h2>
+            <div className="panel space-y-3 p-4">
               {kpis.ocupacao_por_setor.length === 0 && (
-                <p className="text-sm text-slate-500">Nenhum setor cadastrado.</p>
+                <p className="text-sm text-ink-600">Nenhum setor cadastrado.</p>
               )}
               {kpis.ocupacao_por_setor.map((s) => (
                 <div key={s.setor_id}>
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-700">{s.setor_nome}</span>
-                    <span className="text-slate-500">
+                    <span className="font-medium text-ink-900">{s.setor_nome}</span>
+                    <span className="data-code text-ink-600">
                       {s.percentual === null ? 'Sem posições cadastradas' : `${s.ocupados}/${s.total_enderecos} (${s.percentual.toFixed(0)}%)`}
                     </span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100">
-                    <div
-                      className="h-2 rounded-full bg-blue-500"
-                      style={{ width: `${s.percentual ?? 0}%` }}
-                    />
+                  <div className="h-2 w-full rounded-tag bg-concrete-200">
+                    <div className="h-2 rounded-tag bg-rust-600" style={{ width: `${s.percentual ?? 0}%` }} />
                   </div>
                 </div>
               ))}
@@ -125,6 +121,18 @@ export default function DashboardPage() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function HeroTile({ titulo, valor, legenda }: { titulo: string; valor: string; legenda: string }) {
+  return (
+    <div className="col-span-12 flex flex-col justify-center bg-steel-900 p-6 text-white md:col-span-5">
+      <p className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-steel-300">{titulo}</p>
+      <p className="mt-1 font-display text-6xl font-bold text-white">{valor}</p>
+      <p className="mt-2 text-sm text-steel-300" title={legenda}>
+        {legenda}
+      </p>
     </div>
   );
 }
@@ -138,19 +146,18 @@ function Tile({
   titulo: string;
   valor: string;
   legenda: string;
-  cor: 'blue' | 'slate' | 'red' | 'amber';
+  cor: 'neutral' | 'red' | 'amber';
 }) {
   const cores: Record<typeof cor, string> = {
-    blue: 'text-blue-700',
-    slate: 'text-slate-700',
-    red: 'text-red-700',
-    amber: 'text-amber-700',
+    neutral: 'text-steel-700',
+    red: 'text-signal-red600',
+    amber: 'text-signal-amber600',
   };
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <p className="whitespace-nowrap text-xs font-medium uppercase text-slate-500">{titulo}</p>
-      <p className={`mt-1 text-2xl font-semibold ${cores[cor]}`}>{valor}</p>
-      <p className="mt-1 truncate text-xs text-slate-400" title={legenda}>
+    <div className="panel flex flex-col p-4">
+      <p className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-600">{titulo}</p>
+      <p className={`mt-1 font-display text-3xl font-bold ${cores[cor]}`}>{valor}</p>
+      <p className="mt-1 truncate text-xs text-steel-400" title={legenda}>
         {legenda}
       </p>
     </div>

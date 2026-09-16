@@ -44,7 +44,7 @@ export default function AlertaBell() {
           setAberto((v) => !v);
           carregar();
         }}
-        className="relative rounded-md p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white"
+        className="relative rounded-tag p-1.5 text-steel-300 hover:bg-steel-700 hover:text-white"
         title="Alertas"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -52,7 +52,7 @@ export default function AlertaBell() {
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {total > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium leading-none text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-signal-red600 px-1 text-[10px] font-medium leading-none text-white">
             {total}
           </span>
         )}
@@ -61,9 +61,9 @@ export default function AlertaBell() {
       {aberto && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setAberto(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-72 rounded-md border border-slate-200 bg-white py-1 text-sm shadow-lg">
-            {!contagens && <p className="px-3 py-2 text-slate-400">Carregando...</p>}
-            {contagens && total === 0 && <p className="px-3 py-2 text-slate-500">Sem alertas no momento.</p>}
+          <div className="panel absolute right-0 z-20 mt-2 w-72 py-1 text-sm">
+            {!contagens && <p className="px-3 py-2 text-steel-400">Carregando...</p>}
+            {contagens && total === 0 && <p className="px-3 py-2 text-ink-600">Sem alertas no momento.</p>}
             {contagens && contagens.emergencias > 0 && (
               <ItemAlerta
                 texto={`${contagens.emergencias} produto(s) em emergência de vencimento`}
@@ -91,7 +91,7 @@ function ItemAlerta({ texto, onClick }: { texto: string; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="block w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50"
+      className="block w-full px-3 py-2 text-left text-ink-900 hover:bg-concrete-100"
     >
       {texto}
     </button>

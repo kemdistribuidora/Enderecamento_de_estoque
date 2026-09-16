@@ -29,18 +29,18 @@ function CelulaPosicao({
 
   const corOcupado =
     statusValidade === 'emergencia'
-      ? 'border-red-300 bg-red-100 text-red-800 hover:bg-red-200'
+      ? 'border-signal-red600 bg-signal-red100 text-signal-red600'
       : statusValidade === 'proximo'
-        ? 'border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200'
-        : 'border-blue-300 bg-blue-100 text-blue-800 hover:bg-blue-200';
+        ? 'border-signal-amber600 bg-signal-amber100 text-signal-amber600'
+        : 'border-steel-600 bg-concrete-200 text-ink-900';
 
   const corCandidato = destacado
-    ? 'border-green-400 bg-green-200 text-green-800 ring-2 ring-green-500 hover:bg-green-300'
+    ? 'border-signal-green600 bg-signal-green100 text-signal-green600 ring-2 ring-signal-green600'
     : candidato
-      ? `border-green-400 bg-green-200 text-green-800 hover:bg-green-300 ${candidatoPontilhado ? 'border-dashed' : ''}`
+      ? `border-signal-green600 bg-signal-green100 text-signal-green600 ${candidatoPontilhado ? 'border-dashed' : ''}`
       : ocupado
         ? corOcupado
-        : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200';
+        : 'border-steel-300 bg-white text-steel-400';
 
   const tituloBase = ocupado
     ? `${posicao.codigo} — ${posicao.produto?.nome} · ${formatarQtdCx(
@@ -59,13 +59,13 @@ function CelulaPosicao({
     <button
       onClick={() => onClick(posicao)}
       title={posicao.bloqueado ? `${tituloBase} — ⚠ ${posicao.bloqueio_motivo}` : tituloBase}
-      className={`relative flex aspect-square min-w-0 items-center justify-center rounded-md border font-medium transition-transform hover:z-10 hover:scale-110 ${
+      className={`relative flex aspect-square min-w-0 items-center justify-center rounded-tag border-2 font-medium transition-transform hover:z-10 hover:scale-110 hover:opacity-90 ${
         grande ? 'text-base' : 'text-xs'
       } ${corCandidato}`}
     >
       {posicao.posicao}
       {posicao.bloqueado && (
-        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] leading-none text-white">
+        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-signal-red600 text-[9px] leading-none text-white">
           !
         </span>
       )}
@@ -98,24 +98,24 @@ function BlocoPrateleira({
   const colunas = Math.max(...andares.map((andar) => posicoes.filter((p) => p.andar === andar).length));
 
   return (
-    <div className="relative rounded-lg border border-slate-300 bg-white p-3">
+    <div className="relative panel p-3">
       {onExpandir && (
         <button
           onClick={onExpandir}
           title="Ampliar prateleira"
-          className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-sm border border-slate-200 bg-slate-50 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-tag border-2 border-steel-300 bg-concrete-100 text-xs text-ink-600 hover:bg-concrete-200 hover:text-ink-900"
         >
           ⤢
         </button>
       )}
-      <div className="mb-2 text-center text-xs font-semibold text-slate-600">
+      <div className="data-code mb-2 text-center text-xs font-semibold text-ink-600">
         {letraDono}
         {ladoDono}
       </div>
       <div className={grande ? 'space-y-3' : 'space-y-1.5'}>
         {andares.map((andar) => (
           <div key={andar} className="flex items-center gap-2">
-            <span className={`shrink-0 text-center text-slate-400 ${grande ? 'w-5 text-sm' : 'w-4 text-[10px]'}`}>
+            <span className={`data-code shrink-0 text-center text-steel-400 ${grande ? 'w-5 text-sm' : 'w-4 text-[10px]'}`}>
               {andar}
             </span>
             <div
@@ -162,15 +162,15 @@ function ModalPrateleiraExpandida({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="flex h-[92vh] w-[95vw] flex-col rounded-xl bg-white p-6 shadow-xl"
+        className="panel flex h-[92vh] w-[95vw] flex-col p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex shrink-0 items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-700">
+          <h3 className="font-display text-lg font-bold text-steel-900">
             Prateleira {prateleira.dono.letra}
             {prateleira.dono.lado}
           </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <button onClick={onClose} className="text-steel-400 hover:text-ink-900">
             ✕
           </button>
         </div>
@@ -195,8 +195,8 @@ function ModalPrateleiraExpandida({
 
 function FaixaCorredor({ letra }: { letra: string }) {
   return (
-    <div className="flex h-8 items-center justify-center rounded-md border border-dashed border-amber-300 bg-amber-50">
-      <span className="text-[10px] font-semibold tracking-wide text-amber-700">Corredor {letra}</span>
+    <div className="flex h-8 items-center justify-center rounded-tag border-2 border-dashed border-signal-amber600 bg-signal-amber100">
+      <span className="text-[10px] font-semibold tracking-wide text-signal-amber600">Corredor {letra}</span>
     </div>
   );
 }
@@ -210,10 +210,10 @@ export default function MapaSetorView({ mapa, onSelect, enderecoDestacadoId, ids
   const candidatoPontilhado = enderecoDestacadoId != null;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+    <div className="panel p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700">{mapa.setor.nome}</h3>
-        <span className="text-xs text-slate-500">
+        <h3 className="font-display text-sm font-bold text-steel-900">{mapa.setor.nome}</h3>
+        <span className="data-code text-xs text-ink-600">
           {ocupados}/{todasPosicoes.length} posições ocupadas
         </span>
       </div>

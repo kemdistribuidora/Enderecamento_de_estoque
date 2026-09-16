@@ -159,13 +159,15 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="max-w-5xl">
-      <h1 className="mb-4 text-lg font-semibold text-slate-800">Cadastro de produto / entrada em estoque</h1>
+    <div className="max-w-5xl space-y-5">
+      <div className="border-b-2 border-steel-600/25 pb-4">
+        <h1 className="page-title">Cadastro de produto / entrada em estoque</h1>
+      </div>
 
-      <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 bg-white p-5">
+      <form onSubmit={handleSubmit} className="panel p-5">
         <div className="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
         <fieldset className="space-y-3">
-          <legend className="mb-1 text-sm font-medium text-slate-600">Dados do produto</legend>
+          <legend className="mb-1 font-display text-lg font-bold text-steel-900">Dados do produto</legend>
 
           {!produtoSelecionado && (
             <Campo label="Buscar produto existente (código ou nome)">
@@ -177,16 +179,16 @@ export default function CadastroPage() {
                   placeholder="Digite código ou nome para localizar produto já cadastrado..."
                 />
                 {sugestoes.length > 0 && (
-                  <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                  <ul className="panel absolute z-10 mt-1 max-h-56 w-full overflow-auto">
                     {sugestoes.map((p) => (
                       <li key={p.id}>
                         <button
                           type="button"
                           onClick={() => selecionarProduto(p)}
-                          className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                          className="block w-full px-3 py-2 text-left text-sm hover:bg-concrete-200"
                         >
-                          <span className="font-medium text-slate-800">{p.nome}</span>{' '}
-                          <span className="text-slate-400">— {p.codigo}</span>
+                          <span className="font-medium text-ink-900">{p.nome}</span>{' '}
+                          <span className="text-steel-400">— {p.codigo}</span>
                         </button>
                       </li>
                     ))}
@@ -197,7 +199,7 @@ export default function CadastroPage() {
           )}
 
           {produtoSelecionado && (
-            <p className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            <p className="rounded-tag bg-rust-100 px-3 py-2 text-sm text-rust-700">
               Produto existente selecionado — código de barras herdado automaticamente.{' '}
               <button type="button" onClick={limparSelecao} className="font-medium underline">
                 Cadastrar produto novo
@@ -211,7 +213,7 @@ export default function CadastroPage() {
               readOnly={!!produtoSelecionado}
               value={form.codigo}
               onChange={(e) => atualizarCampo('codigo', e.target.value)}
-              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
+              className={`input ${produtoSelecionado ? 'bg-concrete-100 text-ink-600' : ''}`}
               placeholder="PRD0031"
             />
           </Campo>
@@ -222,7 +224,7 @@ export default function CadastroPage() {
               readOnly={!!produtoSelecionado}
               value={form.nome}
               onChange={(e) => atualizarCampo('nome', e.target.value)}
-              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
+              className={`input ${produtoSelecionado ? 'bg-concrete-100 text-ink-600' : ''}`}
               placeholder="Arroz Branco 5kg"
             />
           </Campo>
@@ -233,7 +235,7 @@ export default function CadastroPage() {
               readOnly={!!produtoSelecionado}
               value={form.codigo_barras}
               onChange={(e) => atualizarCampo('codigo_barras', e.target.value)}
-              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
+              className={`input ${produtoSelecionado ? 'bg-concrete-100 text-ink-600' : ''}`}
               placeholder="7890000000001"
             />
           </Campo>
@@ -246,7 +248,7 @@ export default function CadastroPage() {
               readOnly={!!produtoSelecionado}
               value={form.peso_caixa}
               onChange={(e) => atualizarCampo('peso_caixa', e.target.value)}
-              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
+              className={`input ${produtoSelecionado ? 'bg-concrete-100 text-ink-600' : ''}`}
               placeholder="12.5"
             />
           </Campo>
@@ -258,14 +260,14 @@ export default function CadastroPage() {
               readOnly={!!produtoSelecionado}
               value={form.qt_por_cx}
               onChange={(e) => atualizarCampo('qt_por_cx', e.target.value)}
-              className={`input ${produtoSelecionado ? 'bg-slate-50 text-slate-500' : ''}`}
+              className={`input ${produtoSelecionado ? 'bg-concrete-100 text-ink-600' : ''}`}
               placeholder="6"
             />
           </Campo>
         </fieldset>
 
-        <fieldset className="space-y-3 border-t border-slate-100 pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-8">
-          <legend className="mb-1 text-sm font-medium text-slate-600">Entrada em estoque</legend>
+        <fieldset className="space-y-3 border-t border-steel-100 pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-8">
+          <legend className="mb-1 font-display text-lg font-bold text-steel-900">Entrada em estoque</legend>
 
           <Campo label="Validade do lote">
             <input
@@ -311,7 +313,7 @@ export default function CadastroPage() {
               <button
                 type="button"
                 onClick={() => setMapaAberto(true)}
-                className="shrink-0 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                className="btn-secondary shrink-0"
               >
                 Escolher no mapa
               </button>
@@ -328,7 +330,7 @@ export default function CadastroPage() {
               className="input"
             />
             {form.quantidade.trim() && (
-              <span className="mt-1 block text-xs text-slate-400">
+              <span className="mt-1 block text-xs text-steel-400">
                 ={' '}
                 {formatarQtdCx(
                   Number(form.quantidade),
@@ -340,11 +342,11 @@ export default function CadastroPage() {
         </fieldset>
         </div>
 
-        <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
+        <div className="mt-4 space-y-4 border-t border-steel-100 pt-4">
           {status && (
             <p
               className={`text-sm ${
-                status.tipo === 'sucesso' ? 'text-green-700' : status.tipo === 'info' ? 'text-blue-700' : 'text-red-600'
+                status.tipo === 'sucesso' ? 'text-signal-green600' : status.tipo === 'info' ? 'text-rust-600' : 'text-signal-red600'
               }`}
             >
               {status.texto}
@@ -355,7 +357,7 @@ export default function CadastroPage() {
             <button
               type="button"
               onClick={() => setEtiquetaAberta(true)}
-              className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="btn-secondary w-full"
             >
               Imprimir etiqueta desse pallet
             </button>
@@ -364,7 +366,7 @@ export default function CadastroPage() {
           <button
             type="submit"
             disabled={salvando}
-            className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className="btn-primary w-full"
           >
             {salvando ? 'Salvando...' : 'Salvar'}
           </button>
@@ -391,7 +393,7 @@ export default function CadastroPage() {
 function Campo({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block font-medium text-slate-600">{label}</span>
+      <span className="mb-1 block font-medium text-ink-600">{label}</span>
       {children}
     </label>
   );

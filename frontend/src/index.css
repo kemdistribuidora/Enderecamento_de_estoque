@@ -2,8 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply bg-concrete-100 font-sans text-ink-900;
+  }
+}
+
 @layer components {
   .input {
-    @apply w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500;
+    @apply w-full rounded-soft border border-steel-300 bg-white px-3 py-2 text-sm text-ink-900 focus:border-rust-600 focus:outline-none;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-soft bg-rust-600 px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-rust-700 disabled:cursor-not-allowed disabled:bg-steel-300;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-soft border border-steel-600 bg-white px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-steel-700 transition-colors hover:bg-concrete-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .panel {
+    @apply rounded-soft border border-steel-600/30 bg-white shadow-sm shadow-steel-900/10;
+  }
+
+  .page-title {
+    @apply font-display text-3xl font-bold text-steel-900;
+  }
+
+  .table-plate {
+    @apply w-full text-sm;
+  }
+  .table-plate thead {
+    @apply bg-steel-900 text-left text-xs font-semibold uppercase tracking-wide text-concrete-100;
+  }
+  .table-plate th {
+    @apply px-4 py-3;
+  }
+  .table-plate tbody {
+    @apply divide-y divide-steel-100;
+  }
+  .table-plate td {
+    @apply px-4 py-3;
+  }
+  .table-plate tbody tr {
+    @apply transition-colors hover:bg-concrete-50;
+  }
+
+  .tag {
+    @apply inline-flex items-center rounded-tag border px-2 py-0.5 font-mono text-xs font-semibold;
+  }
+  .tag-green {
+    @apply tag border-signal-green600/30 bg-signal-green100 text-signal-green600;
+  }
+  .tag-amber {
+    @apply tag border-signal-amber600/30 bg-signal-amber100 text-signal-amber600;
+  }
+  .tag-red {
+    @apply tag border-signal-red600/30 bg-signal-red100 text-signal-red600;
+  }
+  .tag-neutral {
+    @apply tag border-steel-600/25 bg-concrete-200 text-steel-700;
+  }
+
+  .data-code {
+    @apply font-mono;
   }
 }

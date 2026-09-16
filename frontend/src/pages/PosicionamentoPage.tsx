@@ -47,15 +47,15 @@ export default function PosicionamentoPage() {
 
   return (
     <div className="max-w-5xl space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-800">Posicionar estoque</h1>
-        <p className="mt-1 text-sm text-slate-500">Saldo importado do Winthor ainda pendente de posição física.</p>
+      <div className="border-b-2 border-steel-600/25 pb-4">
+        <h1 className="page-title">Posicionar estoque</h1>
+        <p className="mt-1 text-sm text-ink-600">Saldo importado do Winthor ainda pendente de posição física.</p>
       </div>
 
-      {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
+      {carregando && <p className="text-sm text-steel-400">Carregando...</p>}
 
       {!carregando && pendencias.length === 0 && (
-        <p className="rounded-md bg-slate-50 p-4 text-sm text-slate-500">Nenhuma pendência de posicionamento.</p>
+        <p className="rounded-tag bg-concrete-100 p-4 text-sm text-ink-600">Nenhuma pendência de posicionamento.</p>
       )}
 
       {pendencias.length > 0 && (
@@ -69,12 +69,12 @@ export default function PosicionamentoPage() {
       )}
 
       {pendencias.length > 0 && pendenciasFiltradas.length === 0 && (
-        <p className="rounded-md bg-slate-50 p-4 text-sm text-slate-500">Nenhum produto encontrado para "{busca}".</p>
+        <p className="rounded-tag bg-concrete-100 p-4 text-sm text-ink-600">Nenhum produto encontrado para "{busca}".</p>
       )}
 
       {pendenciasFiltradas.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="w-full table-fixed text-sm">
+        <div className="panel overflow-x-auto">
+          <table className="table-plate table-fixed">
             <colgroup>
               <col />
               <col className="w-32" />
@@ -83,29 +83,29 @@ export default function PosicionamentoPage() {
               <col className="w-28" />
               <col className="w-28" />
             </colgroup>
-            <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
+            <thead>
               <tr>
-                <th className="px-4 py-2">Produto</th>
-                <th className="px-4 py-2">Saldo</th>
-                <th className="px-4 py-2">Alocado</th>
-                <th className="px-4 py-2">Pendente</th>
-                <th className="px-4 py-2">Peso cx (kg)</th>
-                <th className="px-4 py-2"></th>
+                <th>Produto</th>
+                <th>Saldo</th>
+                <th>Alocado</th>
+                <th>Pendente</th>
+                <th>Peso cx (kg)</th>
+                <th></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {pendenciasFiltradas.map((p) => (
                 <tr key={p.produto_id}>
-                  <td className="truncate px-4 py-2" title={`${p.nome} ${p.codigo}`}>
-                    <span className="font-medium text-slate-800">{p.nome}</span>{' '}
-                    <span className="text-slate-400"> ({p.codigo})</span>
+                  <td className="truncate" title={`${p.nome} ${p.codigo}`}>
+                    <span className="font-medium text-ink-900">{p.nome}</span>{' '}
+                    <span className="text-steel-400"> ({p.codigo})</span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-2">{formatarQtdCx(p.saldo_total, p.qt_por_cx)}</td>
-                  <td className="whitespace-nowrap px-4 py-2">{formatarQtdCx(p.alocado_total, p.qt_por_cx)}</td>
-                  <td className="whitespace-nowrap px-4 py-2 font-medium text-amber-700">
+                  <td className="data-code whitespace-nowrap">{formatarQtdCx(p.saldo_total, p.qt_por_cx)}</td>
+                  <td className="data-code whitespace-nowrap">{formatarQtdCx(p.alocado_total, p.qt_por_cx)}</td>
+                  <td className="data-code whitespace-nowrap font-medium text-signal-amber600">
                     {formatarQtdCx(p.pendente, p.qt_por_cx)}
                   </td>
-                  <td className="px-4 py-2">
+                  <td>
                     <PesoCaixaInput
                       pendencia={p}
                       onSalvo={(pesoCaixa) =>
@@ -115,11 +115,11 @@ export default function PosicionamentoPage() {
                       }
                     />
                   </td>
-                  <td className="whitespace-nowrap px-4 py-2">
+                  <td className="whitespace-nowrap">
                     <button
                       type="button"
                       onClick={() => setEmEdicao(p)}
-                      className="rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                      className="btn-primary"
                     >
                       Posicionar
                     </button>
@@ -131,35 +131,35 @@ export default function PosicionamentoPage() {
         </div>
       )}
 
-      <div className="border-t border-slate-200 pt-4">
-        <h2 className="text-base font-semibold text-slate-800">Possível saída não registrada</h2>
-        <p className="mt-1 text-sm text-slate-500">Estoque físico maior que o saldo do Winthor. Apenas alerta.</p>
+      <div className="border-t-2 border-steel-600/25 pt-4">
+        <h2 className="font-display text-lg font-bold text-steel-900">Possível saída não registrada</h2>
+        <p className="mt-1 text-sm text-ink-600">Estoque físico maior que o saldo do Winthor. Apenas alerta.</p>
 
         {!carregando && sobras.length === 0 && (
-          <p className="mt-3 rounded-md bg-slate-50 p-4 text-sm text-slate-500">Nenhuma divergência desse tipo.</p>
+          <p className="mt-3 rounded-tag bg-concrete-100 p-4 text-sm text-ink-600">Nenhuma divergência desse tipo.</p>
         )}
 
         {sobras.length > 0 && (
-          <div className="mt-3 overflow-hidden rounded-lg border border-red-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-red-50 text-left text-xs font-medium uppercase text-red-700">
+          <div className="mt-3 panel overflow-hidden border-signal-red600/30">
+            <table className="table-plate">
+              <thead className="bg-signal-red100 text-signal-red600">
                 <tr>
-                  <th className="px-4 py-2">Produto</th>
-                  <th className="px-4 py-2">Saldo Winthor</th>
-                  <th className="px-4 py-2">Alocado aqui</th>
-                  <th className="px-4 py-2">Excesso</th>
+                  <th>Produto</th>
+                  <th>Saldo Winthor</th>
+                  <th>Alocado aqui</th>
+                  <th>Excesso</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {sobras.map((s) => (
                   <tr key={s.produto_id}>
-                    <td className="whitespace-nowrap px-4 py-2">
-                      <span className="font-medium text-slate-800">{s.nome}</span>{' '}
-                      <span className="text-slate-400"> ({s.codigo})</span>
+                    <td className="whitespace-nowrap">
+                      <span className="font-medium text-ink-900">{s.nome}</span>{' '}
+                      <span className="text-steel-400"> ({s.codigo})</span>
                     </td>
-                    <td className="px-4 py-2">{formatarQtdCx(s.saldo_total, s.qt_por_cx)}</td>
-                    <td className="px-4 py-2">{formatarQtdCx(s.alocado_total, s.qt_por_cx)}</td>
-                    <td className="px-4 py-2 font-medium text-red-700">
+                    <td className="data-code">{formatarQtdCx(s.saldo_total, s.qt_por_cx)}</td>
+                    <td className="data-code">{formatarQtdCx(s.alocado_total, s.qt_por_cx)}</td>
+                    <td className="data-code font-medium text-signal-red600">
                       {formatarQtdCx(s.excesso, s.qt_por_cx)}
                     </td>
                   </tr>
@@ -291,7 +291,7 @@ function PosicionarModal({
   if (carregandoSugestao) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <p className="rounded-lg bg-white px-4 py-3 text-sm text-slate-500">Carregando sugestão de posição...</p>
+        <p className="panel bg-white px-4 py-3 text-sm text-ink-600">Carregando sugestão de posição...</p>
       </div>
     );
   }
@@ -309,17 +309,17 @@ function PosicionarModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onFechar}>
-      <div className="w-full max-w-2xl rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-base font-semibold text-slate-800">
-          {pendencia.nome} <span className="font-normal text-slate-400"> {pendencia.codigo}</span>
+      <div className="w-full max-w-2xl panel p-5" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-semibold text-ink-900">
+          {pendencia.nome} <span className="font-normal text-steel-400"> {pendencia.codigo}</span>
         </h3>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-ink-600">
           Posição escolhida: <strong>{enderecoEscolhido.codigo}</strong>
         </p>
 
         <div className="mt-3 grid grid-cols-3 gap-3">
           <label className="col-span-3 block text-sm sm:col-span-1">
-            <span className="mb-1 block font-medium text-slate-600">
+            <span className="mb-1 block font-medium text-ink-600">
               Quantidade em UN (pendente: {pendencia.pendente} = {formatarQtdCx(pendencia.pendente, pendencia.qt_por_cx)})
             </span>
             <input
@@ -332,23 +332,23 @@ function PosicionarModal({
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-slate-600">Validade do lote</span>
+            <span className="mb-1 block font-medium text-ink-600">Validade do lote</span>
             <input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} className="input" />
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-slate-600">Lote</span>
+            <span className="mb-1 block font-medium text-ink-600">Lote</span>
             <input value={lote} onChange={(e) => setLote(e.target.value)} className="input" placeholder="LOTE-0001" />
           </label>
         </div>
 
-        {erro && <p className="mt-2 text-sm text-red-600">{erro}</p>}
+        {erro && <p className="mt-2 text-sm text-signal-red600">{erro}</p>}
 
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"
             onClick={() => setEnderecoEscolhido(null)}
-            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+            className="btn-secondary"
           >
             Trocar posição
           </button>
@@ -356,7 +356,7 @@ function PosicionarModal({
             type="button"
             onClick={handleConfirmar}
             disabled={salvando}
-            className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className="btn-primary"
           >
             {salvando ? 'Salvando...' : 'Confirmar'}
           </button>

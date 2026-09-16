@@ -74,15 +74,15 @@ export default function ImportacaoPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-800">Importar dados do Winthor</h1>
-        <p className="mt-1 text-sm text-slate-500">Arquivos exportados pela rotina D860, sem precisar abrir no Excel.</p>
+      <div className="border-b-2 border-steel-600/25 pb-4">
+        <h1 className="page-title">Importar dados do Winthor</h1>
+        <p className="mt-1 text-sm text-ink-600">Arquivos exportados pela rotina D860, sem precisar abrir no Excel.</p>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="font-medium text-slate-800">Produtos + saldo</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Arquivo unico: <code>codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo</code> (qt_por_cx e os ultimos 3
+      <div className="panel p-5">
+        <h2 className="font-display text-lg font-bold text-steel-900">Produtos + saldo</h2>
+        <p className="mt-1 text-sm text-ink-600">
+          Arquivo unico: <code className="data-code">codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo</code> (qt_por_cx e os ultimos 3
           vazios se nao se aplicar).
         </p>
 
@@ -94,20 +94,20 @@ export default function ImportacaoPage() {
           type="button"
           onClick={handleImportar}
           disabled={!arquivo || enviando}
-          className="mt-3 rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          className="mt-3 btn-primary"
         >
           {enviando ? 'Importando...' : 'Importar'}
         </button>
 
-        {erro && <p className="mt-3 text-sm text-red-600">{erro}</p>}
+        {erro && <p className="mt-3 text-sm text-signal-red600">{erro}</p>}
 
         {resultado && (
-          <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm">
-            <p className="text-green-700">{resultado.ok} registro(s) gravado(s).</p>
+          <div className="mt-3 rounded-tag bg-concrete-100 p-3 text-sm">
+            <p className="text-signal-green600">{resultado.ok} registro(s) gravado(s).</p>
             {resultado.falhas > 0 && (
               <details className="mt-2">
-                <summary className="cursor-pointer text-amber-700">{resultado.falhas} linha(s) ignorada(s) — ver detalhes</summary>
-                <ul className="mt-2 max-h-40 space-y-1 overflow-auto text-xs text-slate-500">
+                <summary className="cursor-pointer text-signal-amber600">{resultado.falhas} linha(s) ignorada(s) — ver detalhes</summary>
+                <ul className="mt-2 max-h-40 space-y-1 overflow-auto text-xs text-ink-600">
                   {resultado.avisos.map((aviso, i) => (
                     <li key={i}>{aviso}</li>
                   ))}
@@ -115,7 +115,7 @@ export default function ImportacaoPage() {
               </details>
             )}
             {resultado.produtosComSaldo.length > 0 && (
-              <p className="mt-2 text-blue-700">
+              <p className="mt-2 text-rust-600">
                 {resultado.produtosComSaldo.length} produto(s) vieram com saldo {'>'} 0.{' '}
                 <Link to="/posicionamento" className="font-medium underline">
                   Ir para posicionamento
@@ -140,14 +140,16 @@ function CampoArquivo({
 }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block font-medium text-slate-600">{label}</span>
-      <input
-        type="file"
-        accept=".csv,text/csv,text/plain"
-        onChange={(e) => onSelecionar(e.target.files?.[0] ?? null)}
-        className="text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
-      />
-      {arquivo && <span className="ml-2 text-xs text-slate-400">{arquivo.name}</span>}
+      <span className="mb-1 block font-medium text-ink-600">{label}</span>
+      <div className="flex items-center gap-2 border-2 border-dashed border-steel-400 bg-white p-3 hover:border-rust-600 hover:bg-rust-100/30">
+        <input
+          type="file"
+          accept=".csv,text/csv,text/plain"
+          onChange={(e) => onSelecionar(e.target.files?.[0] ?? null)}
+          className="text-sm text-ink-600 file:mr-3 file:rounded-tag file:border-0 file:bg-steel-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-steel-700 hover:file:bg-concrete-200"
+        />
+        {arquivo && <span className="text-xs text-steel-400">{arquivo.name}</span>}
+      </div>
     </label>
   );
 }

@@ -43,7 +43,7 @@ export default function ScannerInput({ onScan, placeholder, autoFocus = true }: 
         type="button"
         onClick={() => setCamaraAberta(true)}
         title="Escanear com a câmera"
-        className="shrink-0 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+        className="shrink-0 rounded-tag border-2 border-steel-300 bg-white px-3 py-2 text-sm text-steel-700 hover:bg-concrete-200"
       >
         📷
       </button>

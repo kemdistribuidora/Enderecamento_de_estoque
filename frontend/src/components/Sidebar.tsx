@@ -88,8 +88,10 @@ const groups: NavGroup[] = [
 ];
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `block whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-    isActive ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+  `block whitespace-nowrap rounded-tag border-l-4 px-3 py-1.5 text-sm font-medium transition-colors ${
+    isActive
+      ? 'border-rust-600 bg-steel-700 text-white'
+      : 'border-transparent text-steel-300 hover:border-steel-500 hover:bg-steel-700 hover:text-white'
   }`;
 
 type SidebarProps = {
@@ -112,7 +114,7 @@ export default function Sidebar({ collapsed, onExpand }: SidebarProps) {
 
   return (
     <aside
-      className={`h-full shrink-0 overflow-y-auto border-r border-slate-800 bg-slate-900 transition-all ${
+      className={`h-full shrink-0 overflow-y-auto border-r-2 border-steel-700 bg-steel-900 transition-all ${
         collapsed ? 'w-14' : 'w-56'
       }`}
     >
@@ -124,7 +126,7 @@ export default function Sidebar({ collapsed, onExpand }: SidebarProps) {
                 type="button"
                 onClick={() => openFromCollapsed(group.label)}
                 title={group.label}
-                className="flex w-full items-center justify-center rounded-md py-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+                className="flex w-full items-center justify-center rounded-tag py-2 text-steel-400 hover:bg-steel-700 hover:text-white"
               >
                 {group.icon}
               </button>
@@ -133,7 +135,7 @@ export default function Sidebar({ collapsed, onExpand }: SidebarProps) {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.label)}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-200"
+                  className="flex w-full items-center gap-2 rounded-tag px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-steel-400 hover:text-steel-100"
                 >
                   {group.icon}
                   <span className="flex-1 whitespace-nowrap text-left">{group.label}</span>

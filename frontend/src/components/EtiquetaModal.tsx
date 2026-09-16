@@ -57,19 +57,21 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="etiqueta-fora-impressao flex max-h-[92vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl"
+        className="etiqueta-fora-impressao flex max-h-[92vh] w-full max-w-2xl flex-col rounded-soft border border-steel-600 bg-white shadow-lg shadow-steel-900/20"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-          <h2 className="text-lg font-semibold text-slate-800">Etiqueta — {dados.enderecoCodigo}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+        <div className="flex items-center justify-between border-b-2 border-steel-600/25 px-5 py-3">
+          <h2 className="font-display text-xl font-bold text-steel-900">
+            Etiqueta — <span className="data-code">{dados.enderecoCodigo}</span>
+          </h2>
+          <button onClick={onClose} className="text-steel-400 hover:text-steel-900">
             ✕
           </button>
         </div>
 
         <div className="overflow-auto p-5">
           <label className="mb-3 block text-sm">
-            <span className="mb-1 block font-medium text-slate-600">Observação (opcional, entra na etiqueta)</span>
+            <span className="mb-1 block font-medium text-ink-600">Observação (opcional, entra na etiqueta)</span>
             <input
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
@@ -78,9 +80,9 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
             />
           </label>
 
-          <p className="mb-2 text-xs text-slate-400">Pré-visualização (impressão sai em paisagem, ocupando a folha toda)</p>
+          <p className="mb-2 text-xs text-steel-400">Pré-visualização (impressão sai em paisagem, ocupando a folha toda)</p>
 
-          <div className="flex justify-center bg-slate-50 p-4">
+          <div className="flex justify-center bg-concrete-100 p-4">
             <div
               id="etiqueta-print"
               className="flex h-[382px] w-[600px] border-2 border-slate-800 bg-white text-slate-900"
@@ -123,7 +125,7 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
           <button
             type="button"
             onClick={() => window.print()}
-            className="mt-4 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="btn-primary mt-4 w-full"
           >
             Imprimir etiqueta
           </button>

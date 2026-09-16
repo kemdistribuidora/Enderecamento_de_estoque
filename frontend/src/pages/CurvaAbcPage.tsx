@@ -58,24 +58,22 @@ export default function CurvaAbcPage() {
   }
 
   return (
-    <div className="max-w-5xl space-y-4">
-      <div className="flex items-start justify-between gap-4">
+    <div className="max-w-5xl space-y-5">
+      <div className="flex items-start justify-between gap-4 border-b-2 border-steel-600/25 pb-4">
         <div>
-          <h1 className="text-lg font-semibold text-slate-800">Curva ABC (giro de estoque)</h1>
-          <p className="mt-1 text-sm text-slate-500">Ordenado por saída total. A = 80% do volume, B = 95%, C = resto.</p>
+          <h1 className="page-title">Curva ABC</h1>
+          <p className="mt-1 text-sm text-ink-600">
+            Giro de estoque ordenado por saída total. Classe A = 80% do volume, B = 95%, C = resto.
+          </p>
         </div>
         {!carregando && curva.length > 0 && (
-          <button
-            type="button"
-            onClick={handleExportar}
-            className="shrink-0 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
+          <button type="button" onClick={handleExportar} className="btn-secondary shrink-0">
             Exportar CSV
           </button>
         )}
       </div>
 
-      {carregando && <p className="text-sm text-slate-400">Carregando...</p>}
+      {carregando && <p className="text-sm text-steel-400">Carregando...</p>}
 
       {!carregando && curva.length > 0 && (
         <input
@@ -88,13 +86,13 @@ export default function CurvaAbcPage() {
       )}
 
       {!carregando && curva.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
+        <div className="panel overflow-hidden">
+          <table className="table-plate">
+            <thead>
               <tr>
-                <th className="px-4 py-2">#</th>
-                <th className="px-4 py-2">Produto</th>
-                <th className="px-4 py-2">
+                <th>#</th>
+                <th>Produto</th>
+                <th>
                   <CabecalhoOrdenavel
                     label="Total saída"
                     campo="total_saida"
@@ -102,7 +100,7 @@ export default function CurvaAbcPage() {
                     onClick={() => alternarOrdenacao('total_saida')}
                   />
                 </th>
-                <th className="px-4 py-2">
+                <th>
                   <CabecalhoOrdenavel
                     label="% Acumulado"
                     campo="percentual_acumulado"
@@ -110,29 +108,29 @@ export default function CurvaAbcPage() {
                     onClick={() => alternarOrdenacao('percentual_acumulado')}
                   />
                 </th>
-                <th className="px-4 py-2">
+                <th>
                   <FiltroClasse valor={classeFiltro} onMudar={setClasseFiltro} />
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {curvaFiltrada.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
+                  <td colSpan={5} className="py-6 text-center text-ink-600">
                     Nenhum produto encontrado para "{busca}".
                   </td>
                 </tr>
               )}
               {curvaOrdenada.map(({ item, posicao }) => (
                 <tr key={item.produto_id}>
-                  <td className="px-4 py-2 text-slate-400">{posicao}</td>
-                  <td className="whitespace-nowrap px-4 py-2">
-                    <span className="font-medium text-slate-800">{item.nome}</span>{' '}
-                    <span className="text-slate-400">— {item.codigo}</span>
+                  <td className="text-steel-400">{posicao}</td>
+                  <td className="whitespace-nowrap">
+                    <span className="font-medium text-ink-900">{item.nome}</span>{' '}
+                    <span className="data-code text-steel-400">{item.codigo}</span>
                   </td>
-                  <td className="px-4 py-2">{item.total_saida}</td>
-                  <td className="px-4 py-2">{item.percentual_acumulado.toFixed(1)}%</td>
-                  <td className="whitespace-nowrap px-4 py-2">
+                  <td className="data-code">{item.total_saida}</td>
+                  <td className="data-code">{item.percentual_acumulado.toFixed(1)}%</td>
+                  <td className="whitespace-nowrap">
                     <ClasseBadge classe={item.classe} />
                   </td>
                 </tr>
@@ -161,11 +159,11 @@ function CabecalhoOrdenavel({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 hover:text-slate-700"
+      className="inline-flex items-center gap-1 hover:text-white"
     >
       {label}
       <svg
-        className={`h-3 w-3 text-slate-400 transition-transform ${ativo && ordenacao?.direcao === 'asc' ? 'rotate-180' : ''}`}
+        className={`h-3 w-3 text-concrete-300 transition-transform ${ativo && ordenacao?.direcao === 'asc' ? 'rotate-180' : ''}`}
         viewBox="0 0 20 20"
         fill="currentColor"
         aria-hidden="true"
@@ -192,15 +190,15 @@ function FiltroClasse({
       <select
         value={valor ?? ''}
         onChange={(e) => onMudar(e.target.value ? (e.target.value as ItemCurvaAbc['classe']) : null)}
-        className="appearance-none border-none bg-transparent py-0 pl-1 pr-4 text-xs font-medium uppercase text-slate-500 focus:outline-none"
+        className="appearance-none border-none bg-transparent py-0 pl-1 pr-4 text-xs font-semibold uppercase tracking-wide text-concrete-100 focus:outline-none"
       >
-        <option value="">Classe</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
+        <option value="" className="bg-steel-900 text-white">Classe</option>
+        <option value="A" className="bg-steel-900 text-white">A</option>
+        <option value="B" className="bg-steel-900 text-white">B</option>
+        <option value="C" className="bg-steel-900 text-white">C</option>
       </select>
       <svg
-        className="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400"
+        className="pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 text-concrete-300"
         viewBox="0 0 20 20"
         fill="currentColor"
         aria-hidden="true"
@@ -217,9 +215,9 @@ function FiltroClasse({
 
 function ClasseBadge({ classe }: { classe: ItemCurvaAbc['classe'] }) {
   const estilos: Record<ItemCurvaAbc['classe'], string> = {
-    A: 'bg-green-100 text-green-700',
-    B: 'bg-amber-100 text-amber-700',
-    C: 'bg-slate-100 text-slate-600',
+    A: 'tag-green',
+    B: 'tag-amber',
+    C: 'tag-neutral',
   };
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${estilos[classe]}`}>{classe}</span>;
+  return <span className={estilos[classe]}>{classe}</span>;
 }
