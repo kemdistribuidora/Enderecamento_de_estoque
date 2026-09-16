@@ -69,6 +69,7 @@ const groups: NavGroup[] = [
       { to: '/posicionamento', label: 'Posicionar Estoque' },
       { to: '/historico', label: 'Histórico' },
       { to: '/validade', label: 'Validade' },
+      { to: '/contagem', label: 'Contagem Cíclica' },
     ],
   },
   {

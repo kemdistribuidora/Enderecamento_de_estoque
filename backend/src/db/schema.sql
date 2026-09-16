@@ -116,3 +116,20 @@ CREATE TABLE IF NOT EXISTS movimentacoes (
 CREATE INDEX IF NOT EXISTS idx_movimentacoes_produto ON movimentacoes(produto_id);
 CREATE INDEX IF NOT EXISTS idx_movimentacoes_endereco ON movimentacoes(endereco_id);
 CREATE INDEX IF NOT EXISTS idx_movimentacoes_criado_em ON movimentacoes(criado_em);
+
+-- Contagem ciclica (inventario rotativo): registro de toda contagem fisica feita, mesmo
+-- quando bate com o sistema (divergencia = 0) -- serve de log/auditoria de que aquela
+-- posicao foi conferida. Quando divergencia != 0, a rota tambem ajusta estoque_posicoes.quantidade
+-- na hora e gera uma movimentacao normal (entrada/saida) refletindo o ajuste.
+CREATE TABLE IF NOT EXISTS contagens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  endereco_id INTEGER NOT NULL REFERENCES enderecos(id) ON DELETE CASCADE,
+  produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
+  quantidade_sistema INTEGER NOT NULL,
+  quantidade_contada INTEGER NOT NULL,
+  divergencia INTEGER NOT NULL,
+  criado_em TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_contagens_endereco ON contagens(endereco_id);
+CREATE INDEX IF NOT EXISTS idx_contagens_criado_em ON contagens(criado_em);

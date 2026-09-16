@@ -253,6 +253,64 @@ enderecosRouter.post('/:id/baixar-parcial', async (req, res) => {
   res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid), quantidade_restante: qtdRestante });
 });
 
+// POST /api/enderecos/:id/contar { quantidade_contada } -> contagem ciclica. Sempre registra
+// em `contagens` (mesmo sem divergencia, serve de log de que a posicao foi conferida). Se
+// quantidade_contada != quantidade do sistema, ajusta estoque_posicoes na hora e gera uma
+// movimentacao (entrada se contou a mais, saida se contou a menos) -- mesmo padrao de
+// auditoria do resto do sistema. quantidade_contada = 0 libera a posicao (como /liberar).
+enderecosRouter.post('/:id/contar', async (req, res) => {
+  const enderecoId = Number(req.params.id);
+  const quantidadeContada = Number((req.body ?? {}).quantidade_contada);
+
+  if (!Number.isFinite(quantidadeContada) || quantidadeContada < 0) {
+    return res.status(400).json({ erro: 'quantidade_contada (>= 0) e obrigatoria' });
+  }
+
+  const ocupacaoRs = await db.execute({
+    sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
+    args: [enderecoId],
+  });
+  const ocupacao = ocupacaoRs.rows[0] as any;
+  if (!ocupacao) {
+    return res.status(404).json({ erro: 'Endereco esta livre, nao ha o que contar' });
+  }
+
+  const quantidadeSistema = Number(ocupacao.quantidade);
+  const divergencia = quantidadeContada - quantidadeSistema;
+  const agora = new Date().toISOString();
+
+  await db.execute({
+    sql: `INSERT INTO contagens (endereco_id, produto_id, quantidade_sistema, quantidade_contada, divergencia, criado_em) VALUES (?, ?, ?, ?, ?, ?)`,
+    args: [enderecoId, Number(ocupacao.produto_id), quantidadeSistema, quantidadeContada, divergencia, agora],
+  });
+
+  if (divergencia !== 0) {
+    if (quantidadeContada === 0) {
+      await db.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
+    } else {
+      await db.execute({
+        sql: `UPDATE estoque_posicoes SET quantidade = ? WHERE endereco_id = ?`,
+        args: [quantidadeContada, enderecoId],
+      });
+    }
+
+    await db.execute({
+      sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES (?, ?, ?, ?, ?, ?, 'confirmada', ?)`,
+      args: [
+        divergencia > 0 ? 'entrada' : 'saida',
+        Number(ocupacao.produto_id),
+        enderecoId,
+        Math.abs(divergencia),
+        ocupacao.validade,
+        ocupacao.lote ?? null,
+        agora,
+      ],
+    });
+  }
+
+  res.json({ ok: true, quantidade_sistema: quantidadeSistema, divergencia });
+});
+
 // POST /api/enderecos/:id/bloquear { motivo } -> so marca flag informativo (posicao ou
 // produto nela com problema). NAO trava ocupar/liberar/retirar -- e' so alerta visual.
 // Vale mesmo com endereco livre (ex: prateleira com defeito fisico).

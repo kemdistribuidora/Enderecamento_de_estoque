@@ -9,6 +9,7 @@ import HistoricoPage from './pages/HistoricoPage';
 import CurvaAbcPage from './pages/CurvaAbcPage';
 import ValidadePage from './pages/ValidadePage';
 import DashboardPage from './pages/DashboardPage';
+import ContagemPage from './pages/ContagemPage';
 
 export default function App() {
   const [collapsed, setCollapsed] = useState(false);
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/historico" element={<HistoricoPage />} />
             <Route path="/curva-abc" element={<CurvaAbcPage />} />
             <Route path="/validade" element={<ValidadePage />} />
+            <Route path="/contagem" element={<ContagemPage />} />
           </Routes>
         </main>
       </div>

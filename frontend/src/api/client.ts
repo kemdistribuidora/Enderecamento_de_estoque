@@ -84,6 +84,17 @@ export function baixarParcialEndereco(
   }).then((r) => handleJson(r));
 }
 
+export function contarEndereco(
+  enderecoId: number,
+  quantidadeContada: number
+): Promise<{ ok: true; quantidade_sistema: number; divergencia: number }> {
+  return fetch(`${BASE_URL}/enderecos/${enderecoId}/contar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quantidade_contada: quantidadeContada }),
+  }).then((r) => handleJson(r));
+}
+
 export function bloquearEndereco(enderecoId: number, motivo: string): Promise<{ ok: true }> {
   return fetch(`${BASE_URL}/enderecos/${enderecoId}/bloquear`, {
     method: 'POST',
