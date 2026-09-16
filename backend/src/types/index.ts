@@ -38,6 +38,8 @@ export interface Endereco {
   andar: number;
   posicao: number;
   codigo: string; // formatted, ex: AD302
+  bloqueado: boolean;
+  bloqueio_motivo: string | null;
 }
 
 export interface EstoquePosicao {

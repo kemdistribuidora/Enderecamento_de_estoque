@@ -46,7 +46,7 @@ mapaRouter.get('/:setorId', async (req, res) => {
     const enderecosRs = await db.execute({
       sql: `
         SELECT
-          e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
+          e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo, e.bloqueado, e.bloqueio_motivo,
           ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
           p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa, p.qt_por_cx as produto_qt_por_cx
         FROM enderecos e
@@ -69,6 +69,8 @@ mapaRouter.get('/:setorId', async (req, res) => {
         andar: Number(r.andar),
         posicao: Number(r.posicao),
         codigo: r.codigo,
+        bloqueado: Boolean(r.bloqueado),
+        bloqueio_motivo: r.bloqueio_motivo ?? null,
         status: r.produto_id ? 'ocupado' : 'livre',
         produto: r.produto_id
           ? {

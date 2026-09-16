@@ -26,6 +26,8 @@ export async function initSchema(): Promise<void> {
   const prateleirasNovas = await adicionarColunaSeNaoExiste('prateleiras', 'letra', `TEXT NOT NULL DEFAULT ''`);
   await adicionarColunaSeNaoExiste('prateleiras', 'lado', `TEXT NOT NULL DEFAULT 'D'`);
   const corredoresNovo = await adicionarColunaSeNaoExiste('corredores', 'apos_prateleira_ordem', 'INTEGER NOT NULL DEFAULT 0');
+  await adicionarColunaSeNaoExiste('enderecos', 'bloqueado', 'INTEGER NOT NULL DEFAULT 0');
+  await adicionarColunaSeNaoExiste('enderecos', 'bloqueio_motivo', 'TEXT');
   if (prateleirasNovas) await preencherDonoPrateleirasExistentes();
   if (corredoresNovo) await db.execute(`UPDATE corredores SET apos_prateleira_ordem = ordem`);
   await garantirPrateleiraBeCamaraResfriados();

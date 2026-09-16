@@ -48,6 +48,10 @@ CREATE TABLE IF NOT EXISTS prateleiras (
   UNIQUE (setor_id, ordem)
 );
 
+-- bloqueado/bloqueio_motivo = flag informativo (posicao ou produto nela com problema --
+-- avaria, aguardando qualidade, prateleira quebrada etc). NAO trava ocupar/liberar/retirar:
+-- so mostra alerta visual pra quem opera decidir o que fazer. Vale mesmo com endereco livre
+-- (ex: prateleira com defeito fisico, sem produto nenhum).
 CREATE TABLE IF NOT EXISTS enderecos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   prateleira_id INTEGER NOT NULL REFERENCES prateleiras(id) ON DELETE CASCADE,
@@ -56,6 +60,8 @@ CREATE TABLE IF NOT EXISTS enderecos (
   andar INTEGER NOT NULL,
   posicao INTEGER NOT NULL,
   codigo TEXT NOT NULL UNIQUE,
+  bloqueado INTEGER NOT NULL DEFAULT 0,
+  bloqueio_motivo TEXT,
   UNIQUE (prateleira_id, andar, posicao)
 );
 

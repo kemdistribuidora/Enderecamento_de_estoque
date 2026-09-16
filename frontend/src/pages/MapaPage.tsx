@@ -190,7 +190,7 @@ export default function MapaPage() {
         <MapaSetorView mapa={mapa} onSelect={setSelecionado} enderecoDestacadoId={enderecoDestacadoId} idsCandidatos={idsCandidatos} />
       )}
 
-      <ProdutoModal endereco={selecionado} onClose={() => setSelecionado(null)} onLiberado={recarregarMapa} />
+      <ProdutoModal endereco={selecionado} onClose={() => setSelecionado(null)} onAtualizado={recarregarMapa} />
     </div>
   );
 }

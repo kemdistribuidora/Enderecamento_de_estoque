@@ -29,6 +29,8 @@ export interface EnderecoComStatus {
   andar: number;
   posicao: number;
   codigo: string;
+  bloqueado: boolean;
+  bloqueio_motivo: string | null;
   status: 'livre' | 'ocupado';
   produto: {
     id: number;

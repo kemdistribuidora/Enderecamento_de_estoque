@@ -84,6 +84,18 @@ export function baixarParcialEndereco(
   }).then((r) => handleJson(r));
 }
 
+export function bloquearEndereco(enderecoId: number, motivo: string): Promise<{ ok: true }> {
+  return fetch(`${BASE_URL}/enderecos/${enderecoId}/bloquear`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ motivo }),
+  }).then((r) => handleJson(r));
+}
+
+export function desbloquearEndereco(enderecoId: number): Promise<{ ok: true }> {
+  return fetch(`${BASE_URL}/enderecos/${enderecoId}/desbloquear`, { method: 'POST' }).then((r) => handleJson(r));
+}
+
 export interface ProdutoComSaldoImportado {
   produto_id: number;
   codigo: string;

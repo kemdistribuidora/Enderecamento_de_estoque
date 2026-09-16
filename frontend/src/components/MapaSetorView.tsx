@@ -42,28 +42,33 @@ function CelulaPosicao({
         ? corOcupado
         : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200';
 
+  const tituloBase = ocupado
+    ? `${posicao.codigo} — ${posicao.produto?.nome} · ${formatarQtdCx(
+        posicao.produto?.quantidade ?? 0,
+        posicao.produto?.qt_por_cx ?? null
+      )} (vence ${posicao.produto?.validade}${
+        statusValidade === 'emergencia'
+          ? ' — EMERGÊNCIA'
+          : statusValidade === 'proximo'
+            ? ' — vence em breve'
+            : ''
+      })`
+    : `${posicao.codigo} — livre`;
+
   return (
     <button
       onClick={() => onClick(posicao)}
-      title={
-        ocupado
-          ? `${posicao.codigo} — ${posicao.produto?.nome} · ${formatarQtdCx(
-              posicao.produto?.quantidade ?? 0,
-              posicao.produto?.qt_por_cx ?? null
-            )} (vence ${posicao.produto?.validade}${
-              statusValidade === 'emergencia'
-                ? ' — EMERGÊNCIA'
-                : statusValidade === 'proximo'
-                  ? ' — vence em breve'
-                  : ''
-            })`
-          : `${posicao.codigo} — livre`
-      }
-      className={`flex aspect-square min-w-0 items-center justify-center rounded-md border font-medium transition-transform hover:z-10 hover:scale-110 ${
+      title={posicao.bloqueado ? `${tituloBase} — ⚠ ${posicao.bloqueio_motivo}` : tituloBase}
+      className={`relative flex aspect-square min-w-0 items-center justify-center rounded-md border font-medium transition-transform hover:z-10 hover:scale-110 ${
         grande ? 'text-base' : 'text-xs'
       } ${corCandidato}`}
     >
       {posicao.posicao}
+      {posicao.bloqueado && (
+        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] leading-none text-white">
+          !
+        </span>
+      )}
     </button>
   );
 }

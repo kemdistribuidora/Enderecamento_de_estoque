@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EnderecoComStatus } from '../types';
-import { baixarParcialEndereco } from '../api/client';
+import { baixarParcialEndereco, bloquearEndereco, desbloquearEndereco } from '../api/client';
 import { BADGE_STATUS_VALIDADE, ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 import { calcularPesoTotal, formatarQtdCx } from '../utils/quantidade';
 import EtiquetaModal from './EtiquetaModal';
@@ -8,14 +8,17 @@ import EtiquetaModal from './EtiquetaModal';
 interface Props {
   endereco: EnderecoComStatus | null;
   onClose: () => void;
-  onLiberado?: () => void;
+  onAtualizado?: () => void;
 }
 
-export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
+export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props) {
   const [retirando, setRetirando] = useState(false);
   const [qtdRetirar, setQtdRetirar] = useState('');
   const [erro, setErro] = useState('');
   const [etiquetaAberta, setEtiquetaAberta] = useState(false);
+  const [formBloqueioAberto, setFormBloqueioAberto] = useState(false);
+  const [motivoBloqueio, setMotivoBloqueio] = useState('');
+  const [bloqueando, setBloqueando] = useState(false);
 
   if (!endereco) return null;
 
@@ -37,12 +40,42 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
     setErro('');
     try {
       await baixarParcialEndereco(endereco.id, qtd);
-      onLiberado?.();
+      onAtualizado?.();
       onClose();
     } catch (err: any) {
       setErro(err.message ?? 'Erro ao retirar quantidade.');
     } finally {
       setRetirando(false);
+    }
+  }
+
+  async function handleBloquear() {
+    if (!endereco || !motivoBloqueio.trim()) return;
+    setBloqueando(true);
+    setErro('');
+    try {
+      await bloquearEndereco(endereco.id, motivoBloqueio.trim());
+      onAtualizado?.();
+      onClose();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao bloquear posição.');
+    } finally {
+      setBloqueando(false);
+    }
+  }
+
+  async function handleDesbloquear() {
+    if (!endereco) return;
+    setBloqueando(true);
+    setErro('');
+    try {
+      await desbloquearEndereco(endereco.id);
+      onAtualizado?.();
+      onClose();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao desbloquear posição.');
+    } finally {
+      setBloqueando(false);
     }
   }
 
@@ -58,6 +91,12 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
             ✕
           </button>
         </div>
+
+        {endereco.bloqueado && (
+          <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+            <span className="font-medium">⚠ Posição com problema:</span> {endereco.bloqueio_motivo}
+          </div>
+        )}
 
         {endereco.status === 'livre' || !endereco.produto ? (
           <p className="text-sm text-slate-500">Posição livre — sem produto armazenado.</p>
@@ -87,8 +126,6 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
                 {ROTULO_STATUS_VALIDADE[endereco.produto.status_validade]}
               </p>
             )}
-
-            {erro && <p className="mt-2 text-sm text-red-600">{erro}</p>}
 
             <button
               type="button"
@@ -125,6 +162,56 @@ export default function ProdutoModal({ endereco, onClose, onLiberado }: Props) {
             </div>
           </>
         )}
+
+        {erro && <p className="mt-2 text-sm text-red-600">{erro}</p>}
+
+        <div className="mt-3 border-t border-slate-100 pt-3">
+          {endereco.bloqueado ? (
+            <button
+              type="button"
+              onClick={handleDesbloquear}
+              disabled={bloqueando}
+              className="w-full rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+            >
+              {bloqueando ? 'Desbloqueando...' : 'Desbloquear posição'}
+            </button>
+          ) : formBloqueioAberto ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={motivoBloqueio}
+                onChange={(e) => setMotivoBloqueio(e.target.value)}
+                placeholder="Motivo (ex: avaria, aguardando qualidade...)"
+                className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleBloquear}
+                  disabled={bloqueando || !motivoBloqueio.trim()}
+                  className="flex-1 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                >
+                  {bloqueando ? 'Bloqueando...' : 'Confirmar bloqueio'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormBloqueioAberto(false)}
+                  className="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setFormBloqueioAberto(true)}
+              className="w-full rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              Marcar posição com problema
+            </button>
+          )}
+        </div>
       </div>
 
       {etiquetaAberta && endereco.produto && (

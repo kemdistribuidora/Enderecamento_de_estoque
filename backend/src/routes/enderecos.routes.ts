@@ -11,7 +11,7 @@ export const enderecosRouter = Router();
 enderecosRouter.get('/', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
-      e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
+      e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo, e.bloqueado, e.bloqueio_motivo,
       ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
       p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa, p.qt_por_cx as produto_qt_por_cx
     FROM enderecos e
@@ -28,6 +28,8 @@ enderecosRouter.get('/', async (_req, res) => {
     andar: Number(r.andar),
     posicao: Number(r.posicao),
     codigo: r.codigo,
+    bloqueado: Boolean(r.bloqueado),
+    bloqueio_motivo: r.bloqueio_motivo ?? null,
     status: r.produto_id ? 'ocupado' : 'livre',
     produto: r.produto_id
       ? {
@@ -59,7 +61,7 @@ enderecosRouter.get('/codigo/:codigo', async (req, res) => {
   const rs = await db.execute({
     sql: `
       SELECT
-        e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo,
+        e.id, e.prateleira_id, e.corredor, e.lado, e.andar, e.posicao, e.codigo, e.bloqueado, e.bloqueio_motivo,
         ep.quantidade as quantidade, ep.validade as validade, ep.lote as lote, ep.criado_em as criado_em,
         p.id as produto_id, p.codigo as produto_codigo, p.nome as produto_nome, p.codigo_barras as produto_codigo_barras, p.peso_caixa as produto_peso_caixa, p.qt_por_cx as produto_qt_por_cx
       FROM enderecos e
@@ -83,6 +85,8 @@ enderecosRouter.get('/codigo/:codigo', async (req, res) => {
     andar: Number(r.andar),
     posicao: Number(r.posicao),
     codigo: r.codigo,
+    bloqueado: Boolean(r.bloqueado),
+    bloqueio_motivo: r.bloqueio_motivo ?? null,
     status: r.produto_id ? 'ocupado' : 'livre',
     produto: r.produto_id
       ? {
@@ -247,4 +251,45 @@ enderecosRouter.post('/:id/baixar-parcial', async (req, res) => {
   });
 
   res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid), quantidade_restante: qtdRestante });
+});
+
+// POST /api/enderecos/:id/bloquear { motivo } -> so marca flag informativo (posicao ou
+// produto nela com problema). NAO trava ocupar/liberar/retirar -- e' so alerta visual.
+// Vale mesmo com endereco livre (ex: prateleira com defeito fisico).
+enderecosRouter.post('/:id/bloquear', async (req, res) => {
+  const enderecoId = Number(req.params.id);
+  const motivo = String((req.body ?? {}).motivo ?? '').trim();
+
+  if (!motivo) {
+    return res.status(400).json({ erro: 'motivo e obrigatorio' });
+  }
+
+  const endereco = await db.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [enderecoId] });
+  if (endereco.rows.length === 0) {
+    return res.status(404).json({ erro: 'Endereco nao encontrado' });
+  }
+
+  await db.execute({
+    sql: `UPDATE enderecos SET bloqueado = 1, bloqueio_motivo = ? WHERE id = ?`,
+    args: [motivo, enderecoId],
+  });
+
+  res.json({ ok: true });
+});
+
+// POST /api/enderecos/:id/desbloquear
+enderecosRouter.post('/:id/desbloquear', async (req, res) => {
+  const enderecoId = Number(req.params.id);
+
+  const endereco = await db.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [enderecoId] });
+  if (endereco.rows.length === 0) {
+    return res.status(404).json({ erro: 'Endereco nao encontrado' });
+  }
+
+  await db.execute({
+    sql: `UPDATE enderecos SET bloqueado = 0, bloqueio_motivo = NULL WHERE id = ?`,
+    args: [enderecoId],
+  });
+
+  res.json({ ok: true });
 });
