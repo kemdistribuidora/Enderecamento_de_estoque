@@ -42,7 +42,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 border-b-2 border-steel-600/25 pb-4">
         <h1 className="page-title">Dashboard</h1>
         {kpis && (

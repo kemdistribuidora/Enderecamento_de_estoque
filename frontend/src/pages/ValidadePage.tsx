@@ -26,7 +26,7 @@ export default function ValidadePage() {
   }, []);
 
   return (
-    <div className="max-w-5xl space-y-4">
+    <div className="space-y-4">
       <div className="border-b-2 border-steel-600/25 pb-4">
         <h1 className="page-title">Controle de validade</h1>
         <p className="mt-1 text-sm text-ink-600">Posições vencidas ou próximas do vencimento, mais urgente primeiro.</p>
@@ -61,8 +61,17 @@ export default function ValidadePage() {
       )}
 
       {posicoes.length > 0 && (
-        <div className="panel overflow-x-auto">
+        <div className="panel overflow-hidden">
           <table className="table-plate">
+            <colgroup>
+              <col className="w-32" />
+              <col />
+              <col className="w-24" />
+              <col className="w-28" />
+              <col className="w-32" />
+              <col className="w-32" />
+              <col className="w-32" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Status</th>
@@ -77,19 +86,19 @@ export default function ValidadePage() {
             <tbody>
               {posicoes.map((p) => (
                 <tr key={p.endereco_id}>
-                  <td className="whitespace-nowrap">
+                  <td className="truncate">
                     <span className={TAG_STATUS_VALIDADE[p.status_validade]}>
                       {ROTULO_STATUS_VALIDADE[p.status_validade]}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap">
+                  <td className="truncate" title={`${p.produto_nome} — ${p.produto_codigo}`}>
                     <span className="font-medium text-ink-900">{p.produto_nome}</span>{' '}
                     <span className="data-code text-steel-400">— {p.produto_codigo}</span>
                   </td>
-                  <td className="data-code whitespace-nowrap text-ink-600">{p.endereco_codigo}</td>
-                  <td className="data-code whitespace-nowrap text-ink-600">{p.lote ?? '—'}</td>
-                  <td className="data-code text-right">{formatarQtdCx(p.quantidade, p.produto_qt_por_cx)}</td>
-                  <td className="data-code whitespace-nowrap text-ink-600">{p.validade}</td>
+                  <td className="data-code truncate text-ink-600">{p.endereco_codigo}</td>
+                  <td className="data-code truncate text-ink-600">{p.lote ?? '—'}</td>
+                  <td className="data-code truncate text-right">{formatarQtdCx(p.quantidade, p.produto_qt_por_cx)}</td>
+                  <td className="data-code truncate text-ink-600">{p.validade}</td>
                   <td className="text-right">
                     <button type="button" onClick={() => setSeparando(p)} className="btn-secondary">
                       Separar

@@ -63,7 +63,7 @@ export default function ContagemPage() {
   const totalContadas = Object.keys(resultados).length;
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <div className="border-b-2 border-steel-600/25 pb-4">
         <h1 className="page-title">Contagem cíclica</h1>
         <p className="mt-1 text-sm text-ink-600">
@@ -104,8 +104,16 @@ export default function ContagemPage() {
             posições contadas nessa sessão.
           </p>
 
-          <div className="panel overflow-x-auto">
+          <div className="panel overflow-hidden">
             <table className="table-plate">
+              <colgroup>
+                <col className="w-[9%]" />
+                <col className="w-[27%]" />
+                <col className="w-[11%]" />
+                <col className="w-[12%]" />
+                <col className="w-[14%]" />
+                <col className="w-[27%]" />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Posição</th>
@@ -121,15 +129,15 @@ export default function ContagemPage() {
                   const resultado = resultados[posicao.id];
                   return (
                     <tr key={posicao.id}>
-                      <td className="data-code whitespace-nowrap text-ink-600">
+                      <td className="data-code truncate text-ink-600">
                         {posicao.codigo}
                         {posicao.bloqueado && <span className="ml-1 text-signal-red600" title={posicao.bloqueio_motivo ?? ''}>⚠</span>}
                       </td>
-                      <td className="whitespace-nowrap">
+                      <td className="truncate" title={`${posicao.produto?.nome} — ${posicao.produto?.codigo}`}>
                         <span className="font-medium text-ink-900">{posicao.produto?.nome}</span>{' '}
                         <span className="data-code text-steel-400">— {posicao.produto?.codigo}</span>
                       </td>
-                      <td className="data-code whitespace-nowrap text-ink-600">
+                      <td className="data-code truncate text-ink-600">
                         {formatarQtdCx(posicao.produto?.quantidade ?? 0, posicao.produto?.qt_por_cx ?? null)}
                       </td>
                       <td>
@@ -139,7 +147,7 @@ export default function ContagemPage() {
                           value={quantidades[posicao.id] ?? ''}
                           onChange={(e) => setQuantidades((prev) => ({ ...prev, [posicao.id]: e.target.value }))}
                           disabled={!!resultado}
-                          className="input w-24 disabled:bg-concrete-100 disabled:text-steel-400"
+                          className="input w-full disabled:bg-concrete-100 disabled:text-steel-400"
                           placeholder="Qtd"
                         />
                       </td>
@@ -148,18 +156,21 @@ export default function ContagemPage() {
                           type="button"
                           onClick={() => handleContar(posicao)}
                           disabled={contando === posicao.id || !!resultado}
-                          className="btn-secondary"
+                          className="btn-secondary w-full"
                         >
                           {contando === posicao.id ? 'Confirmando...' : resultado ? 'Confirmado' : 'Confirmar'}
                         </button>
                       </td>
-                      <td className="whitespace-nowrap">
+                      <td className="truncate">
                         {resultado && (
                           resultado.divergencia === 0 ? (
                             <span className="text-xs font-medium text-signal-green600">Bateu</span>
                           ) : (
-                            <span className="text-xs font-medium text-signal-amber600">
-                              Ajustado: sistema tinha {resultado.quantidadeSistema}, diferença {resultado.divergencia > 0 ? '+' : ''}
+                            <span
+                              className="text-xs font-medium text-signal-amber600"
+                              title={`Ajustado: sistema tinha ${resultado.quantidadeSistema}, diferença ${resultado.divergencia > 0 ? '+' : ''}${resultado.divergencia}`}
+                            >
+                              Ajustado: sistema {resultado.quantidadeSistema}, dif. {resultado.divergencia > 0 ? '+' : ''}
                               {resultado.divergencia}
                             </span>
                           )

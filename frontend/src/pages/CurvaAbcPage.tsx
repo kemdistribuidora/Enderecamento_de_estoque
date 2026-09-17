@@ -58,7 +58,7 @@ export default function CurvaAbcPage() {
   }
 
   return (
-    <div className="max-w-5xl space-y-5">
+    <div className="space-y-5">
       <div className="flex items-start justify-between gap-4 border-b-2 border-steel-600/25 pb-4">
         <div>
           <h1 className="page-title">Curva ABC</h1>
@@ -86,8 +86,15 @@ export default function CurvaAbcPage() {
       )}
 
       {!carregando && curva.length > 0 && (
-        <div className="panel overflow-x-auto">
+        <div className="panel overflow-hidden">
           <table className="table-plate">
+            <colgroup>
+              <col className="w-14" />
+              <col />
+              <col className="w-36" />
+              <col className="w-36" />
+              <col className="w-32" />
+            </colgroup>
             <thead>
               <tr>
                 <th>#</th>
@@ -124,13 +131,13 @@ export default function CurvaAbcPage() {
               {curvaOrdenada.map(({ item, posicao }) => (
                 <tr key={item.produto_id}>
                   <td className="text-steel-400">{posicao}</td>
-                  <td className="whitespace-nowrap">
+                  <td className="truncate" title={`${item.nome} ${item.codigo}`}>
                     <span className="font-medium text-ink-900">{item.nome}</span>{' '}
                     <span className="data-code text-steel-400">{item.codigo}</span>
                   </td>
-                  <td className="data-code">{item.total_saida}</td>
-                  <td className="data-code">{item.percentual_acumulado.toFixed(1)}%</td>
-                  <td className="whitespace-nowrap">
+                  <td className="data-code truncate">{item.total_saida}</td>
+                  <td className="data-code truncate">{item.percentual_acumulado.toFixed(1)}%</td>
+                  <td className="truncate">
                     <ClasseBadge classe={item.classe} />
                   </td>
                 </tr>

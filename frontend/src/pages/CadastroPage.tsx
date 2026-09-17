@@ -159,12 +159,12 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="max-w-5xl space-y-5">
+    <div className="space-y-5">
       <div className="border-b-2 border-steel-600/25 pb-4">
         <h1 className="page-title">Cadastro de produto / entrada em estoque</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="panel p-5">
+      <form onSubmit={handleSubmit} className="panel max-w-5xl p-5">
         <div className="grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
         <fieldset className="space-y-3">
           <legend className="mb-1 font-display text-lg font-bold text-steel-900">Dados do produto</legend>

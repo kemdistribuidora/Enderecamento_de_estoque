@@ -73,13 +73,13 @@ export default function ImportacaoPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div className="border-b-2 border-steel-600/25 pb-4">
         <h1 className="page-title">Importar dados do Winthor</h1>
         <p className="mt-1 text-sm text-ink-600">Arquivos exportados pela rotina D860, sem precisar abrir no Excel.</p>
       </div>
 
-      <div className="panel p-5">
+      <div className="panel max-w-2xl p-5">
         <h2 className="font-display text-lg font-bold text-steel-900">Produtos + saldo</h2>
         <p className="mt-1 text-sm text-ink-600">
           Arquivo unico: <code className="data-code">codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo</code> (qt_por_cx e os ultimos 3

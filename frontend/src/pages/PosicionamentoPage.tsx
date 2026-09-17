@@ -46,7 +46,7 @@ export default function PosicionamentoPage() {
   }, []);
 
   return (
-    <div className="max-w-5xl space-y-4">
+    <div className="space-y-4">
       <div className="border-b-2 border-steel-600/25 pb-4">
         <h1 className="page-title">Posicionar estoque</h1>
         <p className="mt-1 text-sm text-ink-600">Saldo importado do Winthor ainda pendente de posição física.</p>
@@ -73,15 +73,15 @@ export default function PosicionamentoPage() {
       )}
 
       {pendenciasFiltradas.length > 0 && (
-        <div className="panel overflow-x-auto">
-          <table className="table-plate table-fixed">
+        <div className="panel overflow-hidden">
+          <table className="table-plate">
             <colgroup>
               <col />
               <col className="w-32" />
               <col className="w-32" />
               <col className="w-32" />
               <col className="w-28" />
-              <col className="w-28" />
+              <col className="w-36" />
             </colgroup>
             <thead>
               <tr>
@@ -89,7 +89,7 @@ export default function PosicionamentoPage() {
                 <th>Saldo</th>
                 <th>Alocado</th>
                 <th>Pendente</th>
-                <th>Peso cx (kg)</th>
+                <th>Peso (kg)</th>
                 <th></th>
               </tr>
             </thead>
@@ -100,9 +100,9 @@ export default function PosicionamentoPage() {
                     <span className="font-medium text-ink-900">{p.nome}</span>{' '}
                     <span className="text-steel-400"> ({p.codigo})</span>
                   </td>
-                  <td className="data-code whitespace-nowrap">{formatarQtdCx(p.saldo_total, p.qt_por_cx)}</td>
-                  <td className="data-code whitespace-nowrap">{formatarQtdCx(p.alocado_total, p.qt_por_cx)}</td>
-                  <td className="data-code whitespace-nowrap font-medium text-signal-amber600">
+                  <td className="data-code truncate">{formatarQtdCx(p.saldo_total, p.qt_por_cx)}</td>
+                  <td className="data-code truncate">{formatarQtdCx(p.alocado_total, p.qt_por_cx)}</td>
+                  <td className="data-code truncate font-medium text-signal-amber600">
                     {formatarQtdCx(p.pendente, p.qt_por_cx)}
                   </td>
                   <td>
@@ -115,11 +115,11 @@ export default function PosicionamentoPage() {
                       }
                     />
                   </td>
-                  <td className="whitespace-nowrap">
+                  <td>
                     <button
                       type="button"
                       onClick={() => setEmEdicao(p)}
-                      className="btn-primary"
+                      className="btn-primary w-full"
                     >
                       Posicionar
                     </button>
@@ -140,8 +140,14 @@ export default function PosicionamentoPage() {
         )}
 
         {sobras.length > 0 && (
-          <div className="mt-3 panel overflow-x-auto border-signal-red600/30">
+          <div className="mt-3 panel overflow-hidden border-signal-red600/30">
             <table className="table-plate">
+              <colgroup>
+                <col />
+                <col className="w-32" />
+                <col className="w-32" />
+                <col className="w-32" />
+              </colgroup>
               <thead className="bg-signal-red100 text-signal-red600">
                 <tr>
                   <th>Produto</th>
@@ -153,13 +159,13 @@ export default function PosicionamentoPage() {
               <tbody>
                 {sobras.map((s) => (
                   <tr key={s.produto_id}>
-                    <td className="whitespace-nowrap">
+                    <td className="truncate" title={`${s.nome} (${s.codigo})`}>
                       <span className="font-medium text-ink-900">{s.nome}</span>{' '}
                       <span className="text-steel-400"> ({s.codigo})</span>
                     </td>
-                    <td className="data-code">{formatarQtdCx(s.saldo_total, s.qt_por_cx)}</td>
-                    <td className="data-code">{formatarQtdCx(s.alocado_total, s.qt_por_cx)}</td>
-                    <td className="data-code font-medium text-signal-red600">
+                    <td className="data-code truncate">{formatarQtdCx(s.saldo_total, s.qt_por_cx)}</td>
+                    <td className="data-code truncate">{formatarQtdCx(s.alocado_total, s.qt_por_cx)}</td>
+                    <td className="data-code truncate font-medium text-signal-red600">
                       {formatarQtdCx(s.excesso, s.qt_por_cx)}
                     </td>
                   </tr>

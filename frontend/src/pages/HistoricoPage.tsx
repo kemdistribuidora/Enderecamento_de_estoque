@@ -55,7 +55,7 @@ export default function HistoricoPage() {
   }
 
   return (
-    <div className="max-w-6xl space-y-4">
+    <div className="space-y-4">
       <div className="flex items-start justify-between gap-4 border-b-2 border-steel-600/25 pb-4">
         <div>
           <h1 className="page-title">Histórico de movimentação</h1>
@@ -76,8 +76,18 @@ export default function HistoricoPage() {
       )}
 
       {movimentacoes.length > 0 && (
-        <div className="panel overflow-x-auto">
+        <div className="panel overflow-hidden">
           <table className="table-plate">
+            <colgroup>
+              <col className="w-52" />
+              <col className="w-24" />
+              <col />
+              <col className="w-24" />
+              <col className="w-28" />
+              <col className="w-32" />
+              <col className="w-32" />
+              <col className="w-32" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Quando</th>
@@ -93,22 +103,22 @@ export default function HistoricoPage() {
             <tbody>
               {movimentacoes.map((m) => (
                 <tr key={m.id}>
-                  <td className="data-code whitespace-nowrap text-ink-600">
+                  <td className="data-code truncate text-ink-600">
                     {new Date(m.criado_em).toLocaleString('pt-BR')}
                   </td>
-                  <td className="whitespace-nowrap">
+                  <td className="truncate">
                     <span className={m.tipo === 'entrada' ? 'text-signal-green600' : 'text-ink-900'}>
                       {m.tipo === 'entrada' ? 'Entrada' : 'Saída'}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap">
+                  <td className="truncate" title={`${m.produto_nome} — ${m.produto_codigo}`}>
                     <span className="font-medium text-ink-900">{m.produto_nome}</span>{' '}
                     <span className="data-code text-steel-400">— {m.produto_codigo}</span>
                   </td>
-                  <td className="data-code whitespace-nowrap text-ink-600">{m.endereco_codigo}</td>
-                  <td className="data-code whitespace-nowrap text-ink-600">{m.lote ?? '—'}</td>
-                  <td className="data-code text-right">{m.quantidade}</td>
-                  <td className="whitespace-nowrap">
+                  <td className="data-code truncate text-ink-600">{m.endereco_codigo}</td>
+                  <td className="data-code truncate text-ink-600">{m.lote ?? '—'}</td>
+                  <td className="data-code truncate text-right">{m.quantidade}</td>
+                  <td className="truncate">
                     <StatusBadge status={m.status} />
                   </td>
                   <td className="text-right">
