@@ -104,7 +104,7 @@ export default function ContagemPage() {
             posições contadas nessa sessão.
           </p>
 
-          <div className="panel overflow-hidden">
+          <div className="panel overflow-x-auto">
             <table className="table-plate">
               <thead>
                 <tr>

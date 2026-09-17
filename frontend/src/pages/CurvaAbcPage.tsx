@@ -86,7 +86,7 @@ export default function CurvaAbcPage() {
       )}
 
       {!carregando && curva.length > 0 && (
-        <div className="panel overflow-hidden">
+        <div className="panel overflow-x-auto">
           <table className="table-plate">
             <thead>
               <tr>

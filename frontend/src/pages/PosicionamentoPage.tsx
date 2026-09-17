@@ -140,7 +140,7 @@ export default function PosicionamentoPage() {
         )}
 
         {sobras.length > 0 && (
-          <div className="mt-3 panel overflow-hidden border-signal-red600/30">
+          <div className="mt-3 panel overflow-x-auto border-signal-red600/30">
             <table className="table-plate">
               <thead className="bg-signal-red100 text-signal-red600">
                 <tr>
