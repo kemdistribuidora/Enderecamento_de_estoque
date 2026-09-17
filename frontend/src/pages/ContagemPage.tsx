@@ -14,6 +14,7 @@ export default function ContagemPage() {
   const [contando, setContando] = useState<number | null>(null);
   const [resultados, setResultados] = useState<Record<number, Resultado>>({});
   const [erro, setErro] = useState('');
+  const [busca, setBusca] = useState('');
 
   useEffect(() => {
     buscarSetores().then((lista) => {
@@ -32,9 +33,20 @@ export default function ContagemPage() {
       .finally(() => setCarregando(false));
   }, [setorAtivoId]);
 
+  const termo = busca.trim().toLowerCase();
+
   const posicoesOcupadas: EnderecoComStatus[] = (mapa?.prateleiras ?? [])
     .flatMap((p) => p.posicoes)
     .filter((p) => p.status === 'ocupado')
+    .filter((p) => {
+      if (!termo) return true;
+      return (
+        p.codigo.toLowerCase().includes(termo) ||
+        p.produto?.nome?.toLowerCase().includes(termo) ||
+        p.produto?.codigo?.toLowerCase().includes(termo) ||
+        p.produto?.codigo_barras?.toLowerCase().includes(termo)
+      );
+    })
     .sort((a, b) => a.codigo.localeCompare(b.codigo));
 
   async function handleContar(posicao: EnderecoComStatus) {
@@ -87,12 +99,22 @@ export default function ContagemPage() {
         ))}
       </div>
 
+      <input
+        type="text"
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+        className="input w-full max-w-xs"
+        placeholder="Buscar por item, código ou posição..."
+      />
+
       {erro && <p className="text-sm text-signal-red600">{erro}</p>}
 
       {carregando && <p className="text-sm text-steel-400">Carregando...</p>}
 
       {!carregando && posicoesOcupadas.length === 0 && (
-        <p className="panel p-4 text-sm text-ink-600">Nenhuma posição ocupada nesse setor.</p>
+        <p className="panel p-4 text-sm text-ink-600">
+          {termo ? 'Nenhuma posição encontrada para essa busca.' : 'Nenhuma posição ocupada nesse setor.'}
+        </p>
       )}
 
       {!carregando && posicoesOcupadas.length > 0 && (
