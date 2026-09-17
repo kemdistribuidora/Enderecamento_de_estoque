@@ -73,7 +73,7 @@ export default function PosicionamentoPage() {
       )}
 
       {pendenciasFiltradas.length > 0 && (
-        <div className="panel overflow-hidden">
+        <div className="panel max-w-6xl overflow-hidden">
           <table className="table-plate">
             <colgroup>
               <col />
@@ -140,7 +140,7 @@ export default function PosicionamentoPage() {
         )}
 
         {sobras.length > 0 && (
-          <div className="mt-3 panel overflow-hidden border-signal-red600/30">
+          <div className="mt-3 panel max-w-6xl overflow-hidden border-signal-red600/30">
             <table className="table-plate">
               <colgroup>
                 <col />

@@ -45,7 +45,7 @@
     @apply px-4 py-3;
   }
   .table-plate tbody tr {
-    @apply transition-colors hover:bg-concrete-50;
+    @apply transition-colors odd:bg-white even:bg-concrete-100/60 hover:bg-rust-100/30;
   }
 
   .tag {

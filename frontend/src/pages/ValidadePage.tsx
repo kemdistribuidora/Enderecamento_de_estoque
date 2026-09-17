@@ -61,7 +61,7 @@ export default function ValidadePage() {
       )}
 
       {posicoes.length > 0 && (
-        <div className="panel overflow-hidden">
+        <div className="panel max-w-6xl overflow-hidden">
           <table className="table-plate">
             <colgroup>
               <col className="w-32" />
