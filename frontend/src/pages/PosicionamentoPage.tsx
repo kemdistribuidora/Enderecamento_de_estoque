@@ -326,7 +326,7 @@ function PosicionarModal({
         <div className="mt-3 grid grid-cols-3 gap-3">
           <label className="col-span-3 block text-sm sm:col-span-1">
             <span className="mb-1 block font-medium text-ink-600">
-              Quantidade em UN (pendente: {pendencia.pendente} = {formatarQtdCx(pendencia.pendente, pendencia.qt_por_cx)})
+              Quantidade em UN
             </span>
             <input
               type="number"

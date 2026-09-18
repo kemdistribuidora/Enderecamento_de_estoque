@@ -139,7 +139,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
             <div className="panel mt-3 p-3">
               <label className="mb-1 block text-xs font-medium text-ink-600">
                 Retirar quantidade em UN (máx. {endereco.produto.quantidade} ={' '}
-                {formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx)}, digite tudo pra liberar a posição)
+                {formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx)})
               </label>
               <div className="flex gap-2">
                 <input
