@@ -36,6 +36,7 @@ export default function App() {
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+        <img src="/logo.png" alt="Logo" className="h-9 w-9" />
         <span className="whitespace-nowrap font-display text-xl font-bold">
           Endereçamento de Estoque
         </span>
