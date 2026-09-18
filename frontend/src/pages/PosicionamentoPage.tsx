@@ -77,7 +77,7 @@ export default function PosicionamentoPage() {
           <table className="table-plate">
             <colgroup>
               <col />
-              <col className="w-32" />
+              <col className="w-40" />
               <col className="w-32" />
               <col className="w-32" />
               <col className="w-28" />
@@ -144,7 +144,7 @@ export default function PosicionamentoPage() {
             <table className="table-plate">
               <colgroup>
                 <col />
-                <col className="w-32" />
+                <col className="w-40" />
                 <col className="w-32" />
                 <col className="w-32" />
               </colgroup>
