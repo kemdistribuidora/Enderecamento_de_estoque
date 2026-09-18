@@ -30,13 +30,13 @@
   }
 
   .table-plate {
-    @apply w-full table-fixed text-sm;
+    @apply w-full table-auto text-sm;
   }
   .table-plate thead {
     @apply bg-steel-900 text-left text-xs font-semibold uppercase tracking-wide text-concrete-100;
   }
   .table-plate th {
-    @apply truncate px-4 py-3;
+    @apply whitespace-nowrap px-4 py-3;
   }
   .table-plate tbody {
     @apply divide-y divide-steel-100;

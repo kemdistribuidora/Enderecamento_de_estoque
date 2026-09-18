@@ -76,7 +76,7 @@ export default function HistoricoPage() {
       )}
 
       {movimentacoes.length > 0 && (
-        <div className="panel max-w-6xl overflow-hidden">
+        <div className="panel max-w-6xl overflow-x-auto">
           <table className="table-plate">
             <colgroup>
               <col className="w-52" />
@@ -103,22 +103,22 @@ export default function HistoricoPage() {
             <tbody>
               {movimentacoes.map((m) => (
                 <tr key={m.id}>
-                  <td className="data-code truncate text-ink-600">
+                  <td className="data-code whitespace-nowrap text-ink-600">
                     {new Date(m.criado_em).toLocaleString('pt-BR')}
                   </td>
-                  <td className="truncate">
+                  <td>
                     <span className={m.tipo === 'entrada' ? 'text-signal-green600' : 'text-ink-900'}>
                       {m.tipo === 'entrada' ? 'Entrada' : 'Saída'}
                     </span>
                   </td>
-                  <td className="truncate" title={`${m.produto_nome} — ${m.produto_codigo}`}>
+                  <td title={`${m.produto_nome} — ${m.produto_codigo}`}>
                     <span className="font-medium text-ink-900">{m.produto_nome}</span>{' '}
                     <span className="data-code text-steel-400">— {m.produto_codigo}</span>
                   </td>
-                  <td className="data-code truncate text-ink-600">{m.endereco_codigo}</td>
-                  <td className="data-code truncate text-ink-600">{m.lote ?? '—'}</td>
-                  <td className="data-code truncate text-right">{m.quantidade}</td>
-                  <td className="truncate">
+                  <td className="data-code whitespace-nowrap text-ink-600">{m.endereco_codigo}</td>
+                  <td className="data-code whitespace-nowrap text-ink-600">{m.lote ?? '—'}</td>
+                  <td className="data-code whitespace-nowrap text-right">{m.quantidade}</td>
+                  <td>
                     <StatusBadge status={m.status} />
                   </td>
                   <td className="text-right">

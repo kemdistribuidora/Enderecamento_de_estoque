@@ -61,7 +61,7 @@ export default function ValidadePage() {
       )}
 
       {posicoes.length > 0 && (
-        <div className="panel max-w-6xl overflow-hidden">
+        <div className="panel max-w-6xl overflow-x-auto">
           <table className="table-plate">
             <colgroup>
               <col className="w-32" />
@@ -86,19 +86,19 @@ export default function ValidadePage() {
             <tbody>
               {posicoes.map((p) => (
                 <tr key={p.endereco_id}>
-                  <td className="truncate">
+                  <td>
                     <span className={TAG_STATUS_VALIDADE[p.status_validade]}>
                       {ROTULO_STATUS_VALIDADE[p.status_validade]}
                     </span>
                   </td>
-                  <td className="truncate" title={`${p.produto_nome} — ${p.produto_codigo}`}>
+                  <td title={`${p.produto_nome} — ${p.produto_codigo}`}>
                     <span className="font-medium text-ink-900">{p.produto_nome}</span>{' '}
                     <span className="data-code text-steel-400">— {p.produto_codigo}</span>
                   </td>
-                  <td className="data-code truncate text-ink-600">{p.endereco_codigo}</td>
-                  <td className="data-code truncate text-ink-600">{p.lote ?? '—'}</td>
-                  <td className="data-code truncate text-right">{formatarQtdCx(p.quantidade, p.produto_qt_por_cx)}</td>
-                  <td className="data-code truncate text-ink-600">{p.validade}</td>
+                  <td className="data-code whitespace-nowrap text-ink-600">{p.endereco_codigo}</td>
+                  <td className="data-code whitespace-nowrap text-ink-600">{p.lote ?? '—'}</td>
+                  <td className="data-code whitespace-nowrap text-right">{formatarQtdCx(p.quantidade, p.produto_qt_por_cx)}</td>
+                  <td className="data-code whitespace-nowrap text-ink-600">{p.validade}</td>
                   <td className="text-right">
                     <button type="button" onClick={() => setSeparando(p)} className="btn-secondary">
                       Separar

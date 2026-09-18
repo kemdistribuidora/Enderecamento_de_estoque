@@ -86,7 +86,7 @@ export default function CurvaAbcPage() {
       )}
 
       {!carregando && curva.length > 0 && (
-        <div className="panel max-w-6xl overflow-hidden">
+        <div className="panel max-w-6xl overflow-x-auto">
           <table className="table-plate">
             <colgroup>
               <col className="w-14" />
@@ -131,13 +131,13 @@ export default function CurvaAbcPage() {
               {curvaOrdenada.map(({ item, posicao }) => (
                 <tr key={item.produto_id}>
                   <td className="text-steel-400">{posicao}</td>
-                  <td className="truncate" title={`${item.nome} ${item.codigo}`}>
+                  <td title={`${item.nome} ${item.codigo}`}>
                     <span className="font-medium text-ink-900">{item.nome}</span>{' '}
                     <span className="data-code text-steel-400">{item.codigo}</span>
                   </td>
-                  <td className="data-code truncate">{item.total_saida}</td>
-                  <td className="data-code truncate">{item.percentual_acumulado.toFixed(1)}%</td>
-                  <td className="truncate">
+                  <td className="data-code whitespace-nowrap">{item.total_saida}</td>
+                  <td className="data-code whitespace-nowrap">{item.percentual_acumulado.toFixed(1)}%</td>
+                  <td>
                     <ClasseBadge classe={item.classe} />
                   </td>
                 </tr>
