@@ -240,7 +240,7 @@ export default function CadastroPage() {
             />
           </Campo>
 
-          <Campo label="Peso por caixa (kg) — usado na etiqueta de pallet">
+          <Campo label="Peso por caixa (kg)">
             <input
               type="number"
               step="0.01"
@@ -253,7 +253,7 @@ export default function CadastroPage() {
             />
           </Campo>
 
-          <Campo label="Unidades por caixa fechada — usado pra mostrar em CX no mapa/etiqueta">
+          <Campo label="Unidades por caixa fechada">
             <input
               type="number"
               min={1}
