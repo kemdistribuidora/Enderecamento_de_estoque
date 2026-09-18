@@ -98,7 +98,7 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
                 <LinhaEtiqueta label="Quantidade" valor={formatarQtdCx(dados.quantidade, dados.qtPorCx)} />
                 <LinhaEtiqueta
                   label="Peso"
-                  valor={pesoTotal != null ? `${pesoTotal.toFixed(2)} KG` : 'cadastrar peso e qtd/caixa'}
+                  valor={pesoTotal != null ? `${pesoTotal.toFixed(2)} KG` : dados.pesoCaixa == null ? 'cadastrar peso da caixa' : 'sem qtd/caixa'}
                   ultima
                 />
               </div>

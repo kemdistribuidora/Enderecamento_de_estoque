@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EnderecoComStatus } from '../types';
-import { baixarParcialEndereco, bloquearEndereco, desbloquearEndereco } from '../api/client';
+import { atualizarPesoCaixa, baixarParcialEndereco, bloquearEndereco, desbloquearEndereco } from '../api/client';
 import { ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 import { calcularPesoTotal, formatarQtdCx } from '../utils/quantidade';
 import EtiquetaModal from './EtiquetaModal';
@@ -19,8 +19,36 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
   const [formBloqueioAberto, setFormBloqueioAberto] = useState(false);
   const [motivoBloqueio, setMotivoBloqueio] = useState('');
   const [bloqueando, setBloqueando] = useState(false);
+  const [pesoInput, setPesoInput] = useState('');
+  const [salvandoPeso, setSalvandoPeso] = useState(false);
+  // "endereco" e' snapshot do clique no mapa -- nao atualiza com o reload, entao guarda o peso salvo aqui
+  const [pesoSalvo, setPesoSalvo] = useState<{ produtoId: number; peso: number } | null>(null);
 
   if (!endereco) return null;
+
+  const pesoCaixa =
+    endereco.produto && pesoSalvo?.produtoId === endereco.produto.id ? pesoSalvo.peso : endereco.produto?.peso_caixa ?? null;
+
+  async function handleSalvarPeso() {
+    if (!endereco || !endereco.produto) return;
+    const peso = Number(pesoInput.replace(',', '.'));
+    if (!peso || peso <= 0) {
+      setErro('Informe um peso de caixa válido.');
+      return;
+    }
+    setSalvandoPeso(true);
+    setErro('');
+    try {
+      await atualizarPesoCaixa(endereco.produto.id, peso);
+      setPesoSalvo({ produtoId: endereco.produto.id, peso });
+      setPesoInput('');
+      onAtualizado?.();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao salvar peso da caixa.');
+    } finally {
+      setSalvandoPeso(false);
+    }
+  }
 
   async function handleRetirarParcial() {
     if (!endereco || !endereco.produto) return;
@@ -108,14 +136,39 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
               <Row label="Produto" value={endereco.produto.nome} />
               <Row label="Código" value={endereco.produto.codigo} code />
               <Row label="Quantidade" value={formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx)} code />
-              <Row
-                label="Peso do pallet"
-                value={(() => {
-                  const peso = calcularPesoTotal(endereco.produto.quantidade, endereco.produto.qt_por_cx, endereco.produto.peso_caixa);
-                  return peso != null ? `${peso.toFixed(2)} KG` : 'cadastrar peso e qtd/caixa';
-                })()}
-                code
-              />
+              {!endereco.produto.qt_por_cx ? (
+                <Row label="Peso do pallet" value="sem qtd/caixa (vem do Winthor)" code />
+              ) : pesoCaixa == null ? (
+                <div className="flex items-center justify-between gap-2 border-b border-steel-100 pb-1">
+                  <dt className="shrink-0 text-ink-600">Peso da caixa (KG)</dt>
+                  <dd className="flex gap-1">
+                    <input
+                      type="number"
+                      step="0.001"
+                      min={0}
+                      value={pesoInput}
+                      onChange={(e) => setPesoInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSalvarPeso()}
+                      placeholder="ex: 12.5"
+                      className="input w-24"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSalvarPeso}
+                      disabled={salvandoPeso || !pesoInput}
+                      className="btn-secondary disabled:opacity-50"
+                    >
+                      {salvandoPeso ? '...' : 'Salvar'}
+                    </button>
+                  </dd>
+                </div>
+              ) : (
+                <Row
+                  label="Peso do pallet"
+                  value={`${calcularPesoTotal(endereco.produto.quantidade, endereco.produto.qt_por_cx, pesoCaixa)?.toFixed(2)} KG`}
+                  code
+                />
+              )}
               <Row label="Validade do lote" value={endereco.produto.validade} />
               <Row label="Lote" value={endereco.produto.lote ?? '—'} code />
             </dl>
@@ -222,7 +275,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
             produtoNome: endereco.produto.nome,
             produtoCodigo: endereco.produto.codigo,
             codigoBarras: endereco.produto.codigo_barras,
-            pesoCaixa: endereco.produto.peso_caixa,
+            pesoCaixa,
             qtPorCx: endereco.produto.qt_por_cx,
             quantidade: endereco.produto.quantidade,
             validade: endereco.produto.validade,
