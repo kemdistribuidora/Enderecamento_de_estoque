@@ -13,10 +13,12 @@ movimentacoesRouter.get('/', async (req, res) => {
       SELECT
         m.id, m.tipo, m.produto_id, m.endereco_id, m.quantidade, m.validade, m.lote, m.status, m.criado_em,
         p.codigo as produto_codigo, p.nome as produto_nome,
-        e.codigo as endereco_codigo
+        e.codigo as endereco_codigo,
+        et.codigo as transferencia_endereco_codigo
       FROM movimentacoes m
       JOIN produtos p ON p.id = m.produto_id
       JOIN enderecos e ON e.id = m.endereco_id
+      LEFT JOIN enderecos et ON et.id = m.transferencia_endereco_id
       ORDER BY m.criado_em DESC, m.id DESC
       LIMIT ?
     `,
@@ -36,6 +38,7 @@ movimentacoesRouter.get('/', async (req, res) => {
     lote: r.lote ?? null,
     status: r.status,
     criado_em: r.criado_em,
+    transferencia_endereco_codigo: r.transferencia_endereco_codigo ?? null,
   }));
 
   res.json(resultado);

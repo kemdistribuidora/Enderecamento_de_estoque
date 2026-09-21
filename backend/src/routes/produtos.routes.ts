@@ -148,13 +148,13 @@ produtosRouter.get('/divergencias-sobra', async (_req, res) => {
 });
 
 // GET /api/produtos/curva-abc -> classificacao ABC por giro (soma de saida confirmada,
-// ou seja, nao revertida). Ordena por saida desc, acumula % do total geral, corta em
+// ou seja, nao revertida, e que nao seja transferencia entre posicoes). Ordena por saida desc, acumula % do total geral, corta em
 // 80% (A) e 95% (B); resto vira C. Depende de movimentacoes ter dado registrado.
 produtosRouter.get('/curva-abc', async (_req, res) => {
   const rs = await db.execute(`
     SELECT p.id as produto_id, p.codigo, p.nome, COALESCE(SUM(m.quantidade), 0) as total_saida
     FROM produtos p
-    LEFT JOIN movimentacoes m ON m.produto_id = p.id AND m.tipo = 'saida' AND m.status != 'revertida'
+    LEFT JOIN movimentacoes m ON m.produto_id = p.id AND m.tipo = 'saida' AND m.status != 'revertida' AND m.transferencia_endereco_id IS NULL
     GROUP BY p.id
     ORDER BY total_saida DESC, p.nome
   `);

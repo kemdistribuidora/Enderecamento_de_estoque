@@ -20,6 +20,7 @@ export async function initSchema(): Promise<void> {
   await db.executeMultiple(schema);
   await adicionarColunaSeNaoExiste('estoque_posicoes', 'lote', 'TEXT');
   await adicionarColunaSeNaoExiste('movimentacoes', 'lote', 'TEXT');
+  await adicionarColunaSeNaoExiste('movimentacoes', 'transferencia_endereco_id', 'INTEGER REFERENCES enderecos(id) ON DELETE SET NULL');
   await adicionarColunaSeNaoExiste('produtos', 'peso_caixa', 'REAL');
   await adicionarColunaSeNaoExiste('produtos', 'qt_por_cx', 'INTEGER');
   await adicionarColunaSeNaoExiste('estoque_posicoes', 'criado_em', 'TEXT');

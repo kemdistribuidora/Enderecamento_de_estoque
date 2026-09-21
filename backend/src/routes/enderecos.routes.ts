@@ -253,6 +253,74 @@ enderecosRouter.post('/:id/baixar-parcial', async (req, res) => {
   res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid), quantidade_restante: qtdRestante });
 });
 
+// POST /api/enderecos/:id/mover { destino_id } -> move o pallet inteiro da posicao :id pra
+// outra posicao LIVRE (posicao e' sempre 1 pallet, nao mescla). Troca so o endereco_id em
+// estoque_posicoes, entao quantidade/validade/lote/criado_em (data de entrada da etiqueta)
+// acompanham o pallet. Registra par saida+entrada em movimentacoes ja 'confirmada' e com
+// transferencia_endereco_id preenchido, que exclui do giro/curva ABC (nao e' consumo).
+// Bloqueio (flag visual) do destino nao impede -- mesma regra do resto do sistema.
+enderecosRouter.post('/:id/mover', async (req, res) => {
+  const origemId = Number(req.params.id);
+  const destinoId = Number((req.body ?? {}).destino_id);
+
+  if (!destinoId) {
+    return res.status(400).json({ erro: 'destino_id e obrigatorio' });
+  }
+  if (destinoId === origemId) {
+    return res.status(400).json({ erro: 'Destino e origem sao a mesma posicao' });
+  }
+
+  const ocupacaoRs = await db.execute({
+    sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
+    args: [origemId],
+  });
+  const ocupacao = ocupacaoRs.rows[0] as any;
+  if (!ocupacao) {
+    return res.status(404).json({ erro: 'Posicao de origem esta livre, nao ha o que mover' });
+  }
+
+  const destinoRs = await db.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [destinoId] });
+  if (destinoRs.rows.length === 0) {
+    return res.status(404).json({ erro: 'Posicao de destino nao encontrada' });
+  }
+
+  const destinoOcupadoRs = await db.execute({ sql: `SELECT id FROM estoque_posicoes WHERE endereco_id = ?`, args: [destinoId] });
+  if (destinoOcupadoRs.rows.length > 0) {
+    return res.status(409).json({ erro: 'Posicao de destino ja esta ocupada' });
+  }
+
+  const agora = new Date().toISOString();
+  const produtoId = Number(ocupacao.produto_id);
+  const quantidade = Number(ocupacao.quantidade);
+  const lote = ocupacao.lote ?? null;
+
+  try {
+    // batch = transacao unica: ou move e registra os 2 lados, ou nao muda nada. O UNIQUE em
+    // estoque_posicoes.endereco_id cobre a corrida (destino ocupado depois do check acima).
+    await db.batch(
+      [
+        { sql: `UPDATE estoque_posicoes SET endereco_id = ? WHERE endereco_id = ?`, args: [destinoId, origemId] },
+        {
+          sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em, transferencia_endereco_id) VALUES ('saida', ?, ?, ?, ?, ?, 'confirmada', ?, ?)`,
+          args: [produtoId, origemId, quantidade, ocupacao.validade, lote, agora, destinoId],
+        },
+        {
+          sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em, transferencia_endereco_id) VALUES ('entrada', ?, ?, ?, ?, ?, 'confirmada', ?, ?)`,
+          args: [produtoId, destinoId, quantidade, ocupacao.validade, lote, agora, origemId],
+        },
+      ],
+      'write'
+    );
+  } catch (e: any) {
+    if (String(e?.message).includes('UNIQUE')) {
+      return res.status(409).json({ erro: 'Posicao de destino ja esta ocupada' });
+    }
+    throw e;
+  }
+
+  res.json({ ok: true });
+});
+
 // POST /api/enderecos/:id/contar { quantidade_contada } -> contagem ciclica. Sempre registra
 // em `contagens` (mesmo sem divergencia, serve de log de que a posicao foi conferida). Se
 // quantidade_contada != quantidade do sistema, ajusta estoque_posicoes na hora e gera uma

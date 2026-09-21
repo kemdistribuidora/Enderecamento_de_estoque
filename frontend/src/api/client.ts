@@ -95,6 +95,14 @@ export function contarEndereco(
   }).then((r) => handleJson(r));
 }
 
+export function moverPallet(enderecoId: number, destinoId: number): Promise<{ ok: true }> {
+  return fetch(`${BASE_URL}/enderecos/${enderecoId}/mover`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ destino_id: destinoId }),
+  }).then((r) => handleJson(r));
+}
+
 export function bloquearEndereco(enderecoId: number, motivo: string): Promise<{ ok: true }> {
   return fetch(`${BASE_URL}/enderecos/${enderecoId}/bloquear`, {
     method: 'POST',
@@ -216,6 +224,7 @@ export interface Movimentacao {
   lote: string | null;
   status: StatusMovimentacao;
   criado_em: string;
+  transferencia_endereco_codigo: string | null;
 }
 
 export function buscarMovimentacoes(): Promise<Movimentacao[]> {

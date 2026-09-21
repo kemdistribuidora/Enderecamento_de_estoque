@@ -38,15 +38,28 @@ export default function HistoricoPage() {
     revertida: 'Revertida',
   };
 
+  function rotuloTipo(m: Movimentacao): string {
+    if (m.transferencia_endereco_codigo) return m.tipo === 'entrada' ? 'Transferência (entrada)' : 'Transferência (saída)';
+    return m.tipo === 'entrada' ? 'Entrada' : 'Saída';
+  }
+
+  // "A01-1-2 → B02-1-1" nas duas pontas da transferencia, pra ler de relance de onde pra onde
+  function rotuloPosicao(m: Movimentacao): string {
+    if (!m.transferencia_endereco_codigo) return m.endereco_codigo;
+    return m.tipo === 'saida'
+      ? `${m.endereco_codigo} → ${m.transferencia_endereco_codigo}`
+      : `${m.transferencia_endereco_codigo} → ${m.endereco_codigo}`;
+  }
+
   function handleExportar() {
     exportarCsv('historico-movimentacao.csv', [
       ['Quando', 'Tipo', 'Produto', 'Código', 'Posição', 'Lote', 'Quantidade', 'Status'],
       ...movimentacoes.map((m) => [
         new Date(m.criado_em).toLocaleString('pt-BR'),
-        m.tipo === 'entrada' ? 'Entrada' : 'Saída',
+        rotuloTipo(m),
         m.produto_nome,
         m.produto_codigo,
-        m.endereco_codigo,
+        rotuloPosicao(m),
         m.lote ?? '',
         m.quantidade,
         rotulosStatus[m.status],
@@ -80,9 +93,9 @@ export default function HistoricoPage() {
           <table className="table-plate">
             <colgroup>
               <col className="w-52" />
-              <col className="w-24" />
+              <col className="w-44" />
               <col />
-              <col className="w-24" />
+              <col className="w-52" />
               <col className="w-28" />
               <col className="w-32" />
               <col className="w-32" />
@@ -107,15 +120,23 @@ export default function HistoricoPage() {
                     {new Date(m.criado_em).toLocaleString('pt-BR')}
                   </td>
                   <td>
-                    <span className={m.tipo === 'entrada' ? 'text-signal-green600' : 'text-ink-900'}>
-                      {m.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+                    <span
+                      className={
+                        m.transferencia_endereco_codigo
+                          ? 'text-steel-700'
+                          : m.tipo === 'entrada'
+                            ? 'text-signal-green600'
+                            : 'text-ink-900'
+                      }
+                    >
+                      {rotuloTipo(m)}
                     </span>
                   </td>
                   <td title={`${m.produto_nome} — ${m.produto_codigo}`}>
                     <span className="font-medium text-ink-900">{m.produto_nome}</span>{' '}
                     <span className="data-code text-steel-400">— {m.produto_codigo}</span>
                   </td>
-                  <td className="data-code whitespace-nowrap text-ink-600">{m.endereco_codigo}</td>
+                  <td className="data-code whitespace-nowrap text-ink-600">{rotuloPosicao(m)}</td>
                   <td className="data-code whitespace-nowrap text-ink-600">{m.lote ?? '—'}</td>
                   <td className="data-code whitespace-nowrap text-right">{m.quantidade}</td>
                   <td>

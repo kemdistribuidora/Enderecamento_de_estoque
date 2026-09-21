@@ -1,17 +1,26 @@
 import { useState } from 'react';
 import { EnderecoComStatus } from '../types';
-import { atualizarPesoCaixa, baixarParcialEndereco, bloquearEndereco, desbloquearEndereco } from '../api/client';
+import { atualizarPesoCaixa, baixarParcialEndereco, bloquearEndereco, desbloquearEndereco, moverPallet } from '../api/client';
 import { ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 import { calcularPesoTotal, formatarQtdCx } from '../utils/quantidade';
 import EtiquetaModal from './EtiquetaModal';
+import ModalEscolherNoMapa from './ModalEscolherNoMapa';
+import ModalConfirmacao from './ModalConfirmacao';
 
 interface Props {
   endereco: EnderecoComStatus | null;
   onClose: () => void;
   onAtualizado?: () => void;
+  // setor do mapa aberto: o seletor de destino do "Mover pallet" abre nele
+  setorAtualId?: number | null;
 }
 
-export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props) {
+export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtualId }: Props) {
+  const [escolhendoDestino, setEscolhendoDestino] = useState(false);
+  // destino ja clicado no mapa, aguardando o usuario confirmar no modal
+  const [destinoPendente, setDestinoPendente] = useState<EnderecoComStatus | null>(null);
+  const [movendo, setMovendo] = useState(false);
+  const [confirmandoLiberacao, setConfirmandoLiberacao] = useState(false);
   const [retirando, setRetirando] = useState(false);
   const [qtdRetirar, setQtdRetirar] = useState('');
   const [erro, setErro] = useState('');
@@ -50,7 +59,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
     }
   }
 
-  async function handleRetirarParcial() {
+  function handleRetirarParcial() {
     if (!endereco || !endereco.produto) return;
     const qtd = Number(qtdRetirar);
     if (!qtd || qtd <= 0) {
@@ -61,9 +70,16 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
       setErro(`Quantidade maior que a disponível na posição (${endereco.produto.quantidade}).`);
       return;
     }
-    if (qtd === endereco.produto.quantidade && !confirm(`Isso vai liberar a posição ${endereco.codigo} inteira. Confirma?`)) {
+    setErro('');
+    if (qtd === endereco.produto.quantidade) {
+      setConfirmandoLiberacao(true);
       return;
     }
+    executarRetirada(qtd);
+  }
+
+  async function executarRetirada(qtd: number) {
+    if (!endereco) return;
     setRetirando(true);
     setErro('');
     try {
@@ -73,7 +89,27 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
     } catch (err: any) {
       setErro(err.message ?? 'Erro ao retirar quantidade.');
     } finally {
+      setConfirmandoLiberacao(false);
       setRetirando(false);
+    }
+  }
+
+  async function executarMover() {
+    if (!endereco || !destinoPendente) return;
+    setMovendo(true);
+    setErro('');
+    try {
+      await moverPallet(endereco.id, destinoPendente.id);
+      onAtualizado?.();
+      onClose();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao mover pallet.');
+    } finally {
+      // este componente fica montado entre aberturas (retorna null sem endereco), entao
+      // limpa os modais empilhados em qualquer desfecho, senao reabririam no proximo pallet
+      setDestinoPendente(null);
+      setEscolhendoDestino(false);
+      setMovendo(false);
     }
   }
 
@@ -189,6 +225,14 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
               Imprimir etiqueta
             </button>
 
+            <button
+              type="button"
+              onClick={() => setEscolhendoDestino(true)}
+              className="btn-secondary mt-2 w-full"
+            >
+              Mover pallet para outra posição
+            </button>
+
             <div className="panel mt-3 p-3">
               <label className="mb-1 block text-xs font-medium text-ink-600">
                 Retirar quantidade em UN (máx. {endereco.produto.quantidade} ={' '}
@@ -267,6 +311,66 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado }: Props)
           )}
         </div>
       </div>
+
+      {escolhendoDestino && (
+        // wrapper barra o bubbling do clique no fundo do seletor, que senao fecharia este modal tambem
+        <div onClick={(e) => e.stopPropagation()}>
+          <ModalEscolherNoMapa
+            onFechar={() => setEscolhendoDestino(false)}
+            onEscolher={setDestinoPendente}
+            setorSugeridoId={setorAtualId}
+          />
+        </div>
+      )}
+
+      {destinoPendente && endereco.produto && (
+        <ModalConfirmacao
+          titulo="Mover pallet"
+          textoConfirmar="Confirmar movimentação"
+          textoCarregando="Movendo..."
+          carregando={movendo}
+          onConfirmar={executarMover}
+          onCancelar={() => setDestinoPendente(null)}
+        >
+          <p className="mb-3 text-ink-600">
+            {endereco.produto.nome} <span className="data-code text-steel-400">({endereco.produto.codigo})</span>
+          </p>
+          <div className="flex items-center justify-center gap-3 border-y border-steel-100 py-3">
+            <div className="text-center">
+              <p className="text-xs uppercase tracking-wide text-ink-600">De</p>
+              <p className="data-code text-lg font-bold text-steel-900">{endereco.codigo}</p>
+            </div>
+            <span className="text-xl text-steel-400">→</span>
+            <div className="text-center">
+              <p className="text-xs uppercase tracking-wide text-ink-600">Para</p>
+              <p className="data-code text-lg font-bold text-steel-900">{destinoPendente.codigo}</p>
+            </div>
+          </div>
+          <p className="mt-3 text-ink-600">
+            Quantidade, validade e lote acompanham o pallet. A posição {endereco.codigo} fica livre.
+          </p>
+          {destinoPendente.bloqueado && (
+            <div className="mt-3 border-l-4 border-signal-red600 bg-signal-red100 px-3 py-2 text-sm text-ink-900">
+              <span className="font-semibold text-signal-red600">⚠ Destino com problema:</span> {destinoPendente.bloqueio_motivo}
+            </div>
+          )}
+        </ModalConfirmacao>
+      )}
+
+      {confirmandoLiberacao && (
+        <ModalConfirmacao
+          titulo="Liberar posição"
+          textoConfirmar="Retirar tudo e liberar"
+          textoCarregando="Retirando..."
+          carregando={retirando}
+          onConfirmar={() => executarRetirada(Number(qtdRetirar))}
+          onCancelar={() => setConfirmandoLiberacao(false)}
+        >
+          <p>
+            Retirar a quantidade total vai liberar a posição <span className="data-code font-bold">{endereco.codigo}</span> inteira.
+          </p>
+        </ModalConfirmacao>
+      )}
 
       {etiquetaAberta && endereco.produto && (
         <EtiquetaModal

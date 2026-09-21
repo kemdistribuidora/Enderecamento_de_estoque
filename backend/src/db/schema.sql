@@ -101,6 +101,8 @@ CREATE TABLE IF NOT EXISTS estoque_erp_saldo (
 -- (endereco ja fica livre de verdade, mas da pra desfazer enquanto ninguem reocupou
 -- aquele endereco -- protege contra erro de digitacao). 'revertida' = foi desfeita.
 -- Sem usuario/login no sistema ainda, entao sem coluna de quem fez -- soh o que e quando.
+-- transferencia_endereco_id != NULL = par saida/entrada de um mover pallet (aponta pro
+-- OUTRO endereco da transferencia). Nao e' consumo real, entao fica fora de giro/curva ABC.
 CREATE TABLE IF NOT EXISTS movimentacoes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   tipo TEXT NOT NULL CHECK (tipo IN ('entrada', 'saida')),
@@ -110,7 +112,8 @@ CREATE TABLE IF NOT EXISTS movimentacoes (
   validade TEXT NOT NULL,
   lote TEXT,
   status TEXT NOT NULL DEFAULT 'confirmada' CHECK (status IN ('confirmada', 'standby', 'revertida')),
-  criado_em TEXT NOT NULL
+  criado_em TEXT NOT NULL,
+  transferencia_endereco_id INTEGER REFERENCES enderecos(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_movimentacoes_produto ON movimentacoes(produto_id);

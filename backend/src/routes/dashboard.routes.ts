@@ -88,7 +88,7 @@ async function calcularGiroMedio(): Promise<KpisDashboard['giro_medio']> {
     FROM (
       SELECT p.id, SUM(m.quantidade) as total_saida
       FROM produtos p
-      JOIN movimentacoes m ON m.produto_id = p.id AND m.tipo = 'saida' AND m.status != 'revertida'
+      JOIN movimentacoes m ON m.produto_id = p.id AND m.tipo = 'saida' AND m.status != 'revertida' AND m.transferencia_endereco_id IS NULL
       GROUP BY p.id
       HAVING SUM(m.quantidade) > 0
     )

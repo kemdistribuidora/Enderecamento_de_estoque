@@ -147,6 +147,8 @@ export interface Movimentacao {
   lote: string | null;
   status: StatusMovimentacao;
   criado_em: string;
+  // preenchido so nas 2 pontas de um mover pallet: codigo da OUTRA posicao da transferencia
+  transferencia_endereco_codigo: string | null;
 }
 
 // Curva ABC por giro (saida): produto ordenado por total de saida desc, com percentual
