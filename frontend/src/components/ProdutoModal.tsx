@@ -165,7 +165,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
         )}
 
         {endereco.status === 'livre' || !endereco.produto ? (
-          <p className="text-sm text-ink-600">Posição livre — sem produto armazenado.</p>
+          <p className="text-sm text-ink-600">Posição livre</p>
         ) : (
           <>
             <dl className="space-y-2 text-sm">
