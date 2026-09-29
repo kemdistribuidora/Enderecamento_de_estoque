@@ -84,6 +84,7 @@ function BlocoPrateleira({
   idsDestacados,
   idsCandidatos,
   candidatoPontilhado,
+  corredorAcima,
 }: {
   posicoes: EnderecoComStatus[];
   letraDono: string;
@@ -94,8 +95,12 @@ function BlocoPrateleira({
   idsDestacados?: Set<number>;
   idsCandidatos?: Set<number>;
   candidatoPontilhado?: boolean;
+  corredorAcima?: boolean;
 }) {
-  const andares = Array.from(new Set(posicoes.map((p) => p.andar))).sort((a, b) => b - a);
+  // andar 1 sempre colado no corredor da prateleira, como num mapa visto de cima
+  const andares = Array.from(new Set(posicoes.map((p) => p.andar))).sort((a, b) =>
+    corredorAcima ? a - b : b - a
+  );
   const colunas = Math.max(...andares.map((andar) => posicoes.filter((p) => p.andar === andar).length));
 
   return (
@@ -152,6 +157,7 @@ function ModalPrateleiraExpandida({
   idsDestacados,
   idsCandidatos,
   candidatoPontilhado,
+  corredorAcima,
 }: {
   prateleira: PrateleiraComPosicoes;
   onClose: () => void;
@@ -159,6 +165,7 @@ function ModalPrateleiraExpandida({
   idsDestacados?: Set<number>;
   idsCandidatos?: Set<number>;
   candidatoPontilhado?: boolean;
+  corredorAcima?: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -186,6 +193,7 @@ function ModalPrateleiraExpandida({
               idsDestacados={idsDestacados}
               idsCandidatos={idsCandidatos}
               candidatoPontilhado={candidatoPontilhado}
+              corredorAcima={corredorAcima}
             />
           </div>
         </div>
@@ -210,6 +218,12 @@ export default function MapaSetorView({ mapa, onSelect, enderecoDestacadoId, ids
   const idsDestacados = new Set<number>(enderecoDestacadoId != null ? [enderecoDestacadoId] : []);
   const candidatoPontilhado = enderecoDestacadoId != null;
 
+  // corredor da prateleira (mesma letra do dono) vem antes dela no empilhamento?
+  const corredorAcima = (prateleira: PrateleiraComPosicoes) => {
+    const corredor = mapa.corredores.find((c) => c.letra === prateleira.dono.letra);
+    return corredor ? corredor.aposPrateleiraOrdem < prateleira.ordem : false;
+  };
+
   return (
     <div className="panel p-4">
       <div className="mb-3 flex items-center justify-between">
@@ -230,6 +244,7 @@ export default function MapaSetorView({ mapa, onSelect, enderecoDestacadoId, ids
               idsDestacados={idsDestacados}
               idsCandidatos={idsCandidatos}
               candidatoPontilhado={candidatoPontilhado}
+              corredorAcima={corredorAcima(prateleira)}
             />
             {mapa.corredores
               .filter((c) => c.aposPrateleiraOrdem === prateleira.ordem)
@@ -247,6 +262,7 @@ export default function MapaSetorView({ mapa, onSelect, enderecoDestacadoId, ids
           idsDestacados={idsDestacados}
           idsCandidatos={idsCandidatos}
           candidatoPontilhado={candidatoPontilhado}
+          corredorAcima={corredorAcima(prateleiraExpandida)}
         />
       )}
     </div>
