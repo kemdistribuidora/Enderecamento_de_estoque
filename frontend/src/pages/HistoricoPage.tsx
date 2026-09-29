@@ -90,18 +90,8 @@ export default function HistoricoPage() {
       )}
 
       {movimentacoes.length > 0 && (
-        <div className="panel max-w-6xl overflow-x-auto">
+        <div className="panel w-full overflow-x-auto">
           <table className="table-plate">
-            <colgroup>
-              <col className="w-52" />
-              <col className="w-44" />
-              <col />
-              <col className="w-52" />
-              <col className="w-28" />
-              <col className="w-32" />
-              <col className="w-32" />
-              <col className="w-32" />
-            </colgroup>
             <thead>
               <tr>
                 <th>Quando</th>
@@ -133,7 +123,7 @@ export default function HistoricoPage() {
                       {rotuloTipo(m)}
                     </span>
                   </td>
-                  <td title={`${m.produto_nome} — ${m.produto_codigo}`}>
+                  <td className="min-w-[16rem] whitespace-normal" title={`${m.produto_nome} — ${m.produto_codigo}`}>
                     <span className="font-medium text-ink-900">{m.produto_nome}</span>{' '}
                     <span className="data-code text-steel-400">— {m.produto_codigo}</span>
                   </td>
