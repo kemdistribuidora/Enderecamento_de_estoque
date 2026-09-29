@@ -275,7 +275,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                 />
               )}
               <div className="flex items-center justify-between gap-2 border-b border-steel-100 pb-1">
-                <dt className="shrink-0 text-ink-600">Validade do lote</dt>
+                <dt className="shrink-0 text-ink-600">Validade da posição</dt>
                 {editandoValidade ? (
                   <dd className="flex gap-1">
                     <input

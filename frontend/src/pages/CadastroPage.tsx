@@ -95,8 +95,8 @@ export default function CadastroPage() {
     const quantidade = Number(form.quantidade);
     const enderecoId = Number(form.enderecoId);
 
-    if (!form.enderecoId || !quantidade || quantidade <= 0 || !form.validade || !form.lote.trim()) {
-      setStatus({ tipo: 'erro', texto: 'Selecione um endereço, quantidade válida, validade e lote.' });
+    if (!form.enderecoId || !quantidade || quantidade <= 0 || !form.validade) {
+      setStatus({ tipo: 'erro', texto: 'Selecione um endereço, quantidade válida e validade.' });
       return;
     }
     if (!isDataIsoValida(form.validade)) {
@@ -137,7 +137,7 @@ export default function CadastroPage() {
       }
 
       const enderecoOcupado = enderecosLivres.find((e) => e.id === enderecoId);
-      const resultado = await ocuparEndereco(enderecoId, produtoId, quantidade, form.validade, form.lote.trim());
+      const resultado = await ocuparEndereco(enderecoId, produtoId, quantidade, form.validade, form.lote.trim() || null);
 
       setStatus({ tipo: 'sucesso', texto: `Produto adicionado na posição ${enderecoOcupado?.codigo}.` });
       setDadosEtiqueta({
@@ -149,7 +149,7 @@ export default function CadastroPage() {
         qtPorCx: produtoSelecionado?.qt_por_cx ?? qtPorCx,
         quantidade,
         validade: form.validade,
-        lote: form.lote.trim(),
+        lote: form.lote.trim() || null,
         criadoEm: resultado.criado_em,
       });
       setEtiquetaAberta(true);
@@ -274,7 +274,7 @@ export default function CadastroPage() {
         <fieldset className="space-y-3 border-t border-steel-100 pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-8">
           <legend className="mb-1 font-display text-lg font-bold text-steel-900">Entrada em estoque</legend>
 
-          <Campo label="Validade do lote">
+          <Campo label="Validade">
             <input
               required
               type="date"
@@ -286,9 +286,8 @@ export default function CadastroPage() {
             />
           </Campo>
 
-          <Campo label="Lote">
+          <Campo label="Lote (opcional)">
             <input
-              required
               value={form.lote}
               onChange={(e) => atualizarCampo('lote', e.target.value)}
               className="input"

@@ -264,8 +264,8 @@ function PosicionarModal({
 
   async function handleConfirmar() {
     const qtd = Number(quantidade);
-    if (!enderecoEscolhido || !qtd || qtd <= 0 || !validade || !lote.trim()) {
-      setErro('Escolha um endereço no mapa, quantidade válida, validade e lote.');
+    if (!enderecoEscolhido || !qtd || qtd <= 0 || !validade) {
+      setErro('Escolha um endereço no mapa, quantidade válida e validade.');
       return;
     }
     if (!isDataIsoValida(validade)) {
@@ -275,7 +275,7 @@ function PosicionarModal({
     setSalvando(true);
     setErro('');
     try {
-      const resultado = await ocuparEndereco(enderecoEscolhido.id, pendencia.produto_id, qtd, validade, lote.trim());
+      const resultado = await ocuparEndereco(enderecoEscolhido.id, pendencia.produto_id, qtd, validade, lote.trim() || null);
       setDadosEtiqueta({
         enderecoCodigo: enderecoEscolhido.codigo,
         produtoNome: pendencia.nome,
@@ -285,7 +285,7 @@ function PosicionarModal({
         qtPorCx: pendencia.qt_por_cx,
         quantidade: qtd,
         validade,
-        lote: lote.trim(),
+        lote: lote.trim() || null,
         criadoEm: resultado.criado_em,
       });
     } catch (err: any) {
@@ -343,12 +343,12 @@ function PosicionarModal({
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-ink-600">Validade do lote</span>
+            <span className="mb-1 block font-medium text-ink-600">Validade</span>
             <input type="date" min={DATA_MIN} max={DATA_MAX} value={validade} onChange={(e) => setValidade(e.target.value)} className="input" />
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-ink-600">Lote</span>
+            <span className="mb-1 block font-medium text-ink-600">Lote (opcional)</span>
             <input value={lote} onChange={(e) => setLote(e.target.value)} className="input" placeholder="LOTE-0001" />
           </label>
         </div>

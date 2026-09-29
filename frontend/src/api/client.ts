@@ -48,7 +48,7 @@ export function ocuparEndereco(
   produtoId: number,
   quantidade: number,
   validade: string,
-  lote: string
+  lote: string | null
 ): Promise<{ ok: true; criado_em: string }> {
   return fetch(`${BASE_URL}/enderecos/${enderecoId}/ocupar`, {
     method: 'POST',

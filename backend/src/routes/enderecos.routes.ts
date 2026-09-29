@@ -145,10 +145,12 @@ enderecosRouter.get('/a-vencer', async (_req, res) => {
 // POST /api/enderecos/:id/ocupar { produto_id, quantidade, validade, lote }
 enderecosRouter.post('/:id/ocupar', async (req, res) => {
   const enderecoId = Number(req.params.id);
-  const { produto_id, quantidade, validade, lote } = req.body ?? {};
+  const { produto_id, quantidade, validade } = req.body ?? {};
+  // Lote e opcional: vazio vira null
+  const lote = String(req.body?.lote ?? '').trim() || null;
 
-  if (!produto_id || !quantidade || quantidade <= 0 || !validade || !String(lote ?? '').trim()) {
-    return res.status(400).json({ erro: 'produto_id, quantidade (> 0), validade e lote sao obrigatorios' });
+  if (!produto_id || !quantidade || quantidade <= 0 || !validade) {
+    return res.status(400).json({ erro: 'produto_id, quantidade (> 0) e validade sao obrigatorios' });
   }
   if (!isDataIsoValida(validade)) {
     return res.status(400).json({ erro: 'Validade invalida. Use uma data real entre 2000 e 2099.' });
