@@ -162,6 +162,17 @@ export function buscarPendenciasPosicionamento(): Promise<PendenciaPosicionament
   return fetch(`${BASE_URL}/produtos/pendencias-posicionamento`).then((r) => handleJson(r));
 }
 
+export function corrigirValidade(
+  enderecoId: number,
+  validade: string
+): Promise<{ ok: true; validade: string; status_validade: StatusValidade }> {
+  return fetch(`${BASE_URL}/enderecos/${enderecoId}/validade`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ validade }),
+  }).then((r) => handleJson(r));
+}
+
 export function atualizarPesoCaixa(produtoId: number, pesoCaixa: number | null): Promise<{ ok: true; peso_caixa: number | null }> {
   return fetch(`${BASE_URL}/produtos/${produtoId}/peso-caixa`, {
     method: 'PUT',

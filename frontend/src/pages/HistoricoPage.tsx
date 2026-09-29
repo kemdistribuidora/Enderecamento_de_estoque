@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Movimentacao, buscarMovimentacoes, desfazerMovimentacao } from '../api/client';
 import { exportarCsv } from '../utils/exportCsv';
+import { formatarDataHora } from '../utils/data';
 
 export default function HistoricoPage() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
@@ -55,7 +56,7 @@ export default function HistoricoPage() {
     exportarCsv('historico-movimentacao.csv', [
       ['Quando', 'Tipo', 'Produto', 'Código', 'Posição', 'Lote', 'Quantidade', 'Status'],
       ...movimentacoes.map((m) => [
-        new Date(m.criado_em).toLocaleString('pt-BR'),
+        formatarDataHora(m.criado_em),
         rotuloTipo(m),
         m.produto_nome,
         m.produto_codigo,
@@ -117,7 +118,7 @@ export default function HistoricoPage() {
               {movimentacoes.map((m) => (
                 <tr key={m.id}>
                   <td className="data-code whitespace-nowrap text-ink-600">
-                    {new Date(m.criado_em).toLocaleString('pt-BR')}
+                    {formatarDataHora(m.criado_em)}
                   </td>
                   <td>
                     <span

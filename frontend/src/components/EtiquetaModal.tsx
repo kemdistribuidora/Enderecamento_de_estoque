@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import JsBarcode from 'jsbarcode';
 import { calcularPesoTotal, formatarQtdCx } from '../utils/quantidade';
+import { formatarData } from '../utils/data';
 
 export interface DadosEtiqueta {
   enderecoCodigo: string;
@@ -21,12 +22,6 @@ interface Props {
   onClose: () => void;
 }
 
-function formatarData(iso: string | null): string {
-  if (!iso) return '—';
-  const data = new Date(iso);
-  if (isNaN(data.getTime())) return iso;
-  return data.toLocaleDateString('pt-BR');
-}
 
 export default function EtiquetaModal({ dados, onClose }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);

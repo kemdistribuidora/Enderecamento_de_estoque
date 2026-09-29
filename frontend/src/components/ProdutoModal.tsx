@@ -1,11 +1,19 @@
-import { useState } from 'react';
-import { EnderecoComStatus } from '../types';
-import { atualizarPesoCaixa, baixarParcialEndereco, bloquearEndereco, desbloquearEndereco, moverPallet } from '../api/client';
+import { useEffect, useState } from 'react';
+import { EnderecoComStatus, StatusValidade } from '../types';
+import {
+  atualizarPesoCaixa,
+  baixarParcialEndereco,
+  bloquearEndereco,
+  corrigirValidade,
+  desbloquearEndereco,
+  moverPallet,
+} from '../api/client';
 import { ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 import { calcularPesoTotal, formatarQtdCx } from '../utils/quantidade';
 import EtiquetaModal from './EtiquetaModal';
 import ModalEscolherNoMapa from './ModalEscolherNoMapa';
 import ModalConfirmacao from './ModalConfirmacao';
+import { DATA_MAX, DATA_MIN, formatarData, isDataIsoValida } from '../utils/data';
 
 interface Props {
   endereco: EnderecoComStatus | null;
@@ -32,11 +40,72 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
   const [salvandoPeso, setSalvandoPeso] = useState(false);
   // "endereco" e' snapshot do clique no mapa -- nao atualiza com o reload, entao guarda o peso salvo aqui
   const [pesoSalvo, setPesoSalvo] = useState<{ produtoId: number; peso: number } | null>(null);
+  // correcao de validade digitada errada: clicar na data abre o input (discreto, sem botao fixo)
+  const [editandoValidade, setEditandoValidade] = useState(false);
+  const [validadeInput, setValidadeInput] = useState('');
+  const [confirmandoValidade, setConfirmandoValidade] = useState(false);
+  const [salvandoValidade, setSalvandoValidade] = useState(false);
+  // mesmo motivo do pesoSalvo: "endereco" e' snapshot, guarda a validade corrigida aqui
+  const [validadeSalva, setValidadeSalva] = useState<{
+    enderecoId: number;
+    validade: string;
+    status: StatusValidade;
+  } | null>(null);
+
+  // modal fica montado entre aberturas: nao deixa a edicao aberta vazar pro proximo pallet
+  useEffect(() => {
+    setEditandoValidade(false);
+    setConfirmandoValidade(false);
+  }, [endereco?.id]);
 
   if (!endereco) return null;
 
   const pesoCaixa =
     endereco.produto && pesoSalvo?.produtoId === endereco.produto.id ? pesoSalvo.peso : endereco.produto?.peso_caixa ?? null;
+  const correcaoValida = validadeSalva?.enderecoId === endereco.id ? validadeSalva : null;
+  const validadeAtual = correcaoValida?.validade ?? endereco.produto?.validade ?? '';
+  const statusValidadeAtual = correcaoValida?.status ?? endereco.produto?.status_validade ?? 'normal';
+
+  function abrirEdicaoValidade() {
+    setValidadeInput(validadeAtual);
+    setErro('');
+    setEditandoValidade(true);
+  }
+
+  function fecharEdicaoValidade() {
+    setEditandoValidade(false);
+    setConfirmandoValidade(false);
+  }
+
+  function handleRevisarValidade() {
+    if (!isDataIsoValida(validadeInput)) {
+      setErro('Validade inválida. Confira dia, mês e ano (4 dígitos).');
+      return;
+    }
+    setErro('');
+    if (validadeInput === validadeAtual) {
+      fecharEdicaoValidade();
+      return;
+    }
+    setConfirmandoValidade(true);
+  }
+
+  async function executarCorrecaoValidade() {
+    if (!endereco) return;
+    setSalvandoValidade(true);
+    setErro('');
+    try {
+      const r = await corrigirValidade(endereco.id, validadeInput);
+      setValidadeSalva({ enderecoId: endereco.id, validade: r.validade, status: r.status_validade });
+      fecharEdicaoValidade();
+      onAtualizado?.();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao corrigir validade.');
+      setConfirmandoValidade(false);
+    } finally {
+      setSalvandoValidade(false);
+    }
+  }
 
   async function handleSalvarPeso() {
     if (!endereco || !endereco.produto) return;
@@ -205,15 +274,58 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                   code
                 />
               )}
-              <Row label="Validade do lote" value={endereco.produto.validade} />
+              <div className="flex items-center justify-between gap-2 border-b border-steel-100 pb-1">
+                <dt className="shrink-0 text-ink-600">Validade do lote</dt>
+                {editandoValidade ? (
+                  <dd className="flex gap-1">
+                    <input
+                      type="date"
+                      autoFocus
+                      min={DATA_MIN}
+                      max={DATA_MAX}
+                      value={validadeInput}
+                      onChange={(e) => setValidadeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleRevisarValidade();
+                        if (e.key === 'Escape') {
+                          e.stopPropagation();
+                          fecharEdicaoValidade();
+                        }
+                      }}
+                      className="input w-36"
+                    />
+                    <button type="button" onClick={handleRevisarValidade} className="btn-secondary">
+                      Salvar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={fecharEdicaoValidade}
+                      title="Cancelar"
+                      className="px-1 text-steel-400 hover:text-ink-900"
+                    >
+                      ✕
+                    </button>
+                  </dd>
+                ) : (
+                  <dd>
+                    <button
+                      type="button"
+                      onClick={abrirEdicaoValidade}
+                      title="Clique para corrigir a validade"
+                      className="group font-medium text-ink-900 decoration-dotted underline-offset-4 hover:underline"
+                    >
+                      <span aria-hidden="true" className="mr-1 text-steel-400 opacity-0 group-hover:opacity-100">✎</span>
+                      {formatarData(validadeAtual)}
+                    </button>
+                  </dd>
+                )}
+              </div>
               <Row label="Lote" value={endereco.produto.lote ?? '—'} code />
             </dl>
 
-            {endereco.produto.status_validade !== 'normal' && (
-              <p
-                className={`mt-2 ${endereco.produto.status_validade === 'emergencia' ? 'tag-red' : 'tag-amber'}`}
-              >
-                {ROTULO_STATUS_VALIDADE[endereco.produto.status_validade]}
+            {statusValidadeAtual !== 'normal' && (
+              <p className={`mt-2 ${statusValidadeAtual === 'emergencia' ? 'tag-red' : 'tag-amber'}`}>
+                {ROTULO_STATUS_VALIDADE[statusValidadeAtual]}
               </p>
             )}
 
@@ -372,6 +484,34 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
         </ModalConfirmacao>
       )}
 
+      {confirmandoValidade && endereco.produto && (
+        <ModalConfirmacao
+          titulo="Corrigir validade"
+          textoConfirmar="Confirmar nova validade"
+          textoCarregando="Salvando..."
+          carregando={salvandoValidade}
+          onConfirmar={executarCorrecaoValidade}
+          onCancelar={() => setConfirmandoValidade(false)}
+        >
+          <p className="mb-3 text-ink-600">
+            {endereco.produto.nome} <span className="data-code text-steel-400">({endereco.produto.codigo})</span> ·
+            posição <span className="data-code">{endereco.codigo}</span>
+          </p>
+          <div className="flex items-center justify-center gap-3 border-y border-steel-100 py-3">
+            <div className="text-center">
+              <p className="text-xs uppercase tracking-wide text-ink-600">De</p>
+              <p className="data-code text-lg font-bold text-steel-400 line-through">{formatarData(validadeAtual)}</p>
+            </div>
+            <span className="text-xl text-steel-400">→</span>
+            <div className="text-center">
+              <p className="text-xs uppercase tracking-wide text-ink-600">Para</p>
+              <p className="data-code text-lg font-bold text-steel-900">{formatarData(validadeInput)}</p>
+            </div>
+          </div>
+          <p className="mt-3 text-ink-600">Se a etiqueta já foi colada no pallet, imprima de novo depois.</p>
+        </ModalConfirmacao>
+      )}
+
       {etiquetaAberta && endereco.produto && (
         <EtiquetaModal
           dados={{
@@ -382,7 +522,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
             pesoCaixa,
             qtPorCx: endereco.produto.qt_por_cx,
             quantidade: endereco.produto.quantidade,
-            validade: endereco.produto.validade,
+            validade: validadeAtual,
             lote: endereco.produto.lote,
             criadoEm: endereco.produto.criado_em,
           }}

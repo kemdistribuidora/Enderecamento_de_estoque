@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db/client';
 import { EnderecoComStatus, PosicaoAVencer } from '../types';
-import { calcularStatusValidade } from '../services/validade.service';
+import { calcularStatusValidade, isDataIsoValida } from '../services/validade.service';
 
 export const enderecosRouter = Router();
 
@@ -149,6 +149,9 @@ enderecosRouter.post('/:id/ocupar', async (req, res) => {
 
   if (!produto_id || !quantidade || quantidade <= 0 || !validade || !String(lote ?? '').trim()) {
     return res.status(400).json({ erro: 'produto_id, quantidade (> 0), validade e lote sao obrigatorios' });
+  }
+  if (!isDataIsoValida(validade)) {
+    return res.status(400).json({ erro: 'Validade invalida. Use uma data real entre 2000 e 2099.' });
   }
 
   const endereco = await db.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [enderecoId] });
@@ -418,4 +421,25 @@ enderecosRouter.post('/:id/desbloquear', async (req, res) => {
   });
 
   res.json({ ok: true });
+});
+
+// PUT /api/enderecos/:id/validade { validade } -> corrige validade digitada errada na
+// entrada. So mexe na posicao atual; o historico de movimentacoes fica como foi registrado.
+enderecosRouter.put('/:id/validade', async (req, res) => {
+  const enderecoId = Number(req.params.id);
+  const { validade } = req.body ?? {};
+
+  if (!isDataIsoValida(validade)) {
+    return res.status(400).json({ erro: 'Validade invalida. Use uma data real entre 2000 e 2099.' });
+  }
+
+  const resultado = await db.execute({
+    sql: `UPDATE estoque_posicoes SET validade = ? WHERE endereco_id = ?`,
+    args: [validade, enderecoId],
+  });
+  if (resultado.rowsAffected === 0) {
+    return res.status(404).json({ erro: 'Posicao livre, nada para corrigir' });
+  }
+
+  res.json({ ok: true, validade, status_validade: calcularStatusValidade(validade) });
 });

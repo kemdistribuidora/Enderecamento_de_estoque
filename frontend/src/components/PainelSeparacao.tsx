@@ -4,6 +4,7 @@ import { MapaSetor } from '../types';
 import { formatarQtdCx } from '../utils/quantidade';
 import MapaSetorView from './MapaSetorView';
 import ScannerInput from './ScannerInput';
+import { formatarData } from '../utils/data';
 
 interface Props {
   produtoId: number;
@@ -82,7 +83,7 @@ export default function PainelSeparacao({
           </h3>
           <p className="mt-0.5 text-sm text-ink-600">
             Posição <strong>{codigoEndereco}</strong> · {formatarQtdCx(quantidade, qtPorCx)} · lote {lote ?? '—'} · vence{' '}
-            {validade}
+            {formatarData(validade)}
           </p>
         </div>
         <button type="button" onClick={onFechar} className="text-steel-400 hover:text-ink-900">

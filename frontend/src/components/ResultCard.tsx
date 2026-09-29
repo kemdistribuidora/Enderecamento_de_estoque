@@ -1,6 +1,7 @@
 import { ProdutoComPosicoes } from '../types';
 import { ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 import { formatarQtdCx } from '../utils/quantidade';
+import { formatarData } from '../utils/data';
 
 type Posicao = ProdutoComPosicoes['posicoes'][number];
 
@@ -51,7 +52,7 @@ export default function ResultCard({ produto, onSeparar }: Props) {
                 }`}
               >
                 <span className="data-code">
-                  {p.codigo_endereco} · {formatarQtdCx(p.quantidade, produto.qt_por_cx)} · vence {p.validade}
+                  {p.codigo_endereco} · {formatarQtdCx(p.quantidade, produto.qt_por_cx)} · vence {formatarData(p.validade)}
                 </span>
                 {p.status_validade !== 'normal' && (
                   <span className={p.status_validade === 'emergencia' ? 'tag-red' : 'tag-amber'}>

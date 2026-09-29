@@ -3,6 +3,7 @@ import { PosicaoAVencer, buscarPosicoesAVencer } from '../api/client';
 import { ROTULO_STATUS_VALIDADE } from '../utils/statusValidade';
 import { formatarQtdCx } from '../utils/quantidade';
 import PainelSeparacao from '../components/PainelSeparacao';
+import { formatarData } from '../utils/data';
 
 const TAG_STATUS_VALIDADE: Record<PosicaoAVencer['status_validade'], string> = {
   emergencia: 'tag-red',
@@ -98,7 +99,7 @@ export default function ValidadePage() {
                   <td className="data-code whitespace-nowrap text-ink-600">{p.endereco_codigo}</td>
                   <td className="data-code whitespace-nowrap text-ink-600">{p.lote ?? '—'}</td>
                   <td className="data-code whitespace-nowrap text-right">{formatarQtdCx(p.quantidade, p.produto_qt_por_cx)}</td>
-                  <td className="data-code whitespace-nowrap text-ink-600">{p.validade}</td>
+                  <td className="data-code whitespace-nowrap text-ink-600">{formatarData(p.validade)}</td>
                   <td className="text-right">
                     <button type="button" onClick={() => setSeparando(p)} className="btn-secondary">
                       Separar

@@ -4,6 +4,7 @@ import { EnderecoComStatus, ProdutoComPosicoes } from '../types';
 import { formatarQtdCx } from '../utils/quantidade';
 import ModalEscolherNoMapa from '../components/ModalEscolherNoMapa';
 import EtiquetaModal, { DadosEtiqueta } from '../components/EtiquetaModal';
+import { DATA_MAX, DATA_MIN, isDataIsoValida } from '../utils/data';
 
 const FORM_INICIAL = {
   codigo: '',
@@ -96,6 +97,10 @@ export default function CadastroPage() {
 
     if (!form.enderecoId || !quantidade || quantidade <= 0 || !form.validade || !form.lote.trim()) {
       setStatus({ tipo: 'erro', texto: 'Selecione um endereço, quantidade válida, validade e lote.' });
+      return;
+    }
+    if (!isDataIsoValida(form.validade)) {
+      setStatus({ tipo: 'erro', texto: 'Validade inválida. Confira dia, mês e ano (4 dígitos).' });
       return;
     }
 
@@ -273,6 +278,8 @@ export default function CadastroPage() {
             <input
               required
               type="date"
+              min={DATA_MIN}
+              max={DATA_MAX}
               value={form.validade}
               onChange={(e) => atualizarCampo('validade', e.target.value)}
               className="input"

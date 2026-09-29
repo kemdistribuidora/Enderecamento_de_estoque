@@ -13,6 +13,7 @@ import { EnderecoComStatus } from '../types';
 import { formatarQtdCx } from '../utils/quantidade';
 import ModalEscolherNoMapa from '../components/ModalEscolherNoMapa';
 import EtiquetaModal, { DadosEtiqueta } from '../components/EtiquetaModal';
+import { DATA_MAX, DATA_MIN, isDataIsoValida } from '../utils/data';
 
 export default function PosicionamentoPage() {
   const [pendencias, setPendencias] = useState<PendenciaPosicionamento[]>([]);
@@ -267,6 +268,10 @@ function PosicionarModal({
       setErro('Escolha um endereço no mapa, quantidade válida, validade e lote.');
       return;
     }
+    if (!isDataIsoValida(validade)) {
+      setErro('Validade inválida. Confira dia, mês e ano (4 dígitos).');
+      return;
+    }
     setSalvando(true);
     setErro('');
     try {
@@ -339,7 +344,7 @@ function PosicionarModal({
 
           <label className="block text-sm">
             <span className="mb-1 block font-medium text-ink-600">Validade do lote</span>
-            <input type="date" value={validade} onChange={(e) => setValidade(e.target.value)} className="input" />
+            <input type="date" min={DATA_MIN} max={DATA_MAX} value={validade} onChange={(e) => setValidade(e.target.value)} className="input" />
           </label>
 
           <label className="block text-sm">
