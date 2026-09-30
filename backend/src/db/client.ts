@@ -23,6 +23,7 @@ export async function initSchema(): Promise<void> {
   await adicionarColunaSeNaoExiste('movimentacoes', 'transferencia_endereco_id', 'INTEGER REFERENCES enderecos(id) ON DELETE SET NULL');
   await adicionarColunaSeNaoExiste('produtos', 'peso_caixa', 'REAL');
   await adicionarColunaSeNaoExiste('produtos', 'qt_por_cx', 'INTEGER');
+  await adicionarColunaSeNaoExiste('produtos', 'cor_marcador', 'TEXT');
   await adicionarColunaSeNaoExiste('estoque_posicoes', 'criado_em', 'TEXT');
   const prateleirasNovas = await adicionarColunaSeNaoExiste('prateleiras', 'letra', `TEXT NOT NULL DEFAULT ''`);
   await adicionarColunaSeNaoExiste('prateleiras', 'lado', `TEXT NOT NULL DEFAULT 'D'`);

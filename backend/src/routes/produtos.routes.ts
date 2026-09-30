@@ -63,6 +63,30 @@ produtosRouter.put('/:id/peso-caixa', async (req, res) => {
   res.json({ ok: true, peso_caixa: pesoCaixa });
 });
 
+// PUT /api/produtos/:id/cor-marcador -> marcador colorido do produto no mapa (paleta fixa).
+// Fica no produto, nao na posicao: marca todas as posicoes dele de uma vez. null = remove.
+const CORES_MARCADOR = ['vermelho', 'laranja', 'amarelo', 'verde', 'azul', 'roxo', 'rosa', 'marrom'];
+
+produtosRouter.put('/:id/cor-marcador', async (req, res) => {
+  const id = Number(req.params.id);
+  const cor = req.body?.cor_marcador ?? null;
+
+  if (cor != null && !CORES_MARCADOR.includes(cor)) {
+    return res.status(400).json({ erro: 'cor_marcador invalida' });
+  }
+
+  const info = await db.execute({
+    sql: `UPDATE produtos SET cor_marcador = ? WHERE id = ?`,
+    args: [cor, id],
+  });
+
+  if (info.rowsAffected === 0) {
+    return res.status(404).json({ erro: 'Produto nao encontrado' });
+  }
+
+  res.json({ ok: true, cor_marcador: cor });
+});
+
 // GET /api/produtos?search=termo -> busca parcial por codigo OU nome, case-insensitive
 produtosRouter.get('/', async (req, res) => {
   const search = String(req.query.search ?? '').trim();

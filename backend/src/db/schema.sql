@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS produtos (
   -- unidades por caixa fechada, vindo do Winthor; NULL = produto sem embalagem em
   -- caixa conhecida. Saldo (estoque_erp_saldo.saldo / estoque_posicoes.quantidade)
   -- SEMPRE fica em UN -- qt_por_cx e so pra converter em CX na exibicao.
-  qt_por_cx INTEGER
+  qt_por_cx INTEGER,
+  -- marcador visual escolhido no mapa (chave da paleta fixa do frontend, ex: "azul");
+  -- NULL = sem marcador. Fica no produto, entao aparece em todas as posicoes dele.
+  cor_marcador TEXT
 );
 
 CREATE TABLE IF NOT EXISTS setores (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EnderecoComStatus, MapaSetor, PrateleiraComPosicoes } from '../types';
 import { formatarQtdCx } from '../utils/quantidade';
 import { formatarData } from '../utils/data';
+import { hexCorMarcador } from '../utils/corMarcador';
 
 interface Props {
   mapa: MapaSetor;
@@ -27,6 +28,7 @@ function CelulaPosicao({
 }) {
   const ocupado = posicao.status === 'ocupado';
   const statusValidade = posicao.produto?.status_validade;
+  const corMarcador = hexCorMarcador(posicao.produto?.cor_marcador);
 
   const corOcupado =
     statusValidade === 'emergencia'
@@ -65,6 +67,13 @@ function CelulaPosicao({
       } ${corCandidato}`}
     >
       {posicao.posicao}
+      {/* marcador do produto: canto oposto ao "!" de bloqueio pra nao sobrepor */}
+      {corMarcador && (
+        <span
+          className="absolute -left-1 -top-1 h-3.5 w-3.5 rounded-full ring-2 ring-white"
+          style={{ backgroundColor: corMarcador }}
+        />
+      )}
       {posicao.bloqueado && (
         <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-signal-red600 text-[9px] leading-none text-white">
           !

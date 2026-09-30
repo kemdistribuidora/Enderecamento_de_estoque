@@ -39,6 +39,7 @@ export interface EnderecoComStatus {
     codigo_barras: string;
     peso_caixa: number | null;
     qt_por_cx: number | null;
+    cor_marcador: string | null;
     quantidade: number;
     validade: string;
     lote: string | null;

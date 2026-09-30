@@ -181,6 +181,17 @@ export function atualizarPesoCaixa(produtoId: number, pesoCaixa: number | null):
   }).then((r) => handleJson(r));
 }
 
+export function atualizarCorMarcador(
+  produtoId: number,
+  cor: string | null
+): Promise<{ ok: true; cor_marcador: string | null }> {
+  return fetch(`${BASE_URL}/produtos/${produtoId}/cor-marcador`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cor_marcador: cor }),
+  }).then((r) => handleJson(r));
+}
+
 export interface SugestaoEndereco {
   endereco_id: number;
   codigo: string;

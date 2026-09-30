@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { EnderecoComStatus, StatusValidade } from '../types';
 import {
+  atualizarCorMarcador,
   atualizarPesoCaixa,
   baixarParcialEndereco,
   bloquearEndereco,
@@ -14,6 +15,7 @@ import EtiquetaModal from './EtiquetaModal';
 import ModalEscolherNoMapa from './ModalEscolherNoMapa';
 import ModalConfirmacao from './ModalConfirmacao';
 import { DATA_MAX, DATA_MIN, formatarData, isDataIsoValida } from '../utils/data';
+import { CORES_MARCADOR } from '../utils/corMarcador';
 
 interface Props {
   endereco: EnderecoComStatus | null;
@@ -40,6 +42,9 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
   const [salvandoPeso, setSalvandoPeso] = useState(false);
   // "endereco" e' snapshot do clique no mapa -- nao atualiza com o reload, entao guarda o peso salvo aqui
   const [pesoSalvo, setPesoSalvo] = useState<{ produtoId: number; peso: number } | null>(null);
+  // mesmo motivo do pesoSalvo: guarda o marcador escolhido pra refletir na hora
+  const [corSalva, setCorSalva] = useState<{ produtoId: number; cor: string | null } | null>(null);
+  const [salvandoCor, setSalvandoCor] = useState(false);
   // correcao de validade digitada errada: clicar na data abre o input (discreto, sem botao fixo)
   const [editandoValidade, setEditandoValidade] = useState(false);
   const [validadeInput, setValidadeInput] = useState('');
@@ -62,6 +67,8 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
 
   const pesoCaixa =
     endereco.produto && pesoSalvo?.produtoId === endereco.produto.id ? pesoSalvo.peso : endereco.produto?.peso_caixa ?? null;
+  const corMarcadorAtual =
+    endereco.produto && corSalva?.produtoId === endereco.produto.id ? corSalva.cor : endereco.produto?.cor_marcador ?? null;
   const correcaoValida = validadeSalva?.enderecoId === endereco.id ? validadeSalva : null;
   const validadeAtual = correcaoValida?.validade ?? endereco.produto?.validade ?? '';
   const statusValidadeAtual = correcaoValida?.status ?? endereco.produto?.status_validade ?? 'normal';
@@ -104,6 +111,23 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
       setConfirmandoValidade(false);
     } finally {
       setSalvandoValidade(false);
+    }
+  }
+
+  // clicar na cor ja marcada tira o marcador
+  async function handleEscolherCor(chave: string) {
+    if (!endereco || !endereco.produto) return;
+    const nova = corMarcadorAtual === chave ? null : chave;
+    setSalvandoCor(true);
+    setErro('');
+    try {
+      await atualizarCorMarcador(endereco.produto.id, nova);
+      setCorSalva({ produtoId: endereco.produto.id, cor: nova });
+      onAtualizado?.();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao salvar marcador.');
+    } finally {
+      setSalvandoCor(false);
     }
   }
 
@@ -321,6 +345,29 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                 )}
               </div>
               <Row label="Lote" value={endereco.produto.lote ?? '—'} code />
+              <div className="flex items-center justify-between gap-2 border-b border-steel-100 pb-1">
+                <dt className="shrink-0 text-ink-600">Marcador</dt>
+                <dd className="flex gap-1.5">
+                  {CORES_MARCADOR.map((c) => {
+                    const ativa = corMarcadorAtual === c.chave;
+                    return (
+                      <button
+                        key={c.chave}
+                        type="button"
+                        onClick={() => handleEscolherCor(c.chave)}
+                        disabled={salvandoCor}
+                        title={ativa ? `${c.rotulo} (clique para tirar)` : c.rotulo}
+                        aria-label={c.rotulo}
+                        aria-pressed={ativa}
+                        className={`h-5 w-5 rounded-full transition-transform hover:scale-110 disabled:opacity-50 ${
+                          ativa ? 'ring-2 ring-steel-900 ring-offset-2' : ''
+                        }`}
+                        style={{ backgroundColor: c.hex }}
+                      />
+                    );
+                  })}
+                </dd>
+              </div>
             </dl>
 
             {statusValidadeAtual !== 'normal' && (
