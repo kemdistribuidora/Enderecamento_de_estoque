@@ -47,3 +47,14 @@ export function isDataIsoValida(valor: string): boolean {
   const d = new Date(Date.UTC(ano, mes - 1, dia));
   return d.getUTCFullYear() === ano && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia;
 }
+
+// Dias de hoje (Brasilia) ate a validade YYYY-MM-DD. Negativo = ja venceu. null se data invalida.
+export function diasParaVencer(validade: string | null | undefined): number | null {
+  const m = REGEX_DATA_ISO.exec(validade ?? '');
+  if (!m) return null;
+  const hoje = REGEX_DATA_ISO.exec(new Date().toLocaleDateString('en-CA', { timeZone: FUSO_BRASIL }));
+  if (!hoje) return null;
+  const alvo = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const base = Date.UTC(Number(hoje[1]), Number(hoje[2]) - 1, Number(hoje[3]));
+  return Math.round((alvo - base) / 86_400_000);
+}
