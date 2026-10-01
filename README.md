@@ -128,8 +128,9 @@ Lógica de parse/formatação isolada em [backend/src/services/endereco.service.
 | POST | `/api/movimentacoes/:id/desfazer` | Reverte uma movimentação (restaura a posição) |
 | GET | `/api/mapa/setores` | Lista setores |
 | GET | `/api/mapa/:setorId` | Mapa de endereços de um setor |
-| POST | `/api/importacao/produtos` | Importa produtos via CSV do Winthor (D860) |
-| POST | `/api/importacao/saldo` | Importa saldo de estoque via CSV do Winthor |
+| POST | `/api/importacao/winthor/previa` | Reconcilia arquivo Winthor (D860) x estoque fisico, sem gravar |
+| POST | `/api/importacao/winthor/confirmar` | Grava cadastro + saldo + historico do arquivo (transacao unica) |
+| GET | `/api/importacao/winthor/historico` | Ultimos imports (e `/:id` pros itens de um) |
 | GET | `/api/dashboard/kpis` | KPIs consolidados: acurácia de estoque, ocupação por setor, giro médio, vencimento |
 
 ## Coletor (leitor de código de barras)

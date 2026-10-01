@@ -1,24 +1,50 @@
 import { Router } from 'express';
-import { importarProdutosCsv, importarSaldoCsv } from '../services/importacao-winthor.service';
+import {
+  confirmarImportacao,
+  ErroImportacao,
+  itensImportacao,
+  listarImportacoes,
+  previaImportacao,
+} from '../services/importacao-winthor.service';
 
 export const importacaoRouter = Router();
 
-// POST /api/importacao/produtos { csv: string } -> conteudo cru do arquivo exportado do D860
-importacaoRouter.post('/produtos', async (req, res) => {
-  const csv = req.body?.csv;
-  if (typeof csv !== 'string' || csv.trim().length === 0) {
-    return res.status(400).json({ erro: 'csv (conteudo do arquivo) e obrigatorio' });
+function lerCsv(body: any): string | null {
+  const csv = body?.csv;
+  return typeof csv === 'string' && csv.trim().length > 0 ? csv : null;
+}
+
+// POST /api/importacao/winthor/previa { csv } -> reconciliacao arquivo x estoque, NAO grava
+importacaoRouter.post('/winthor/previa', async (req, res) => {
+  const csv = lerCsv(req.body);
+  if (!csv) return res.status(400).json({ erro: 'csv (conteudo do arquivo) e obrigatorio' });
+  try {
+    res.json(await previaImportacao(csv));
+  } catch (e: any) {
+    res.status(500).json({ erro: e?.message ?? 'Erro ao processar arquivo' });
   }
-  const resultado = await importarProdutosCsv(csv);
-  res.json(resultado);
 });
 
-// POST /api/importacao/saldo { csv: string } -> precisa produtos ja importados antes
-importacaoRouter.post('/saldo', async (req, res) => {
-  const csv = req.body?.csv;
-  if (typeof csv !== 'string' || csv.trim().length === 0) {
-    return res.status(400).json({ erro: 'csv (conteudo do arquivo) e obrigatorio' });
+// POST /api/importacao/winthor/confirmar { csv, nome_arquivo } -> recalcula e grava tudo
+// numa transacao (cadastro + saldo + historico)
+importacaoRouter.post('/winthor/confirmar', async (req, res) => {
+  const csv = lerCsv(req.body);
+  if (!csv) return res.status(400).json({ erro: 'csv (conteudo do arquivo) e obrigatorio' });
+  const nomeArquivo = typeof req.body?.nome_arquivo === 'string' ? req.body.nome_arquivo : null;
+  try {
+    res.json(await confirmarImportacao(csv, nomeArquivo));
+  } catch (e: any) {
+    const status = e instanceof ErroImportacao ? 400 : 500;
+    res.status(status).json({ erro: e?.message ?? 'Erro ao gravar importacao' });
   }
-  const resultado = await importarSaldoCsv(csv);
-  res.json(resultado);
+});
+
+// GET /api/importacao/winthor/historico -> ultimos imports confirmados
+importacaoRouter.get('/winthor/historico', async (_req, res) => {
+  res.json(await listarImportacoes());
+});
+
+// GET /api/importacao/winthor/historico/:id -> foto por produto daquele import
+importacaoRouter.get('/winthor/historico/:id', async (req, res) => {
+  res.json(await itensImportacao(Number(req.params.id)));
 });

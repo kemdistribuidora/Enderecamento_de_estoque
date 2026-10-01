@@ -115,35 +115,112 @@ export function desbloquearEndereco(enderecoId: number): Promise<{ ok: true }> {
   return fetch(`${BASE_URL}/enderecos/${enderecoId}/desbloquear`, { method: 'POST' }).then((r) => handleJson(r));
 }
 
-export interface ProdutoComSaldoImportado {
-  produto_id: number;
+// Reconciliacao do arquivo Winthor x estoque fisico (espelha backend/src/services/importacao-winthor.service.ts)
+export type StatusReconciliacao = 'novo' | 'sem_mudanca' | 'entrou' | 'saiu' | 'sobra';
+
+export interface LinhaBloqueada {
+  linha: number;
+  conteudo: string;
+  motivo: string;
+}
+
+export interface PosicaoProduto {
+  endereco_codigo: string;
+  quantidade: number;
+  validade: string;
+  lote: string | null;
+}
+
+export interface ItemReconciliacao {
+  produto_id: number | null;
   codigo: string;
   nome: string;
-  filial: string;
-  saldo: number;
+  qt_por_cx: number | null;
+  produto_novo: boolean;
+  cadastro_alterado: boolean;
+  saldo_anterior: number | null;
+  saldo_novo: number;
+  delta: number;
+  posicionado: number;
+  nao_posicionado_antes: number | null;
+  nao_posicionado: number;
+  sobra: number;
+  status: StatusReconciliacao;
+  posicoes: PosicaoProduto[];
 }
 
-export interface ResultadoImportacao {
-  ok: number;
-  falhas: number;
+export interface TotaisReconciliacao {
+  linhas_lidas: number;
+  linhas_bloqueadas: number;
+  produtos_arquivo: number;
+  produtos_novos: number;
+  produtos_fora_arquivo: number;
+  sem_mudanca: number;
+  entrou: number;
+  saiu: number;
+  sobra: number;
+  novo: number;
+}
+
+export interface PreviaImportacao {
+  itens: ItemReconciliacao[];
+  bloqueadas: LinhaBloqueada[];
   avisos: string[];
-  produtosComSaldo: ProdutoComSaldoImportado[];
+  totais: TotaisReconciliacao;
 }
 
-export function importarProdutosCsv(csv: string): Promise<ResultadoImportacao> {
-  return fetch(`${BASE_URL}/importacao/produtos`, {
+export interface ImportacaoResumo {
+  id: number;
+  criado_em: string;
+  nome_arquivo: string | null;
+  linhas_lidas: number;
+  linhas_bloqueadas: number;
+  produtos_arquivo: number;
+  produtos_novos: number;
+  novo: number;
+  sem_mudanca: number;
+  entrou: number;
+  saiu: number;
+  sobra: number;
+}
+
+export interface ItemHistoricoImportacao {
+  produto_id: number | null;
+  codigo: string;
+  nome: string;
+  saldo_anterior: number | null;
+  saldo_novo: number;
+  posicionado: number;
+  nao_posicionado: number;
+  sobra: number;
+  status: StatusReconciliacao;
+}
+
+export function previaImportacaoWinthor(csv: string): Promise<PreviaImportacao> {
+  return fetch(`${BASE_URL}/importacao/winthor/previa`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ csv }),
   }).then((r) => handleJson(r));
 }
 
-export function importarSaldoCsv(csv: string): Promise<ResultadoImportacao> {
-  return fetch(`${BASE_URL}/importacao/saldo`, {
+export function confirmarImportacaoWinthor(
+  csv: string,
+  nomeArquivo: string
+): Promise<{ importacao_id: number; previa: PreviaImportacao }> {
+  return fetch(`${BASE_URL}/importacao/winthor/confirmar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ csv }),
+    body: JSON.stringify({ csv, nome_arquivo: nomeArquivo }),
   }).then((r) => handleJson(r));
+}
+
+export function buscarHistoricoImportacoes(): Promise<ImportacaoResumo[]> {
+  return fetch(`${BASE_URL}/importacao/winthor/historico`).then((r) => handleJson(r));
+}
+
+export function buscarItensImportacao(importacaoId: number): Promise<ItemHistoricoImportacao[]> {
+  return fetch(`${BASE_URL}/importacao/winthor/historico/${importacaoId}`).then((r) => handleJson(r));
 }
 
 export interface PendenciaPosicionamento {

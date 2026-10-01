@@ -225,7 +225,7 @@ function PesoCaixaInput({
   return (
     <input
       type="number"
-      step="0.001"
+      step="any"
       min={0}
       value={valor}
       onChange={(e) => setValor(e.target.value)}
@@ -335,7 +335,8 @@ function PosicionarModal({
             </span>
             <input
               type="number"
-              min={1}
+              step="any"
+              min={0}
               value={quantidade}
               onChange={(e) => setQuantidade(e.target.value)}
               className="input"

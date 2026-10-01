@@ -3,6 +3,7 @@ import { db } from '../db/client';
 import { Produto, ProdutoComPosicoes, PendenciaPosicionamento, SugestaoEndereco, DivergenciaSobra, ItemCurvaAbc } from '../types';
 import { sugerirEnderecoLivre, EnderecoParaSugestao } from '../services/endereco.service';
 import { calcularStatusValidade } from '../services/validade.service';
+import { arredondarQtd } from '../utils/quantidade';
 
 export const produtosRouter = Router();
 
@@ -121,8 +122,8 @@ produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
       COALESCE(saldo.total, 0) as saldo_total,
       COALESCE(alocado.total, 0) as alocado_total
     FROM produtos p
-    JOIN (SELECT produto_id, SUM(saldo) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
-    LEFT JOIN (SELECT produto_id, SUM(quantidade) as total FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
+    JOIN (SELECT produto_id, ROUND(SUM(saldo), 6) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
+    LEFT JOIN (SELECT produto_id, ROUND(SUM(quantidade), 6) as total FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
     WHERE COALESCE(saldo.total, 0) > COALESCE(alocado.total, 0)
     ORDER BY p.nome
   `);
@@ -136,7 +137,7 @@ produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
     qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
     saldo_total: Number(r.saldo_total),
     alocado_total: Number(r.alocado_total),
-    pendente: Number(r.saldo_total) - Number(r.alocado_total),
+    pendente: arredondarQtd(Number(r.saldo_total) - Number(r.alocado_total)),
   }));
 
   res.json(pendencias);
@@ -152,8 +153,8 @@ produtosRouter.get('/divergencias-sobra', async (_req, res) => {
       COALESCE(saldo.total, 0) as saldo_total,
       COALESCE(alocado.total, 0) as alocado_total
     FROM produtos p
-    JOIN (SELECT produto_id, SUM(saldo) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
-    LEFT JOIN (SELECT produto_id, SUM(quantidade) as total FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
+    JOIN (SELECT produto_id, ROUND(SUM(saldo), 6) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
+    LEFT JOIN (SELECT produto_id, ROUND(SUM(quantidade), 6) as total FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
     WHERE COALESCE(alocado.total, 0) > COALESCE(saldo.total, 0)
     ORDER BY p.nome
   `);
@@ -165,7 +166,7 @@ produtosRouter.get('/divergencias-sobra', async (_req, res) => {
     qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
     saldo_total: Number(r.saldo_total),
     alocado_total: Number(r.alocado_total),
-    excesso: Number(r.alocado_total) - Number(r.saldo_total),
+    excesso: arredondarQtd(Number(r.alocado_total) - Number(r.saldo_total)),
   }));
 
   res.json(divergencias);

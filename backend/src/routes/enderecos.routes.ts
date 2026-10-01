@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { db } from '../db/client';
 import { EnderecoComStatus, PosicaoAVencer } from '../types';
 import { calcularStatusValidade, isDataIsoValida } from '../services/validade.service';
+import { arredondarQtd } from '../utils/quantidade';
 
 export const enderecosRouter = Router();
 
@@ -147,11 +148,13 @@ enderecosRouter.get('/a-vencer', async (_req, res) => {
 // POST /api/enderecos/:id/ocupar { produto_id, quantidade, validade, lote }
 enderecosRouter.post('/:id/ocupar', async (req, res) => {
   const enderecoId = Number(req.params.id);
-  const { produto_id, quantidade, validade } = req.body ?? {};
+  const { produto_id, validade } = req.body ?? {};
+  // fracionado (KG) fica com ate 6 casas, igual ao saldo do Winthor
+  const quantidade = arredondarQtd(Number(req.body?.quantidade));
   // Lote e opcional: vazio vira null
   const lote = String(req.body?.lote ?? '').trim() || null;
 
-  if (!produto_id || !quantidade || quantidade <= 0 || !validade) {
+  if (!produto_id || !Number.isFinite(quantidade) || quantidade <= 0 || !validade) {
     return res.status(400).json({ erro: 'produto_id, quantidade (> 0) e validade sao obrigatorios' });
   }
   if (!isDataIsoValida(validade)) {
@@ -220,9 +223,9 @@ enderecosRouter.post('/:id/liberar', async (req, res) => {
 // que so reverte liberacao total).
 enderecosRouter.post('/:id/baixar-parcial', async (req, res) => {
   const enderecoId = Number(req.params.id);
-  const qtdRetirada = Number((req.body ?? {}).quantidade);
+  const qtdRetirada = arredondarQtd(Number((req.body ?? {}).quantidade));
 
-  if (!qtdRetirada || qtdRetirada <= 0) {
+  if (!Number.isFinite(qtdRetirada) || qtdRetirada <= 0) {
     return res.status(400).json({ erro: 'quantidade (> 0) e obrigatoria' });
   }
 
@@ -235,12 +238,13 @@ enderecosRouter.post('/:id/baixar-parcial', async (req, res) => {
     return res.status(404).json({ erro: 'Endereco esta livre' });
   }
 
-  const qtdAtual = Number(ocupacao.quantidade);
+  const qtdAtual = arredondarQtd(Number(ocupacao.quantidade));
   if (qtdRetirada > qtdAtual) {
     return res.status(400).json({ erro: `Quantidade retirada (${qtdRetirada}) maior que a quantidade na posicao (${qtdAtual})` });
   }
 
-  const qtdRestante = qtdAtual - qtdRetirada;
+  // arredondado: 10.3 - 0.1 sem isso da 10.200000000000001 e 0.3 - 0.1 - 0.2 nunca zera
+  const qtdRestante = arredondarQtd(qtdAtual - qtdRetirada);
   const agora = new Date().toISOString();
 
   if (qtdRestante === 0) {
@@ -335,7 +339,7 @@ enderecosRouter.post('/:id/mover', async (req, res) => {
 // auditoria do resto do sistema. quantidade_contada = 0 libera a posicao (como /liberar).
 enderecosRouter.post('/:id/contar', async (req, res) => {
   const enderecoId = Number(req.params.id);
-  const quantidadeContada = Number((req.body ?? {}).quantidade_contada);
+  const quantidadeContada = arredondarQtd(Number((req.body ?? {}).quantidade_contada));
 
   if (!Number.isFinite(quantidadeContada) || quantidadeContada < 0) {
     return res.status(400).json({ erro: 'quantidade_contada (>= 0) e obrigatoria' });
@@ -350,8 +354,8 @@ enderecosRouter.post('/:id/contar', async (req, res) => {
     return res.status(404).json({ erro: 'Endereco esta livre, nao ha o que contar' });
   }
 
-  const quantidadeSistema = Number(ocupacao.quantidade);
-  const divergencia = quantidadeContada - quantidadeSistema;
+  const quantidadeSistema = arredondarQtd(Number(ocupacao.quantidade));
+  const divergencia = arredondarQtd(quantidadeContada - quantidadeSistema);
   const agora = new Date().toISOString();
 
   await db.execute({
@@ -375,7 +379,7 @@ enderecosRouter.post('/:id/contar', async (req, res) => {
         divergencia > 0 ? 'entrada' : 'saida',
         Number(ocupacao.produto_id),
         enderecoId,
-        Math.abs(divergencia),
+        arredondarQtd(Math.abs(divergencia)),
         ocupacao.validade,
         ocupacao.lote ?? null,
         agora,

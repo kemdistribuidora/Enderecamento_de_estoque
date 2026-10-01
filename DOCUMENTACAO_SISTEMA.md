@@ -33,8 +33,8 @@ Enderecamento_de_estoque/
 │       │   ├── validade.service.ts     # classificação vencido/próximo/normal
 │       │   └── importacao-winthor.service.ts
 │       ├── scripts/
-│       │   ├── import-winthor-produtos.ts
-│       │   └── import-winthor-saldo.ts
+│       │   ├── import-winthor.ts
+│       │   └── testar-reconciliacao-winthor.ts
 │       └── types/index.ts
 └── frontend/
     ├── package.json, vite.config.ts, tailwind.config.js
@@ -70,6 +70,8 @@ Fonte: `backend/src/db/schema.sql`. Migrações de coluna condicionais em `clien
 | `enderecos` | id, prateleira_id FK, corredor, lado (E/D), andar, posicao, codigo (UNIQUE) | UNIQUE(prateleira_id,andar,posicao) |
 | `estoque_posicoes` | id, produto_id FK, endereco_id FK (UNIQUE), quantidade, validade, lote | 1 produto por posição |
 | `estoque_erp_saldo` | id, produto_id FK, filial, saldo, atualizado_em | UNIQUE(produto_id,filial) — saldo Winthor, só conferência |
+| `importacoes_saldo` | id, criado_em, nome_arquivo, linhas_lidas/bloqueadas, produtos_arquivo/novos, contagem por status | 1 linha por import confirmado |
+| `importacoes_saldo_itens` | importacao_id FK, produto_id FK, codigo, nome, saldo_anterior, saldo_novo, posicionado, nao_posicionado, sobra, status | foto por produto no momento do import |
 | `movimentacoes` | id, tipo (entrada/saida), produto_id FK, endereco_id FK, quantidade, validade, lote, status (confirmada/standby/revertida), criado_em | histórico append-only, sem coluna de usuário |
 
 Código de endereço: `[Letra corredor][Lado E/D][andar][posição]`, ex. `AD302`. Formatação/parse em `endereco.service.ts`.
@@ -81,17 +83,17 @@ Status de endereço (livre/ocupado) não é coluna — sempre derivado via JOIN 
 **services/**
 - `endereco.service.ts` — `formatarEndereco`/`parsearEndereco`, `donoPrateleira` (regra de qual corredor/lado é dono da prateleira), `sugerirEnderecoLivre` (heurística de distância física para sugestão).
 - `validade.service.ts` — `calcularStatusValidade`, janela `DIAS_ALERTA_VENCIMENTO = 35`.
-- `importacao-winthor.service.ts` — `importarProdutosCsv`, `importarSaldoCsv` (upsert, usado por rota HTTP e por CLI).
+- `importacao-winthor.service.ts` — `parsearArquivoWinthor`, `previaImportacao` (reconciliação sem gravar), `confirmarImportacao` (grava tudo num `db.batch`), `listarImportacoes`/`itensImportacao` (histórico). Usado por rota HTTP e por CLI.
 
 **routes/**
 - `produtos.routes.ts` — CRUD produto, pendências de posicionamento, divergências de sobra, curva ABC, busca por código de barras, sugestão de endereço, detalhe.
 - `enderecos.routes.ts` — listagem com status, busca por código (scanner), posições a vencer, ocupar/liberar.
 - `mapa.routes.ts` — setores, mapa completo de um setor.
-- `importacao.routes.ts` — upload CSV produtos/saldo.
+- `importacao.routes.ts` — prévia/confirmação do arquivo Winthor e histórico de imports.
 - `movimentacoes.routes.ts` — histórico, desfazer saída em standby.
 - `dashboard.routes.ts` — 4 KPIs (queries próprias, deliberadamente não reaproveita queries de outras rotas).
 
-**scripts/** — `import-winthor-produtos.ts` / `import-winthor-saldo.ts`: mesmos serviços via CLI (`npm run import:winthor:produtos -- caminho.csv`).
+**scripts/** — `import-winthor.ts`: mesmo serviço via CLI (`npm run import:winthor -- caminho.csv` mostra a prévia, `--confirmar` grava). `testar-reconciliacao-winthor.ts`: teste da reconciliação num SQLite temporário (`npm run test:reconciliacao`).
 
 ## 6. Endpoints de API
 
@@ -117,8 +119,10 @@ Status de endereço (livre/ocupado) não é coluna — sempre derivado via JOIN 
 - `GET /:setorId`
 
 **Importação** (`/api/importacao`)
-- `POST /produtos` — body `{csv}`
-- `POST /saldo` — body `{csv}`
+- `POST /winthor/previa` — body `{csv}`, reconcilia sem gravar
+- `POST /winthor/confirmar` — body `{csv, nome_arquivo}`, recalcula e grava (transação única)
+- `GET /winthor/historico` — últimos imports
+- `GET /winthor/historico/:id` — itens de um import
 
 **Movimentações** (`/api/movimentacoes`)
 - `GET /?limit=100` (máx 500)
@@ -140,7 +144,7 @@ Rotas em `App.tsx`, sem layout aninhado.
 | `/` | MapaPage | mapa visual do depósito, abas por setor, busca destaca posição |
 | `/busca` | BuscaPage | busca produto com debounce, posições por validade |
 | `/cadastro` | CadastroPage | cadastro produto + entrada em estoque |
-| `/importacao` | ImportacaoPage | upload CSV Winthor (UTF-8/Windows-1252) |
+| `/importacao` | ImportacaoPage | upload arquivo Winthor, prévia da reconciliação, confirmação, histórico |
 | `/posicionamento` | PosicionamentoPage | pendências + sugestão de endereço, divergências de sobra |
 | `/coletor` | ColetorPage | entrada/saída via leitor código de barras |
 | `/historico` | HistoricoPage | movimentações, desfazer standby |
@@ -153,12 +157,21 @@ Componentes: `MapaSetorView`, `ModalEscolherNoMapa`, `ProdutoModal`, `ResultCard
 
 CSVs sem cabeçalho, separados por `;`, encoding tipicamente Windows-1252 (tratado em `ImportacaoPage.tsx::lerArquivoTexto`: tenta UTF-8 estrito, cai para Windows-1252).
 
-- **Produtos**: colunas `codigo;nome;codigo_barras`, upsert por `codigo`.
-- **Saldo**: colunas `filial;codigo;saldo`, exige produto já existir, upsert por `(produto_id, filial)`.
+Arquivo único: `codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo` (LEFT JOIN produto+saldo no Winthor; filial/codigo/saldo vazios = sem saldo = 0). Saldo e qt_por_cx com ponto decimal, sem separador de milhar, aceitando o formato Oracle sem zero antes do ponto (`.5`, `-.24`); fracionado (KG) guardado com até 6 casas (Winthor usa até 5).
 
-Saldo Winthor nunca é fonte de posição física — só conferência: pendências de posicionamento, divergência de sobra, acurácia no dashboard.
+**Regra central: o saldo do Winthor é a verdade.** Para cada produto do arquivo, posicionado + não posicionado = saldo do arquivo:
+- saldo >= posicionado: a diferença é o não posicionado (derivado, nunca gravado: `saldo - SUM(estoque_posicoes)`).
+- saldo < posicionado: não posicionado = 0 e a diferença vira **sobra** (algo saiu no Winthor e não foi retirado da posição). Só alerta, mostrando as posições do produto (validade mais antiga primeiro); o usuário dá a baixa. O import nunca mexe em `estoque_posicoes`.
+- Área de Espera conta como posicionado.
+- Produto fora do arquivo não é alterado (arquivo pode ser parcial, filtrado por produto/fornecedor).
 
-Dois pontos de entrada por fluxo: UI (`POST /api/importacao/*`) e CLI (`npm run import:winthor:*`).
+Fluxo em 2 passos: prévia (não grava) e confirmação (servidor recalcula e grava cadastro + saldo + histórico num único `db.batch`: entra tudo ou nada). Status por produto: `novo` (primeiro saldo), `sem_mudanca`, `entrou`, `saiu`, `sobra`.
+
+Linhas bloqueadas (não gravadas): número de campos diferente de 7, código/nome vazio, coluna 6 diferente da 1, saldo não numérico (ex. vírgula), qt_por_cx inválido, produto repetido com saldo diferente. Produto repetido com o mesmo saldo conta 1 vez (fan-out de JOIN) com aviso.
+
+Precisão: toda quantidade gravada/comparada passa por `arredondarQtd` (`utils/quantidade.ts`, 6 casas) e as somas SQL usam `ROUND(SUM(...), 6)`. Evita divergência falsa por ponto flutuante (`10.3 - 0.1 = 10.200000000000001`).
+
+Dois pontos de entrada: UI (`POST /api/importacao/winthor/*`) e CLI (`npm run import:winthor`).
 
 ## 9. Funcionalidades x commits
 
@@ -178,7 +191,7 @@ Detalhes:
 
 ## 10. Scripts e variáveis de ambiente
 
-**Backend** (`package.json`): `dev` (tsx watch, porta 3001), `build`, `start`, `seed`, `import:winthor:produtos`, `import:winthor:saldo`.
+**Backend** (`package.json`): `dev` (tsx watch, porta 3001), `build`, `start`, `seed`, `import:winthor`, `test:reconciliacao`.
 
 **Frontend**: `dev` (vite, porta 5173, proxy `/api`→localhost:3001), `build`, `preview`.
 

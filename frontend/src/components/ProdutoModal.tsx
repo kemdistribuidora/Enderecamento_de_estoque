@@ -273,7 +273,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                   <dd className="flex gap-1">
                     <input
                       type="number"
-                      step="0.001"
+                      step="any"
                       min={0}
                       value={pesoInput}
                       onChange={(e) => setPesoInput(e.target.value)}
@@ -400,7 +400,8 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
               <div className="flex gap-2">
                 <input
                   type="number"
-                  min={1}
+                  step="any"
+                  min={0}
                   max={endereco.produto.quantidade}
                   value={qtdRetirar}
                   onChange={(e) => setQtdRetirar(e.target.value)}

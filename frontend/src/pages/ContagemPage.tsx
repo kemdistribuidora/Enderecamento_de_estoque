@@ -165,6 +165,7 @@ export default function ContagemPage() {
                       <td>
                         <input
                           type="number"
+                          step="any"
                           min={0}
                           value={quantidades[posicao.id] ?? ''}
                           onChange={(e) => setQuantidades((prev) => ({ ...prev, [posicao.id]: e.target.value }))}

@@ -91,6 +91,10 @@ CREATE INDEX IF NOT EXISTS idx_enderecos_prateleira ON enderecos(prateleira_id);
 
 -- Saldo importado do Winthor (ERP), so pra conferencia/reconciliacao contra a
 -- ocupacao fisica em estoque_posicoes. NUNCA usado como fonte de posicao fisica.
+-- saldo (e as quantidades de estoque_posicoes/movimentacoes/contagens) pode ser
+-- fracionado (produto KG, ate 6 casas): coluna declarada INTEGER, mas afinidade INTEGER do
+-- SQLite guarda 1684.089 como REAL sem cortar (so converte quando nao perde valor).
+-- Tabela nao e recriada so pra trocar o tipo declarado (Turso remoto ja tem dados).
 CREATE TABLE IF NOT EXISTS estoque_erp_saldo (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
@@ -139,3 +143,41 @@ CREATE TABLE IF NOT EXISTS contagens (
 
 CREATE INDEX IF NOT EXISTS idx_contagens_endereco ON contagens(endereco_id);
 CREATE INDEX IF NOT EXISTS idx_contagens_criado_em ON contagens(criado_em);
+
+-- Historico dos uploads do arquivo Winthor (D860): 1 linha por import confirmado, com os
+-- totais por status da reconciliacao. Arquivo pode ser parcial (filtrado por produto/
+-- fornecedor), entao produto fora do arquivo nao aparece aqui e nao teve saldo alterado.
+CREATE TABLE IF NOT EXISTS importacoes_saldo (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  criado_em TEXT NOT NULL,
+  nome_arquivo TEXT,
+  linhas_lidas INTEGER NOT NULL,
+  linhas_bloqueadas INTEGER NOT NULL,
+  produtos_arquivo INTEGER NOT NULL,
+  produtos_novos INTEGER NOT NULL,
+  novo INTEGER NOT NULL,
+  sem_mudanca INTEGER NOT NULL,
+  entrou INTEGER NOT NULL,
+  saiu INTEGER NOT NULL,
+  sobra INTEGER NOT NULL
+);
+
+-- Foto de cada produto do arquivo no momento do import: saldo antes/depois e como ficou
+-- a conta posicionado + nao_posicionado = saldo_novo (sobra > 0 quando o posicionado
+-- passa do saldo -- algo saiu no Winthor e nao foi retirado da posicao).
+-- codigo/nome copiados (nao so FK) pra historico continuar legivel mesmo se produto mudar.
+CREATE TABLE IF NOT EXISTS importacoes_saldo_itens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  importacao_id INTEGER NOT NULL REFERENCES importacoes_saldo(id) ON DELETE CASCADE,
+  produto_id INTEGER REFERENCES produtos(id) ON DELETE SET NULL,
+  codigo TEXT NOT NULL,
+  nome TEXT NOT NULL,
+  saldo_anterior REAL,
+  saldo_novo REAL NOT NULL,
+  posicionado REAL NOT NULL,
+  nao_posicionado REAL NOT NULL,
+  sobra REAL NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('novo', 'sem_mudanca', 'entrou', 'saiu', 'sobra'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_importacoes_itens_importacao ON importacoes_saldo_itens(importacao_id);

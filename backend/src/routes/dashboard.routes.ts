@@ -34,8 +34,8 @@ async function calcularAcuraciaEstoque(): Promise<KpisDashboard['acuracia_estoqu
     SELECT COUNT(*) as total FROM (
       SELECT p.id
       FROM produtos p
-      JOIN (SELECT produto_id, SUM(saldo) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
-      LEFT JOIN (SELECT produto_id, SUM(quantidade) as total FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
+      JOIN (SELECT produto_id, ROUND(SUM(saldo), 6) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
+      LEFT JOIN (SELECT produto_id, ROUND(SUM(quantidade), 6) as total FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
       WHERE COALESCE(saldo.total, 0) != COALESCE(alocado.total, 0)
     )
   `);

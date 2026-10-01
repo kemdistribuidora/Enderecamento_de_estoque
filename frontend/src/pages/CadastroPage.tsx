@@ -261,7 +261,8 @@ export default function CadastroPage() {
           <Campo label="Unidades por caixa fechada">
             <input
               type="number"
-              min={1}
+              step="any"
+              min={0}
               readOnly={!!produtoSelecionado}
               value={form.qt_por_cx}
               onChange={(e) => atualizarCampo('qt_por_cx', e.target.value)}
@@ -330,7 +331,8 @@ export default function CadastroPage() {
             <input
               required
               type="number"
-              min={1}
+              step="any"
+              min={0}
               value={form.quantidade}
               onChange={(e) => atualizarCampo('quantidade', e.target.value)}
               className="input"
