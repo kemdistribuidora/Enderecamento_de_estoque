@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { routerAsync } from '../utils/http';
 import { db } from '../db/client';
 import { calcularStatusValidade } from '../services/validade.service';
 import { KpisDashboard } from '../types';
 
-export const dashboardRouter = Router();
+export const dashboardRouter = routerAsync();
 
 // GET /api/dashboard/kpis -> indicadores consolidados. Cada bloco replica (nao reaproveita)
 // a query equivalente ja existente em produtos.routes.ts/enderecos.routes.ts -- ver nota

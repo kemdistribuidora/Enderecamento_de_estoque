@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import AvisoIdadeSaldo from '../components/AvisoIdadeSaldo';
 import {
   DivergenciaSobra,
   PendenciaPosicionamento,
@@ -52,6 +53,8 @@ export default function PosicionamentoPage() {
         <h1 className="page-title">Posicionar estoque</h1>
         <p className="mt-1 text-sm text-ink-600">Saldo importado do Winthor ainda pendente de posição física.</p>
       </div>
+
+      <AvisoIdadeSaldo />
 
       {carregando && <p className="text-sm text-steel-400">Carregando...</p>}
 

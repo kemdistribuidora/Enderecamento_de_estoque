@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import AvisoIdadeSaldo from '../components/AvisoIdadeSaldo';
 import { KpisDashboard, buscarDashboardKpis } from '../api/client';
 import { exportarCsv } from '../utils/exportCsv';
 
@@ -51,6 +52,8 @@ export default function DashboardPage() {
           </button>
         )}
       </div>
+
+      <AvisoIdadeSaldo />
 
       {carregando && <p className="text-sm text-steel-400">Carregando...</p>}
 

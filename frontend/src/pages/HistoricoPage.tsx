@@ -1,24 +1,47 @@
 import { useEffect, useState } from 'react';
 import { Movimentacao, buscarMovimentacoes, desfazerMovimentacao } from '../api/client';
 import { exportarCsv } from '../utils/exportCsv';
-import { formatarDataHora } from '../utils/data';
+import { DATA_MAX, DATA_MIN, formatarDataHora } from '../utils/data';
+
+const POR_PAGINA = 100;
 
 export default function HistoricoPage() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [temMais, setTemMais] = useState(false);
   const [desfazendoId, setDesfazendoId] = useState<number | null>(null);
   const [erro, setErro] = useState('');
+  const [de, setDe] = useState('');
+  const [ate, setAte] = useState('');
+  const [busca, setBusca] = useState('');
+  const [buscaAplicada, setBuscaAplicada] = useState('');
 
-  function carregar() {
+  // espera parar de digitar pra nao buscar a cada letra
+  useEffect(() => {
+    const t = setTimeout(() => setBuscaAplicada(busca.trim()), 300);
+    return () => clearTimeout(t);
+  }, [busca]);
+
+  // anexar = "carregar mais" (proxima pagina no fim da lista); senao recarrega do zero
+  function carregar(anexar = false) {
     setCarregando(true);
-    buscarMovimentacoes()
-      .then(setMovimentacoes)
+    setErro('');
+    const offset = anexar ? movimentacoes.length : 0;
+    buscarMovimentacoes({ de, ate, busca: buscaAplicada, limit: POR_PAGINA, offset })
+      .then((pagina) => {
+        setMovimentacoes((atual) => (anexar ? [...atual, ...pagina] : pagina));
+        setTemMais(pagina.length === POR_PAGINA);
+      })
+      .catch((err: any) => setErro(err.message ?? 'Erro ao carregar histórico.'))
       .finally(() => setCarregando(false));
   }
 
   useEffect(() => {
     carregar();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [de, ate, buscaAplicada]);
+
+  const filtrando = Boolean(de || ate || buscaAplicada);
 
   async function handleDesfazer(id: number) {
     setDesfazendoId(id);
@@ -82,11 +105,47 @@ export default function HistoricoPage() {
         )}
       </div>
 
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="text-sm text-ink-600">
+          <span className="mb-1 block">De</span>
+          <input type="date" className="input" min={DATA_MIN} max={DATA_MAX} value={de} onChange={(e) => setDe(e.target.value)} />
+        </label>
+        <label className="text-sm text-ink-600">
+          <span className="mb-1 block">Até</span>
+          <input type="date" className="input" min={DATA_MIN} max={DATA_MAX} value={ate} onChange={(e) => setAte(e.target.value)} />
+        </label>
+        <label className="min-w-[14rem] flex-1 text-sm text-ink-600">
+          <span className="mb-1 block">Produto ou posição</span>
+          <input
+            type="search"
+            className="input w-full"
+            placeholder="Código, nome ou posição"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </label>
+        {filtrando && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setDe('');
+              setAte('');
+              setBusca('');
+            }}
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
+
       {erro && <p className="text-sm text-signal-red600">{erro}</p>}
-      {carregando && <p className="text-sm text-steel-400">Carregando...</p>}
+      {carregando && movimentacoes.length === 0 && <p className="text-sm text-steel-400">Carregando...</p>}
 
       {!carregando && movimentacoes.length === 0 && (
-        <p className="panel p-4 text-sm text-ink-600">Nenhuma movimentação registrada ainda.</p>
+        <p className="panel p-4 text-sm text-ink-600">
+          {filtrando ? 'Nenhuma movimentação com esses filtros.' : 'Nenhuma movimentação registrada ainda.'}
+        </p>
       )}
 
       {movimentacoes.length > 0 && (
@@ -149,6 +208,14 @@ export default function HistoricoPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {temMais && (
+        <div className="flex justify-center">
+          <button type="button" onClick={() => carregar(true)} disabled={carregando} className="btn-secondary">
+            {carregando ? 'Carregando...' : 'Carregar mais'}
+          </button>
         </div>
       )}
     </div>

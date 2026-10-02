@@ -1,4 +1,4 @@
-import { createClient, Client } from '@libsql/client';
+import { createClient, Client, Transaction } from '@libsql/client';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -15,11 +15,27 @@ const authToken = process.env.TURSO_AUTH_TOKEN;
 
 export const db: Client = createClient({ url, authToken });
 
+// Transacao de escrita (BEGIN IMMEDIATE): leituras de conferencia + gravacoes rodam
+// travadas juntas, entao dois operadores mexendo na mesma posicao ao mesmo tempo nao
+// perdem baixa nem duplicam movimentacao. Erro lancado dentro de fn (inclusive ErroHttp
+// de validacao) desfaz tudo.
+export async function emTransacao<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
+  const tx = await db.transaction('write');
+  try {
+    const resultado = await fn(tx);
+    await tx.commit();
+    return resultado;
+  } finally {
+    tx.close();
+  }
+}
+
 export async function initSchema(): Promise<void> {
   const schema = fs.readFileSync(SCHEMA_PATH, 'utf-8');
   await db.executeMultiple(schema);
   await adicionarColunaSeNaoExiste('estoque_posicoes', 'lote', 'TEXT');
   await adicionarColunaSeNaoExiste('movimentacoes', 'lote', 'TEXT');
+  await adicionarColunaSeNaoExiste('movimentacoes', 'posicao_criado_em', 'TEXT');
   await adicionarColunaSeNaoExiste('movimentacoes', 'transferencia_endereco_id', 'INTEGER REFERENCES enderecos(id) ON DELETE SET NULL');
   await adicionarColunaSeNaoExiste('produtos', 'peso_caixa', 'REAL');
   await adicionarColunaSeNaoExiste('produtos', 'qt_por_cx', 'INTEGER');

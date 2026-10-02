@@ -2,6 +2,51 @@ import { EnderecoComStatus, MapaSetor, Produto, ProdutoComPosicoes, Setor, Statu
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
+// PIN unico de acesso (backend exige header x-app-pin quando APP_PIN esta definido).
+// Fica salvo no navegador; 401 apaga e avisa o PinGate pra pedir de novo.
+const CHAVE_PIN = 'app-pin';
+export const EVENTO_PIN_INVALIDO = 'pin-invalido';
+
+export function lerPin(): string {
+  try {
+    return localStorage.getItem(CHAVE_PIN) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export function salvarPin(pin: string | null): void {
+  try {
+    if (pin) localStorage.setItem(CHAVE_PIN, pin);
+    else localStorage.removeItem(CHAVE_PIN);
+  } catch {
+    // navegador sem storage: PIN vale so ate recarregar a pagina
+  }
+  pinMemoria = pin ?? '';
+}
+
+let pinMemoria = lerPin();
+
+async function requisicao(url: string, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers);
+  if (pinMemoria) headers.set('x-app-pin', pinMemoria);
+  const res = await fetch(url, { ...init, headers });
+  if (res.status === 401) {
+    salvarPin(null);
+    window.dispatchEvent(new Event(EVENTO_PIN_INVALIDO));
+  }
+  return res;
+}
+
+// Confere o PIN digitado na tela de acesso. true = aceito (ou backend sem PIN).
+export async function verificarPin(pin: string): Promise<boolean> {
+  const res = await fetch(`${BASE_URL}/acesso`, { headers: pin ? { 'x-app-pin': pin } : {} });
+  if (res.ok) return true;
+  if (res.status === 401) return false;
+  const body = await res.json().catch(() => ({}));
+  throw new Error(body.erro ?? `Servidor respondeu erro ${res.status}`);
+}
+
 async function handleJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -12,19 +57,19 @@ async function handleJson<T>(res: Response): Promise<T> {
 
 export function buscarProdutos(search: string): Promise<ProdutoComPosicoes[]> {
   const params = search ? `?search=${encodeURIComponent(search)}` : '';
-  return fetch(`${BASE_URL}/produtos${params}`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/produtos${params}`).then((r) => handleJson(r));
 }
 
 export function buscarMapaEnderecos(): Promise<EnderecoComStatus[]> {
-  return fetch(`${BASE_URL}/enderecos`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/enderecos`).then((r) => handleJson(r));
 }
 
 export function buscarSetores(): Promise<Setor[]> {
-  return fetch(`${BASE_URL}/mapa/setores`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/mapa/setores`).then((r) => handleJson(r));
 }
 
 export function buscarMapaSetor(setorId: number): Promise<MapaSetor> {
-  return fetch(`${BASE_URL}/mapa/${setorId}`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/mapa/${setorId}`).then((r) => handleJson(r));
 }
 
 export interface DadosNovoProduto {
@@ -36,7 +81,7 @@ export interface DadosNovoProduto {
 }
 
 export function criarProduto(dados: DadosNovoProduto): Promise<Produto> {
-  return fetch(`${BASE_URL}/produtos`, {
+  return requisicao(`${BASE_URL}/produtos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dados),
@@ -50,7 +95,7 @@ export function ocuparEndereco(
   validade: string,
   lote: string | null
 ): Promise<{ ok: true; criado_em: string }> {
-  return fetch(`${BASE_URL}/enderecos/${enderecoId}/ocupar`, {
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/ocupar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ produto_id: produtoId, quantidade, validade, lote }),
@@ -58,26 +103,26 @@ export function ocuparEndereco(
 }
 
 export function buscarProdutoPorCodigoBarras(codigo: string): Promise<Produto> {
-  return fetch(`${BASE_URL}/produtos/codigo-barras/${encodeURIComponent(codigo)}`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/produtos/codigo-barras/${encodeURIComponent(codigo)}`).then((r) => handleJson(r));
 }
 
 export function buscarProdutoDetalhe(produtoId: number): Promise<ProdutoComPosicoes> {
-  return fetch(`${BASE_URL}/produtos/${produtoId}`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/produtos/${produtoId}`).then((r) => handleJson(r));
 }
 
 export function buscarEnderecoPorCodigo(codigo: string): Promise<EnderecoComStatus> {
-  return fetch(`${BASE_URL}/enderecos/codigo/${encodeURIComponent(codigo)}`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/enderecos/codigo/${encodeURIComponent(codigo)}`).then((r) => handleJson(r));
 }
 
 export function liberarEndereco(enderecoId: number): Promise<{ ok: true; movimentacao_id: number }> {
-  return fetch(`${BASE_URL}/enderecos/${enderecoId}/liberar`, { method: 'POST' }).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/liberar`, { method: 'POST' }).then((r) => handleJson(r));
 }
 
 export function baixarParcialEndereco(
   enderecoId: number,
   quantidade: number
 ): Promise<{ ok: true; movimentacao_id: number; quantidade_restante: number }> {
-  return fetch(`${BASE_URL}/enderecos/${enderecoId}/baixar-parcial`, {
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/baixar-parcial`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ quantidade }),
@@ -88,7 +133,7 @@ export function contarEndereco(
   enderecoId: number,
   quantidadeContada: number
 ): Promise<{ ok: true; quantidade_sistema: number; divergencia: number }> {
-  return fetch(`${BASE_URL}/enderecos/${enderecoId}/contar`, {
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/contar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ quantidade_contada: quantidadeContada }),
@@ -96,7 +141,7 @@ export function contarEndereco(
 }
 
 export function moverPallet(enderecoId: number, destinoId: number): Promise<{ ok: true }> {
-  return fetch(`${BASE_URL}/enderecos/${enderecoId}/mover`, {
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/mover`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ destino_id: destinoId }),
@@ -104,7 +149,7 @@ export function moverPallet(enderecoId: number, destinoId: number): Promise<{ ok
 }
 
 export function bloquearEndereco(enderecoId: number, motivo: string): Promise<{ ok: true }> {
-  return fetch(`${BASE_URL}/enderecos/${enderecoId}/bloquear`, {
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/bloquear`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ motivo }),
@@ -112,7 +157,7 @@ export function bloquearEndereco(enderecoId: number, motivo: string): Promise<{ 
 }
 
 export function desbloquearEndereco(enderecoId: number): Promise<{ ok: true }> {
-  return fetch(`${BASE_URL}/enderecos/${enderecoId}/desbloquear`, { method: 'POST' }).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/desbloquear`, { method: 'POST' }).then((r) => handleJson(r));
 }
 
 // Reconciliacao do arquivo Winthor x estoque fisico (espelha backend/src/services/importacao-winthor.service.ts)
@@ -197,7 +242,7 @@ export interface ItemHistoricoImportacao {
 }
 
 export function previaImportacaoWinthor(csv: string): Promise<PreviaImportacao> {
-  return fetch(`${BASE_URL}/importacao/winthor/previa`, {
+  return requisicao(`${BASE_URL}/importacao/winthor/previa`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ csv }),
@@ -208,19 +253,24 @@ export function confirmarImportacaoWinthor(
   csv: string,
   nomeArquivo: string
 ): Promise<{ importacao_id: number; previa: PreviaImportacao }> {
-  return fetch(`${BASE_URL}/importacao/winthor/confirmar`, {
+  return requisicao(`${BASE_URL}/importacao/winthor/confirmar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ csv, nome_arquivo: nomeArquivo }),
   }).then((r) => handleJson(r));
 }
 
+// quando o saldo Winthor foi atualizado pela ultima vez (null = nunca importado)
+export function buscarUltimaAtualizacaoSaldo(): Promise<{ atualizado_em: string | null }> {
+  return requisicao(`${BASE_URL}/importacao/winthor/ultima`).then((r) => handleJson(r));
+}
+
 export function buscarHistoricoImportacoes(): Promise<ImportacaoResumo[]> {
-  return fetch(`${BASE_URL}/importacao/winthor/historico`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/importacao/winthor/historico`).then((r) => handleJson(r));
 }
 
 export function buscarItensImportacao(importacaoId: number): Promise<ItemHistoricoImportacao[]> {
-  return fetch(`${BASE_URL}/importacao/winthor/historico/${importacaoId}`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/importacao/winthor/historico/${importacaoId}`).then((r) => handleJson(r));
 }
 
 export interface PendenciaPosicionamento {
@@ -236,14 +286,14 @@ export interface PendenciaPosicionamento {
 }
 
 export function buscarPendenciasPosicionamento(): Promise<PendenciaPosicionamento[]> {
-  return fetch(`${BASE_URL}/produtos/pendencias-posicionamento`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/produtos/pendencias-posicionamento`).then((r) => handleJson(r));
 }
 
 export function corrigirValidade(
   enderecoId: number,
   validade: string
 ): Promise<{ ok: true; validade: string; status_validade: StatusValidade }> {
-  return fetch(`${BASE_URL}/enderecos/${enderecoId}/validade`, {
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/validade`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ validade }),
@@ -251,7 +301,7 @@ export function corrigirValidade(
 }
 
 export function atualizarPesoCaixa(produtoId: number, pesoCaixa: number | null): Promise<{ ok: true; peso_caixa: number | null }> {
-  return fetch(`${BASE_URL}/produtos/${produtoId}/peso-caixa`, {
+  return requisicao(`${BASE_URL}/produtos/${produtoId}/peso-caixa`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ peso_caixa: pesoCaixa }),
@@ -262,7 +312,7 @@ export function atualizarCorMarcador(
   produtoId: number,
   cor: string | null
 ): Promise<{ ok: true; cor_marcador: string | null }> {
-  return fetch(`${BASE_URL}/produtos/${produtoId}/cor-marcador`, {
+  return requisicao(`${BASE_URL}/produtos/${produtoId}/cor-marcador`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ cor_marcador: cor }),
@@ -276,7 +326,7 @@ export interface SugestaoEndereco {
 }
 
 export function buscarSugestaoEndereco(produtoId: number): Promise<SugestaoEndereco | null> {
-  return fetch(`${BASE_URL}/produtos/${produtoId}/sugestao-endereco`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/produtos/${produtoId}/sugestao-endereco`).then((r) => handleJson(r));
 }
 
 export interface DivergenciaSobra {
@@ -290,7 +340,7 @@ export interface DivergenciaSobra {
 }
 
 export function buscarDivergenciasSobra(): Promise<DivergenciaSobra[]> {
-  return fetch(`${BASE_URL}/produtos/divergencias-sobra`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/produtos/divergencias-sobra`).then((r) => handleJson(r));
 }
 
 export interface ItemCurvaAbc {
@@ -304,7 +354,7 @@ export interface ItemCurvaAbc {
 }
 
 export function buscarCurvaAbc(): Promise<ItemCurvaAbc[]> {
-  return fetch(`${BASE_URL}/produtos/curva-abc`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/produtos/curva-abc`).then((r) => handleJson(r));
 }
 
 export type TipoMovimentacao = 'entrada' | 'saida';
@@ -326,12 +376,25 @@ export interface Movimentacao {
   transferencia_endereco_codigo: string | null;
 }
 
-export function buscarMovimentacoes(): Promise<Movimentacao[]> {
-  return fetch(`${BASE_URL}/movimentacoes`).then((r) => handleJson(r));
+export interface FiltroMovimentacoes {
+  de?: string; // YYYY-MM-DD, horario de Brasilia, inclusivo
+  ate?: string;
+  busca?: string; // codigo/nome do produto ou codigo da posicao
+  limit?: number;
+  offset?: number;
+}
+
+export function buscarMovimentacoes(filtro: FiltroMovimentacoes = {}): Promise<Movimentacao[]> {
+  const params = new URLSearchParams();
+  for (const [chave, valor] of Object.entries(filtro)) {
+    if (valor !== undefined && valor !== '') params.set(chave, String(valor));
+  }
+  const query = params.toString();
+  return requisicao(`${BASE_URL}/movimentacoes${query ? `?${query}` : ''}`).then((r) => handleJson(r));
 }
 
 export function desfazerMovimentacao(id: number): Promise<void> {
-  return fetch(`${BASE_URL}/movimentacoes/${id}/desfazer`, { method: 'POST' }).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/movimentacoes/${id}/desfazer`, { method: 'POST' }).then((r) => handleJson(r));
 }
 
 export interface PosicaoAVencer {
@@ -349,7 +412,7 @@ export interface PosicaoAVencer {
 }
 
 export function buscarPosicoesAVencer(): Promise<PosicaoAVencer[]> {
-  return fetch(`${BASE_URL}/enderecos/a-vencer`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/enderecos/a-vencer`).then((r) => handleJson(r));
 }
 
 export interface KpisDashboard {
@@ -361,5 +424,5 @@ export interface KpisDashboard {
 }
 
 export function buscarDashboardKpis(): Promise<KpisDashboard> {
-  return fetch(`${BASE_URL}/dashboard/kpis`).then((r) => handleJson(r));
+  return requisicao(`${BASE_URL}/dashboard/kpis`).then((r) => handleJson(r));
 }

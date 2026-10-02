@@ -120,7 +120,10 @@ CREATE TABLE IF NOT EXISTS movimentacoes (
   lote TEXT,
   status TEXT NOT NULL DEFAULT 'confirmada' CHECK (status IN ('confirmada', 'standby', 'revertida')),
   criado_em TEXT NOT NULL,
-  transferencia_endereco_id INTEGER REFERENCES enderecos(id) ON DELETE SET NULL
+  transferencia_endereco_id INTEGER REFERENCES enderecos(id) ON DELETE SET NULL,
+  -- so na saida de /liberar: data de entrada do pallet (estoque_posicoes.criado_em), pro
+  -- desfazer devolver a posicao com a mesma data da etiqueta
+  posicao_criado_em TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_movimentacoes_produto ON movimentacoes(produto_id);

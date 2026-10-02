@@ -24,6 +24,8 @@ Objetivo: 1 URL única, acessada por qualquer PC/tablet da operação via navega
 3. Em **Environment**, adicionar:
    - `TURSO_DATABASE_URL` = (copiar de `backend/.env`)
    - `TURSO_AUTH_TOKEN` = (copiar de `backend/.env`)
+   - `APP_PIN` = PIN de acesso da operação (use 6+ dígitos; 10 erros seguidos bloqueiam o IP por 15 min)
+   - `CORS_ORIGIN` (opcional) = URL do frontend, ex: `https://estoque.vercel.app`
 4. Deploy. Anotar a URL gerada, ex: `https://enderecamento-backend.onrender.com`.
 5. Se o banco remoto ainda não tem schema/dados, popular uma vez: no Shell do Render (ou local, com `backend/.env` apontando pro Turso remoto) rodar `npm run seed`.
 6. Checar: abrir `https://enderecamento-backend.onrender.com/api/health` → deve responder `{"ok":true}`.
@@ -44,6 +46,12 @@ Obs: plano free do Render "dorme" backend sem uso — primeira requisição depo
 ## 4. Uso na operação
 
 Qualquer máquina: abrir `https://estoque.vercel.app` no navegador. Sem instalar nada, sem rodar `npm run dev`, sem ligar PC nenhum manualmente — só precisa internet.
+
+## Backup diário
+
+`npm run backup` (pasta `backend`) grava um JSON com todas as tabelas na pasta `backups-enderecamento`, ao lado da pasta do projeto (fora do repo), mantendo os 30 mais recentes. Com `-- --env .env.backup` usa as credenciais do Turso remoto desse arquivo (fora do git), sem mexer no `.env` de dev.
+
+Agendado no Windows: tarefa "Backup Enderecamento Estoque", todo dia 12:00, roda `backend/backup-agendado.cmd` (log em `backups-enderecamento/backup.log`). Só roda com a máquina ligada e o usuário logado.
 
 ## Atualizações futuras
 

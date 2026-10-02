@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import { db } from '../db/client';
+import { ErroHttp, routerAsync } from '../utils/http';
+import { db, emTransacao } from '../db/client';
 import { EnderecoComStatus, PosicaoAVencer } from '../types';
 import { calcularStatusValidade, isDataIsoValida } from '../services/validade.service';
 import { arredondarQtd } from '../utils/quantidade';
 
-export const enderecosRouter = Router();
+export const enderecosRouter = routerAsync();
 
 // GET /api/enderecos -> lista flat de todos os enderecos com status (livre/ocupado) e
 // produto ocupante. Usado pelo Cadastro pra montar o <select> de posicao livre; o mapa
@@ -161,31 +161,28 @@ enderecosRouter.post('/:id/ocupar', async (req, res) => {
     return res.status(400).json({ erro: 'Validade invalida. Use uma data real entre 2000 e 2099.' });
   }
 
-  const endereco = await db.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [enderecoId] });
-  if (endereco.rows.length === 0) {
-    return res.status(404).json({ erro: 'Endereco nao encontrado' });
-  }
-
-  const produto = await db.execute({ sql: `SELECT id FROM produtos WHERE id = ?`, args: [produto_id] });
-  if (produto.rows.length === 0) {
-    return res.status(404).json({ erro: 'Produto nao encontrado' });
-  }
-
-  const jaOcupado = await db.execute({ sql: `SELECT id FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
-  if (jaOcupado.rows.length > 0) {
-    return res.status(409).json({ erro: 'Endereco ja esta ocupado. Libere antes de ocupar novamente.' });
-  }
-
   const agora = new Date().toISOString();
 
-  await db.execute({
-    sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade, lote, criado_em) VALUES (?, ?, ?, ?, ?, ?)`,
-    args: [produto_id, enderecoId, quantidade, validade, lote, agora],
-  });
+  await emTransacao(async (tx) => {
+    const endereco = await tx.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [enderecoId] });
+    if (endereco.rows.length === 0) throw new ErroHttp(404, 'Endereco nao encontrado');
 
-  await db.execute({
-    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('entrada', ?, ?, ?, ?, ?, 'confirmada', ?)`,
-    args: [produto_id, enderecoId, quantidade, validade, lote, agora],
+    const produto = await tx.execute({ sql: `SELECT id FROM produtos WHERE id = ?`, args: [produto_id] });
+    if (produto.rows.length === 0) throw new ErroHttp(404, 'Produto nao encontrado');
+
+    const jaOcupado = await tx.execute({ sql: `SELECT id FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
+    if (jaOcupado.rows.length > 0) {
+      throw new ErroHttp(409, 'Endereco ja esta ocupado. Libere antes de ocupar novamente.');
+    }
+
+    await tx.execute({
+      sql: `INSERT INTO estoque_posicoes (produto_id, endereco_id, quantidade, validade, lote, criado_em) VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [produto_id, enderecoId, quantidade, validade, lote, agora],
+    });
+    await tx.execute({
+      sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('entrada', ?, ?, ?, ?, ?, 'confirmada', ?)`,
+      args: [produto_id, enderecoId, quantidade, validade, lote, agora],
+    });
   });
 
   res.status(201).json({ ok: true, criado_em: agora });
@@ -197,23 +194,32 @@ enderecosRouter.post('/:id/ocupar', async (req, res) => {
 enderecosRouter.post('/:id/liberar', async (req, res) => {
   const enderecoId = Number(req.params.id);
 
-  const ocupacaoRs = await db.execute({
-    sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
-    args: [enderecoId],
+  const movimentacaoId = await emTransacao(async (tx) => {
+    const ocupacaoRs = await tx.execute({
+      sql: `SELECT produto_id, quantidade, validade, lote, criado_em FROM estoque_posicoes WHERE endereco_id = ?`,
+      args: [enderecoId],
+    });
+    const ocupacao = ocupacaoRs.rows[0] as any;
+    if (!ocupacao) throw new ErroHttp(404, 'Endereco ja estava livre');
+
+    await tx.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
+
+    const movimentacaoInfo = await tx.execute({
+      sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em, posicao_criado_em) VALUES ('saida', ?, ?, ?, ?, ?, 'standby', ?, ?)`,
+      args: [
+        Number(ocupacao.produto_id),
+        enderecoId,
+        Number(ocupacao.quantidade),
+        ocupacao.validade,
+        ocupacao.lote ?? null,
+        new Date().toISOString(),
+        ocupacao.criado_em ?? null,
+      ],
+    });
+    return Number(movimentacaoInfo.lastInsertRowid);
   });
-  const ocupacao = ocupacaoRs.rows[0] as any;
-  if (!ocupacao) {
-    return res.status(404).json({ erro: 'Endereco ja estava livre' });
-  }
 
-  await db.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
-
-  const movimentacaoInfo = await db.execute({
-    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('saida', ?, ?, ?, ?, ?, 'standby', ?)`,
-    args: [Number(ocupacao.produto_id), enderecoId, Number(ocupacao.quantidade), ocupacao.validade, ocupacao.lote ?? null, new Date().toISOString()],
-  });
-
-  res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid) });
+  res.json({ ok: true, movimentacao_id: movimentacaoId });
 });
 
 // POST /api/enderecos/:id/baixar-parcial { quantidade } -> retira uma quantidade especifica
@@ -229,39 +235,42 @@ enderecosRouter.post('/:id/baixar-parcial', async (req, res) => {
     return res.status(400).json({ erro: 'quantidade (> 0) e obrigatoria' });
   }
 
-  const ocupacaoRs = await db.execute({
-    sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
-    args: [enderecoId],
-  });
-  const ocupacao = ocupacaoRs.rows[0] as any;
-  if (!ocupacao) {
-    return res.status(404).json({ erro: 'Endereco esta livre' });
-  }
-
-  const qtdAtual = arredondarQtd(Number(ocupacao.quantidade));
-  if (qtdRetirada > qtdAtual) {
-    return res.status(400).json({ erro: `Quantidade retirada (${qtdRetirada}) maior que a quantidade na posicao (${qtdAtual})` });
-  }
-
-  // arredondado: 10.3 - 0.1 sem isso da 10.200000000000001 e 0.3 - 0.1 - 0.2 nunca zera
-  const qtdRestante = arredondarQtd(qtdAtual - qtdRetirada);
-  const agora = new Date().toISOString();
-
-  if (qtdRestante === 0) {
-    await db.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
-  } else {
-    await db.execute({
-      sql: `UPDATE estoque_posicoes SET quantidade = ? WHERE endereco_id = ?`,
-      args: [qtdRestante, enderecoId],
+  // dentro da transacao: le e grava travado, entao duas baixas simultaneas na mesma posicao
+  // somam certo (sem isso as duas liam o mesmo saldo e uma baixa sumia)
+  const resultado = await emTransacao(async (tx) => {
+    const ocupacaoRs = await tx.execute({
+      sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
+      args: [enderecoId],
     });
-  }
+    const ocupacao = ocupacaoRs.rows[0] as any;
+    if (!ocupacao) throw new ErroHttp(404, 'Endereco esta livre');
 
-  const movimentacaoInfo = await db.execute({
-    sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('saida', ?, ?, ?, ?, ?, 'confirmada', ?)`,
-    args: [Number(ocupacao.produto_id), enderecoId, qtdRetirada, ocupacao.validade, ocupacao.lote ?? null, agora],
+    const qtdAtual = arredondarQtd(Number(ocupacao.quantidade));
+    if (qtdRetirada > qtdAtual) {
+      throw new ErroHttp(400, `Quantidade retirada (${qtdRetirada}) maior que a quantidade na posicao (${qtdAtual})`);
+    }
+
+    // arredondado: 10.3 - 0.1 sem isso da 10.200000000000001 e 0.3 - 0.1 - 0.2 nunca zera
+    const qtdRestante = arredondarQtd(qtdAtual - qtdRetirada);
+    const agora = new Date().toISOString();
+
+    if (qtdRestante === 0) {
+      await tx.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
+    } else {
+      await tx.execute({
+        sql: `UPDATE estoque_posicoes SET quantidade = ? WHERE endereco_id = ?`,
+        args: [qtdRestante, enderecoId],
+      });
+    }
+
+    const movimentacaoInfo = await tx.execute({
+      sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('saida', ?, ?, ?, ?, ?, 'confirmada', ?)`,
+      args: [Number(ocupacao.produto_id), enderecoId, qtdRetirada, ocupacao.validade, ocupacao.lote ?? null, agora],
+    });
+    return { movimentacao_id: Number(movimentacaoInfo.lastInsertRowid), quantidade_restante: qtdRestante };
   });
 
-  res.json({ ok: true, movimentacao_id: Number(movimentacaoInfo.lastInsertRowid), quantidade_restante: qtdRestante });
+  res.json({ ok: true, ...resultado });
 });
 
 // POST /api/enderecos/:id/mover { destino_id } -> move o pallet inteiro da posicao :id pra
@@ -281,53 +290,36 @@ enderecosRouter.post('/:id/mover', async (req, res) => {
     return res.status(400).json({ erro: 'Destino e origem sao a mesma posicao' });
   }
 
-  const ocupacaoRs = await db.execute({
-    sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
-    args: [origemId],
+  // transacao unica: ou move e registra os 2 lados, ou nao muda nada
+  await emTransacao(async (tx) => {
+    const ocupacaoRs = await tx.execute({
+      sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
+      args: [origemId],
+    });
+    const ocupacao = ocupacaoRs.rows[0] as any;
+    if (!ocupacao) throw new ErroHttp(404, 'Posicao de origem esta livre, nao ha o que mover');
+
+    const destinoRs = await tx.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [destinoId] });
+    if (destinoRs.rows.length === 0) throw new ErroHttp(404, 'Posicao de destino nao encontrada');
+
+    const destinoOcupadoRs = await tx.execute({ sql: `SELECT id FROM estoque_posicoes WHERE endereco_id = ?`, args: [destinoId] });
+    if (destinoOcupadoRs.rows.length > 0) throw new ErroHttp(409, 'Posicao de destino ja esta ocupada');
+
+    const agora = new Date().toISOString();
+    const produtoId = Number(ocupacao.produto_id);
+    const quantidade = Number(ocupacao.quantidade);
+    const lote = ocupacao.lote ?? null;
+
+    await tx.execute({ sql: `UPDATE estoque_posicoes SET endereco_id = ? WHERE endereco_id = ?`, args: [destinoId, origemId] });
+    await tx.execute({
+      sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em, transferencia_endereco_id) VALUES ('saida', ?, ?, ?, ?, ?, 'confirmada', ?, ?)`,
+      args: [produtoId, origemId, quantidade, ocupacao.validade, lote, agora, destinoId],
+    });
+    await tx.execute({
+      sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em, transferencia_endereco_id) VALUES ('entrada', ?, ?, ?, ?, ?, 'confirmada', ?, ?)`,
+      args: [produtoId, destinoId, quantidade, ocupacao.validade, lote, agora, origemId],
+    });
   });
-  const ocupacao = ocupacaoRs.rows[0] as any;
-  if (!ocupacao) {
-    return res.status(404).json({ erro: 'Posicao de origem esta livre, nao ha o que mover' });
-  }
-
-  const destinoRs = await db.execute({ sql: `SELECT id FROM enderecos WHERE id = ?`, args: [destinoId] });
-  if (destinoRs.rows.length === 0) {
-    return res.status(404).json({ erro: 'Posicao de destino nao encontrada' });
-  }
-
-  const destinoOcupadoRs = await db.execute({ sql: `SELECT id FROM estoque_posicoes WHERE endereco_id = ?`, args: [destinoId] });
-  if (destinoOcupadoRs.rows.length > 0) {
-    return res.status(409).json({ erro: 'Posicao de destino ja esta ocupada' });
-  }
-
-  const agora = new Date().toISOString();
-  const produtoId = Number(ocupacao.produto_id);
-  const quantidade = Number(ocupacao.quantidade);
-  const lote = ocupacao.lote ?? null;
-
-  try {
-    // batch = transacao unica: ou move e registra os 2 lados, ou nao muda nada. O UNIQUE em
-    // estoque_posicoes.endereco_id cobre a corrida (destino ocupado depois do check acima).
-    await db.batch(
-      [
-        { sql: `UPDATE estoque_posicoes SET endereco_id = ? WHERE endereco_id = ?`, args: [destinoId, origemId] },
-        {
-          sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em, transferencia_endereco_id) VALUES ('saida', ?, ?, ?, ?, ?, 'confirmada', ?, ?)`,
-          args: [produtoId, origemId, quantidade, ocupacao.validade, lote, agora, destinoId],
-        },
-        {
-          sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em, transferencia_endereco_id) VALUES ('entrada', ?, ?, ?, ?, ?, 'confirmada', ?, ?)`,
-          args: [produtoId, destinoId, quantidade, ocupacao.validade, lote, agora, origemId],
-        },
-      ],
-      'write'
-    );
-  } catch (e: any) {
-    if (String(e?.message).includes('UNIQUE')) {
-      return res.status(409).json({ erro: 'Posicao de destino ja esta ocupada' });
-    }
-    throw e;
-  }
 
   res.json({ ok: true });
 });
@@ -345,49 +337,50 @@ enderecosRouter.post('/:id/contar', async (req, res) => {
     return res.status(400).json({ erro: 'quantidade_contada (>= 0) e obrigatoria' });
   }
 
-  const ocupacaoRs = await db.execute({
-    sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
-    args: [enderecoId],
-  });
-  const ocupacao = ocupacaoRs.rows[0] as any;
-  if (!ocupacao) {
-    return res.status(404).json({ erro: 'Endereco esta livre, nao ha o que contar' });
-  }
+  const resultado = await emTransacao(async (tx) => {
+    const ocupacaoRs = await tx.execute({
+      sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
+      args: [enderecoId],
+    });
+    const ocupacao = ocupacaoRs.rows[0] as any;
+    if (!ocupacao) throw new ErroHttp(404, 'Endereco esta livre, nao ha o que contar');
 
-  const quantidadeSistema = arredondarQtd(Number(ocupacao.quantidade));
-  const divergencia = arredondarQtd(quantidadeContada - quantidadeSistema);
-  const agora = new Date().toISOString();
+    const quantidadeSistema = arredondarQtd(Number(ocupacao.quantidade));
+    const divergencia = arredondarQtd(quantidadeContada - quantidadeSistema);
+    const agora = new Date().toISOString();
 
-  await db.execute({
-    sql: `INSERT INTO contagens (endereco_id, produto_id, quantidade_sistema, quantidade_contada, divergencia, criado_em) VALUES (?, ?, ?, ?, ?, ?)`,
-    args: [enderecoId, Number(ocupacao.produto_id), quantidadeSistema, quantidadeContada, divergencia, agora],
-  });
+    await tx.execute({
+      sql: `INSERT INTO contagens (endereco_id, produto_id, quantidade_sistema, quantidade_contada, divergencia, criado_em) VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [enderecoId, Number(ocupacao.produto_id), quantidadeSistema, quantidadeContada, divergencia, agora],
+    });
 
-  if (divergencia !== 0) {
-    if (quantidadeContada === 0) {
-      await db.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
-    } else {
-      await db.execute({
-        sql: `UPDATE estoque_posicoes SET quantidade = ? WHERE endereco_id = ?`,
-        args: [quantidadeContada, enderecoId],
+    if (divergencia !== 0) {
+      if (quantidadeContada === 0) {
+        await tx.execute({ sql: `DELETE FROM estoque_posicoes WHERE endereco_id = ?`, args: [enderecoId] });
+      } else {
+        await tx.execute({
+          sql: `UPDATE estoque_posicoes SET quantidade = ? WHERE endereco_id = ?`,
+          args: [quantidadeContada, enderecoId],
+        });
+      }
+
+      await tx.execute({
+        sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES (?, ?, ?, ?, ?, ?, 'confirmada', ?)`,
+        args: [
+          divergencia > 0 ? 'entrada' : 'saida',
+          Number(ocupacao.produto_id),
+          enderecoId,
+          arredondarQtd(Math.abs(divergencia)),
+          ocupacao.validade,
+          ocupacao.lote ?? null,
+          agora,
+        ],
       });
     }
+    return { quantidade_sistema: quantidadeSistema, divergencia };
+  });
 
-    await db.execute({
-      sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES (?, ?, ?, ?, ?, ?, 'confirmada', ?)`,
-      args: [
-        divergencia > 0 ? 'entrada' : 'saida',
-        Number(ocupacao.produto_id),
-        enderecoId,
-        arredondarQtd(Math.abs(divergencia)),
-        ocupacao.validade,
-        ocupacao.lote ?? null,
-        agora,
-      ],
-    });
-  }
-
-  res.json({ ok: true, quantidade_sistema: quantidadeSistema, divergencia });
+  res.json({ ok: true, ...resultado });
 });
 
 // POST /api/enderecos/:id/bloquear { motivo } -> so marca flag informativo (posicao ou

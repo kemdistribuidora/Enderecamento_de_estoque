@@ -1,13 +1,14 @@
-import { Router } from 'express';
+import { routerAsync } from '../utils/http';
 import {
   confirmarImportacao,
   ErroImportacao,
   itensImportacao,
   listarImportacoes,
   previaImportacao,
+  ultimaAtualizacaoSaldo,
 } from '../services/importacao-winthor.service';
 
-export const importacaoRouter = Router();
+export const importacaoRouter = routerAsync();
 
 function lerCsv(body: any): string | null {
   const csv = body?.csv;
@@ -37,6 +38,11 @@ importacaoRouter.post('/winthor/confirmar', async (req, res) => {
     const status = e instanceof ErroImportacao ? 400 : 500;
     res.status(status).json({ erro: e?.message ?? 'Erro ao gravar importacao' });
   }
+});
+
+// GET /api/importacao/winthor/ultima -> { atualizado_em } do saldo mais recente (ou null)
+importacaoRouter.get('/winthor/ultima', async (_req, res) => {
+  res.json({ atualizado_em: await ultimaAtualizacaoSaldo() });
 });
 
 // GET /api/importacao/winthor/historico -> ultimos imports confirmados

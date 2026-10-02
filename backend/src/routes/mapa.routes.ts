@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { routerAsync } from '../utils/http';
 import { db } from '../db/client';
 import { calcularStatusValidade } from '../services/validade.service';
 import { EnderecoComStatus, MapaSetor, Setor } from '../types';
 
-export const mapaRouter = Router();
+export const mapaRouter = routerAsync();
 
 // GET /api/mapa/setores -> lista de setores (pras abas de departamento)
 mapaRouter.get('/setores', async (_req, res) => {

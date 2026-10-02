@@ -352,6 +352,7 @@ export async function confirmarImportacao(
   }
 
   const t = previa.totais;
+  const indiceInsertImportacao = stmts.length;
   stmts.push({
     sql: `
       INSERT INTO importacoes_saldo (criado_em, nome_arquivo, linhas_lidas, linhas_bloqueadas, produtos_arquivo,
@@ -371,10 +372,23 @@ export async function confirmarImportacao(
     });
   }
 
-  await db.batch(stmts, 'write');
+  const resultados = await db.batch(stmts, 'write');
+  return { importacao_id: Number(resultados[indiceInsertImportacao].lastInsertRowid), previa };
+}
 
-  const idRs = await db.execute(`SELECT MAX(id) as id FROM importacoes_saldo`);
-  return { importacao_id: Number((idRs.rows[0] as any).id), previa };
+// Data/hora do ultimo saldo gravado (import mais recente). A pendencia de posicionamento e
+// saldo desse momento - alocado de agora: quanto mais velho, mais baixa feita depois do
+// import aparece como "nao posicionado" que nao existe. A tela mostra isso pro usuario.
+// Fallback em estoque_erp_saldo cobre saldo gravado antes do historico de imports existir.
+export async function ultimaAtualizacaoSaldo(): Promise<string | null> {
+  const rs = await db.execute(`
+    SELECT MAX(quando) as quando FROM (
+      SELECT MAX(criado_em) as quando FROM importacoes_saldo
+      UNION ALL
+      SELECT MAX(atualizado_em) FROM estoque_erp_saldo
+    )
+  `);
+  return ((rs.rows[0] as any)?.quando as string | null) ?? null;
 }
 
 export class ErroImportacao extends Error {}

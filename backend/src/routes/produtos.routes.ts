@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { routerAsync } from '../utils/http';
 import { db } from '../db/client';
 import { Produto, ProdutoComPosicoes, PendenciaPosicionamento, SugestaoEndereco, DivergenciaSobra, ItemCurvaAbc } from '../types';
 import { sugerirEnderecoLivre, EnderecoParaSugestao } from '../services/endereco.service';
 import { calcularStatusValidade } from '../services/validade.service';
 import { arredondarQtd } from '../utils/quantidade';
 
-export const produtosRouter = Router();
+export const produtosRouter = routerAsync();
 
 // POST /api/produtos -> cadastra produto novo (dados mestre, sem posicao/estoque ainda)
 produtosRouter.post('/', async (req, res) => {
