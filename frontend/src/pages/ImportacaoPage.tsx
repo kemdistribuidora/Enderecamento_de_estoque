@@ -31,6 +31,7 @@ interface LinhaTabela {
   codigo: string;
   nome: string;
   qt_por_cx: number | null;
+  unidade: string | null;
   status: StatusReconciliacao;
   produto_novo?: boolean;
   cadastro_alterado?: boolean;
@@ -137,7 +138,7 @@ export default function ImportacaoPage() {
       <div className="panel max-w-2xl p-5">
         <h2 className="font-display text-lg font-bold text-steel-900">Produtos + saldo</h2>
         <p className="mt-1 text-sm text-ink-600">
-          Arquivo do D860: <code className="data-code">codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo</code>. Pode ser
+          Arquivo do D860: <code className="data-code">codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo;unidade</code>. Pode ser
           parcial (filtrado por produto ou fornecedor): produto fora do arquivo não é alterado.
         </p>
 
@@ -366,7 +367,7 @@ function TabelaReconciliacao({
 }
 
 function LinhaReconciliacao({ linha: l, mostrarAntesDepois }: { linha: LinhaTabela; mostrarAntesDepois: boolean }) {
-  const qtd = (v: number) => formatarQtdCx(v, l.qt_por_cx);
+  const qtd = (v: number) => formatarQtdCx(v, l.qt_por_cx, l.unidade);
   const mudouSaldo = l.saldo_anterior != null && l.saldo_anterior !== l.saldo_novo;
   const mudouNaoPos = l.nao_posicionado_antes != null && l.nao_posicionado_antes !== l.nao_posicionado;
 
@@ -435,7 +436,7 @@ function HistoricoImportacoes({ historico }: { historico: ImportacaoResumo[] }) 
     setCarregando(true);
     try {
       const itens = await buscarItensImportacao(imp.id);
-      setLinhas(itens.map((i) => ({ ...i, qt_por_cx: null })));
+      setLinhas(itens.map((i) => ({ ...i, qt_por_cx: null, unidade: null })));
     } finally {
       setCarregando(false);
     }

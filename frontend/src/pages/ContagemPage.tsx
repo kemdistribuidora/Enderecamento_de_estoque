@@ -156,7 +156,7 @@ export default function ContagemPage() {
                         <span className="data-code block text-xs text-steel-400">{posicao.produto?.codigo}</span>
                       </td>
                       <td className="data-code whitespace-nowrap text-ink-600">
-                        {formatarQtdCx(posicao.produto?.quantidade ?? 0, posicao.produto?.qt_por_cx ?? null)}
+                        {formatarQtdCx(posicao.produto?.quantidade ?? 0, posicao.produto?.qt_por_cx ?? null, posicao.produto?.unidade ?? null)}
                       </td>
                       <td>
                         <span className="data-code block text-ink-900">{formatarData(posicao.produto?.validade)}</span>

@@ -14,10 +14,13 @@ import { InStatement } from '@libsql/client';
 import { db } from '../db/client';
 import { arredondarQtd } from '../utils/quantidade';
 
-// sem cabecalho, separador ';': codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo
+// sem cabecalho, separador ';': codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo[;unidade]
 // (query do Winthor faz LEFT JOIN produto+saldo: filial/codigo/saldo vazios = sem saldo
 // na filial, tratado como saldo 0 -- o produto veio no arquivo, entao o Winthor diz 0).
+// 8a coluna (P.UNIDADE, ex: UN/KG) e opcional: arquivo antigo de 7 colunas continua
+// valendo e nao mexe na unidade ja cadastrada.
 const COLUNAS = 7;
+const COLUNAS_COM_UNIDADE = 8;
 const FILIAL_PADRAO = '1';
 // Winthor (Oracle) exporta decimal com ponto, sem separador de milhar e SEM o zero antes
 // do ponto quando < 1 (ex: 1684.089, .5, -.24). Virgula ou qualquer outra coisa bloqueia
@@ -44,8 +47,9 @@ export interface ItemReconciliacao {
   codigo: string;
   nome: string;
   qt_por_cx: number | null;
+  unidade: string | null;
   produto_novo: boolean;
-  cadastro_alterado: boolean; // nome/codigo de barras/qt_por_cx diferente do cadastrado
+  cadastro_alterado: boolean; // nome/codigo de barras/qt_por_cx/unidade diferente do cadastrado
   saldo_anterior: number | null; // null = produto nunca teve saldo importado
   saldo_novo: number;
   delta: number; // saldo_novo - (saldo_anterior ?? 0)
@@ -86,6 +90,7 @@ interface ProdutoArquivo {
   nome: string;
   codigo_barras: string;
   qt_por_cx: number | null;
+  unidade: string | null; // null = arquivo sem a 8a coluna (ou vazia)
   filial: string | null; // null = sem saldo no Winthor (colunas vazias)
   saldo: number;
 }
@@ -117,11 +122,12 @@ export function parsearArquivoWinthor(conteudo: string): ArquivoParseado {
 
     const campos = crua.split(';').map((c) => c.trim());
     while (campos.length > COLUNAS && campos[campos.length - 1] === '') campos.pop();
-    if (campos.length !== COLUNAS) {
-      return bloquear(`esperado ${COLUNAS} campos separados por ";", veio ${campos.length}`);
+    if (campos.length !== COLUNAS && campos.length !== COLUNAS_COM_UNIDADE) {
+      return bloquear(`esperado ${COLUNAS} ou ${COLUNAS_COM_UNIDADE} campos separados por ";", veio ${campos.length}`);
     }
 
-    const [codigo, nome, codigoBarras, qtPorCxStr, filialStr, codigoRepetido, saldoStr] = campos;
+    const [codigo, nome, codigoBarras, qtPorCxStr, filialStr, codigoRepetido, saldoStr, unidadeStr] = campos;
+    const unidade = unidadeStr ? unidadeStr.toUpperCase() : null;
     if (!codigo) return bloquear('codigo vazio');
     if (!nome) return bloquear('nome vazio');
     if (codigoRepetido && codigoRepetido !== codigo) {
@@ -179,6 +185,7 @@ export function parsearArquivoWinthor(conteudo: string): ArquivoParseado {
       nome,
       codigo_barras: codigoBarras,
       qt_por_cx: qtPorCx,
+      unidade,
       filial,
       saldo,
     });
@@ -201,7 +208,7 @@ async function reconciliar(conteudo: string): Promise<Reconciliacao> {
   // Carrega tudo de uma vez (3 queries) em vez de 3 por produto: arquivo tem milhares de
   // linhas e o banco pode ser o Turso remoto.
   const [produtosRs, saldoRs, posicionadoRs] = await Promise.all([
-    db.execute(`SELECT id, codigo, nome, codigo_barras, qt_por_cx FROM produtos`),
+    db.execute(`SELECT id, codigo, nome, codigo_barras, qt_por_cx, unidade FROM produtos`),
     db.execute(`SELECT produto_id, ROUND(SUM(saldo), 6) as total FROM estoque_erp_saldo GROUP BY produto_id`),
     db.execute(`SELECT produto_id, ROUND(SUM(quantidade), 6) as total FROM estoque_posicoes GROUP BY produto_id`),
   ]);
@@ -239,13 +246,15 @@ async function reconciliar(conteudo: string): Promise<Reconciliacao> {
       !!cadastro &&
       (cadastro.nome !== p.nome ||
         cadastro.codigo_barras !== p.codigo_barras ||
-        (p.qt_por_cx != null && Number(cadastro.qt_por_cx) !== p.qt_por_cx));
+        (p.qt_por_cx != null && Number(cadastro.qt_por_cx) !== p.qt_por_cx) ||
+        (p.unidade != null && cadastro.unidade !== p.unidade));
 
     return {
       produto_id: produtoId,
       codigo: p.codigo,
       nome: p.nome,
       qt_por_cx: p.qt_por_cx ?? (cadastro?.qt_por_cx != null ? Number(cadastro.qt_por_cx) : null),
+      unidade: p.unidade ?? cadastro?.unidade ?? null,
       produto_novo: !cadastro,
       cadastro_alterado: cadastroAlterado,
       saldo_anterior: saldoAnterior,
@@ -333,13 +342,14 @@ export async function confirmarImportacao(
   for (const p of produtos) {
     stmts.push({
       sql: `
-        INSERT INTO produtos (codigo, nome, codigo_barras, qt_por_cx) VALUES (?, ?, ?, ?)
+        INSERT INTO produtos (codigo, nome, codigo_barras, qt_por_cx, unidade) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(codigo) DO UPDATE SET
           nome = excluded.nome,
           codigo_barras = excluded.codigo_barras,
-          qt_por_cx = COALESCE(excluded.qt_por_cx, produtos.qt_por_cx)
+          qt_por_cx = COALESCE(excluded.qt_por_cx, produtos.qt_por_cx),
+          unidade = COALESCE(excluded.unidade, produtos.unidade)
       `,
-      args: [p.codigo, p.nome, p.codigo_barras, p.qt_por_cx],
+      args: [p.codigo, p.nome, p.codigo_barras, p.qt_por_cx, p.unidade],
     });
     // Saldo do produto e substituido inteiro pelo do arquivo (1 linha por produto). Sem
     // saldo no Winthor tambem grava linha com 0: sem linha, o produto sumiria da

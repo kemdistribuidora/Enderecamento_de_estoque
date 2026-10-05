@@ -11,6 +11,7 @@ export interface DadosEtiqueta {
   codigoBarras: string;
   pesoCaixa: number | null;
   qtPorCx: number | null;
+  unidade?: string | null;
   quantidade: number;
   validade: string;
   lote: string | null;
@@ -90,7 +91,7 @@ export default function EtiquetaModal({ dados, onClose }: Props) {
                 <LinhaEtiqueta label="Endereço" valor={dados.enderecoCodigo} />
                 <LinhaEtiqueta label="Dt Entrada" valor={formatarData(dados.criadoEm)} />
                 <LinhaEtiqueta label="Lote" valor={dados.lote ?? '—'} />
-                <LinhaEtiqueta label="Quantidade" valor={formatarQtdCx(dados.quantidade, dados.qtPorCx)} />
+                <LinhaEtiqueta label="Quantidade" valor={formatarQtdCx(dados.quantidade, dados.qtPorCx, dados.unidade)} />
                 <LinhaEtiqueta
                   label="Peso"
                   valor={pesoTotal != null ? `${pesoTotal.toFixed(2)} KG` : dados.pesoCaixa == null ? 'cadastrar peso da caixa' : 'sem qtd/caixa'}

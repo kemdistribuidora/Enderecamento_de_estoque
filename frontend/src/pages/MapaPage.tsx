@@ -141,6 +141,7 @@ export default function MapaPage() {
           setorId={separando.posicao.setor_id}
           quantidade={separando.posicao.quantidade}
           qtPorCx={separando.produto.qt_por_cx}
+          unidade={separando.produto.unidade}
           validade={separando.posicao.validade}
           lote={separando.posicao.lote}
           onFechar={() => setSeparando(null)}

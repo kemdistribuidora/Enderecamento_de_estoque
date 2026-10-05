@@ -157,7 +157,7 @@ Componentes: `MapaSetorView`, `ModalEscolherNoMapa`, `ProdutoModal`, `ResultCard
 
 CSVs sem cabeçalho, separados por `;`, encoding tipicamente Windows-1252 (tratado em `ImportacaoPage.tsx::lerArquivoTexto`: tenta UTF-8 estrito, cai para Windows-1252).
 
-Arquivo único: `codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo` (LEFT JOIN produto+saldo no Winthor; filial/codigo/saldo vazios = sem saldo = 0). Saldo e qt_por_cx com ponto decimal, sem separador de milhar, aceitando o formato Oracle sem zero antes do ponto (`.5`, `-.24`); fracionado (KG) guardado com até 6 casas (Winthor usa até 5).
+Arquivo único: `codigo;nome;codigo_barras;qt_por_cx;filial;codigo;saldo;unidade` (LEFT JOIN produto+saldo no Winthor; filial/codigo/saldo vazios = sem saldo = 0). 8ª coluna `unidade` (P.UNIDADE: UN, KG...) é opcional: arquivo de 7 colunas continua aceito e não altera a unidade já cadastrada; sem unidade, exibe UN. Saldo e qt_por_cx com ponto decimal, sem separador de milhar, aceitando o formato Oracle sem zero antes do ponto (`.5`, `-.24`); fracionado (KG) guardado com até 6 casas (Winthor usa até 5).
 
 **Regra central: o saldo do Winthor é a verdade.** Para cada produto do arquivo, posicionado + não posicionado = saldo do arquivo:
 - saldo >= posicionado: a diferença é o não posicionado (derivado, nunca gravado: `saldo - SUM(estoque_posicoes)`).

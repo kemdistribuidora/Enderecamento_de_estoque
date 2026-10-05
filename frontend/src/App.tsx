@@ -11,6 +11,7 @@ import CurvaAbcPage from './pages/CurvaAbcPage';
 import ValidadePage from './pages/ValidadePage';
 import DashboardPage from './pages/DashboardPage';
 import ContagemPage from './pages/ContagemPage';
+import EstoqueTotalPage from './pages/EstoqueTotalPage';
 
 export default function App() {
   const [collapsed, setCollapsed] = useState(false);
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="/curva-abc" element={<CurvaAbcPage />} />
             <Route path="/validade" element={<ValidadePage />} />
             <Route path="/contagem" element={<ContagemPage />} />
+            <Route path="/estoque-total" element={<EstoqueTotalPage />} />
           </Routes>
         </main>
       </div>

@@ -48,7 +48,8 @@ function CelulaPosicao({
   const tituloBase = ocupado
     ? `${posicao.codigo} — ${posicao.produto?.nome} · ${formatarQtdCx(
         posicao.produto?.quantidade ?? 0,
-        posicao.produto?.qt_por_cx ?? null
+        posicao.produto?.qt_por_cx ?? null,
+        posicao.produto?.unidade ?? null
       )} (vence ${formatarData(posicao.produto?.validade)}${
         statusValidade === 'emergencia'
           ? ' — EMERGÊNCIA'

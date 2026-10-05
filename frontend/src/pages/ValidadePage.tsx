@@ -43,6 +43,7 @@ export default function ValidadePage() {
           setorId={separando.setor_id}
           quantidade={separando.quantidade}
           qtPorCx={separando.produto_qt_por_cx}
+          unidade={separando.produto_unidade}
           validade={separando.validade}
           lote={separando.lote}
           onFechar={() => setSeparando(null)}
@@ -98,7 +99,7 @@ export default function ValidadePage() {
                   </td>
                   <td className="data-code whitespace-nowrap text-ink-600">{p.endereco_codigo}</td>
                   <td className="data-code whitespace-nowrap text-ink-600">{p.lote ?? '—'}</td>
-                  <td className="data-code whitespace-nowrap text-right">{formatarQtdCx(p.quantidade, p.produto_qt_por_cx)}</td>
+                  <td className="data-code whitespace-nowrap text-right">{formatarQtdCx(p.quantidade, p.produto_qt_por_cx, p.produto_unidade)}</td>
                   <td className="data-code whitespace-nowrap text-ink-600">{formatarData(p.validade)}</td>
                   <td className="text-right">
                     <button type="button" onClick={() => setSeparando(p)} className="btn-secondary">

@@ -7,6 +7,7 @@ export interface Produto {
   codigo_barras: string;
   peso_caixa: number | null;
   qt_por_cx: number | null;
+  unidade: string | null;
 }
 
 export interface Setor {
@@ -62,6 +63,7 @@ export interface EnderecoComStatus extends Endereco {
     codigo_barras: string;
     peso_caixa: number | null;
     qt_por_cx: number | null;
+    unidade: string | null;
     cor_marcador: string | null;
     quantidade: number;
     validade: string;
@@ -108,6 +110,7 @@ export interface PendenciaPosicionamento {
   codigo_barras: string;
   peso_caixa: number | null;
   qt_por_cx: number | null;
+  unidade: string | null;
   saldo_total: number;
   alocado_total: number;
   pendente: number;
@@ -127,6 +130,7 @@ export interface DivergenciaSobra {
   codigo: string;
   nome: string;
   qt_por_cx: number | null;
+  unidade: string | null;
   saldo_total: number;
   alocado_total: number;
   excesso: number;
@@ -164,6 +168,21 @@ export interface ItemCurvaAbc {
   classe: 'A' | 'B' | 'C';
 }
 
+// Estoque total por produto: saldo Winthor x soma das posicoes no WMS.
+// diferenca = posicionado - saldo (negativo = falta posicionar, positivo = sobra fisica).
+export interface ItemEstoqueTotal {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  qt_por_cx: number | null;
+  unidade: string | null;
+  saldo_winthor: number | null;
+  posicionado: number;
+  posicoes: number;
+  diferenca: number;
+  status: 'ok' | 'falta_posicionar' | 'sobra' | 'sem_saldo';
+}
+
 // Posicao ocupada com validade vencida ou proxima (ver DIAS_ALERTA_VENCIMENTO).
 export interface PosicaoAVencer {
   endereco_id: number;
@@ -173,6 +192,7 @@ export interface PosicaoAVencer {
   produto_codigo: string;
   produto_nome: string;
   produto_qt_por_cx: number | null;
+  produto_unidade: string | null;
   quantidade: number;
   validade: string;
   lote: string | null;

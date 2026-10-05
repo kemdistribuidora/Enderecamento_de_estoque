@@ -147,6 +147,7 @@ export default function CadastroPage() {
         codigoBarras: form.codigo_barras,
         pesoCaixa: produtoSelecionado?.peso_caixa ?? pesoCaixa,
         qtPorCx: produtoSelecionado?.qt_por_cx ?? qtPorCx,
+        unidade: produtoSelecionado?.unidade ?? null,
         quantidade,
         validade: form.validade,
         lote: form.lote.trim() || null,
@@ -327,7 +328,7 @@ export default function CadastroPage() {
             </div>
           </Campo>
 
-          <Campo label="Quantidade em UN">
+          <Campo label={`Quantidade em ${produtoSelecionado?.unidade || 'UN'}`}>
             <input
               required
               type="number"
@@ -342,7 +343,8 @@ export default function CadastroPage() {
                 ={' '}
                 {formatarQtdCx(
                   Number(form.quantidade),
-                  produtoSelecionado?.qt_por_cx ?? (form.qt_por_cx.trim() ? Number(form.qt_por_cx) : null)
+                  produtoSelecionado?.qt_por_cx ?? (form.qt_por_cx.trim() ? Number(form.qt_por_cx) : null),
+                  produtoSelecionado?.unidade ?? null
                 )}
               </span>
             )}

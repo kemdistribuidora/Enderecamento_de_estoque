@@ -1,6 +1,6 @@
 import { routerAsync } from '../utils/http';
 import { db } from '../db/client';
-import { Produto, ProdutoComPosicoes, PendenciaPosicionamento, SugestaoEndereco, DivergenciaSobra, ItemCurvaAbc } from '../types';
+import { Produto, ProdutoComPosicoes, PendenciaPosicionamento, SugestaoEndereco, DivergenciaSobra, ItemCurvaAbc, ItemEstoqueTotal } from '../types';
 import { sugerirEnderecoLivre, EnderecoParaSugestao } from '../services/endereco.service';
 import { calcularStatusValidade } from '../services/validade.service';
 import { arredondarQtd } from '../utils/quantidade';
@@ -31,6 +31,7 @@ produtosRouter.post('/', async (req, res) => {
       codigo_barras,
       peso_caixa: pesoCaixa,
       qt_por_cx: qtPorCx,
+      unidade: null,
     };
     res.status(201).json(produto);
   } catch (e: any) {
@@ -118,7 +119,7 @@ produtosRouter.get('/', async (req, res) => {
 produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
-      p.id as produto_id, p.codigo, p.nome, p.codigo_barras, p.peso_caixa, p.qt_por_cx,
+      p.id as produto_id, p.codigo, p.nome, p.codigo_barras, p.peso_caixa, p.qt_por_cx, p.unidade,
       COALESCE(saldo.total, 0) as saldo_total,
       COALESCE(alocado.total, 0) as alocado_total
     FROM produtos p
@@ -135,6 +136,7 @@ produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
     codigo_barras: r.codigo_barras,
     peso_caixa: r.peso_caixa != null ? Number(r.peso_caixa) : null,
     qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
+    unidade: r.unidade ?? null,
     saldo_total: Number(r.saldo_total),
     alocado_total: Number(r.alocado_total),
     pendente: arredondarQtd(Number(r.saldo_total) - Number(r.alocado_total)),
@@ -149,7 +151,7 @@ produtosRouter.get('/pendencias-posicionamento', async (_req, res) => {
 produtosRouter.get('/divergencias-sobra', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
-      p.id as produto_id, p.codigo, p.nome, p.qt_por_cx,
+      p.id as produto_id, p.codigo, p.nome, p.qt_por_cx, p.unidade,
       COALESCE(saldo.total, 0) as saldo_total,
       COALESCE(alocado.total, 0) as alocado_total
     FROM produtos p
@@ -164,6 +166,7 @@ produtosRouter.get('/divergencias-sobra', async (_req, res) => {
     codigo: r.codigo,
     nome: r.nome,
     qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
+    unidade: r.unidade ?? null,
     saldo_total: Number(r.saldo_total),
     alocado_total: Number(r.alocado_total),
     excesso: arredondarQtd(Number(r.alocado_total) - Number(r.saldo_total)),
@@ -215,6 +218,46 @@ produtosRouter.get('/curva-abc', async (_req, res) => {
   res.json(curva);
 });
 
+// GET /api/produtos/estoque-total -> visao lado a lado saldo Winthor x posicionado no WMS,
+// 1 linha por produto que tenha saldo importado OU posicao ocupada. Conferencia de olho
+// contra a tela do Winthor. saldo_winthor null = produto nunca veio no import.
+produtosRouter.get('/estoque-total', async (_req, res) => {
+  const rs = await db.execute(`
+    SELECT
+      p.id as produto_id, p.codigo, p.nome, p.qt_por_cx, p.unidade,
+      saldo.total as saldo_winthor,
+      COALESCE(alocado.total, 0) as posicionado,
+      COALESCE(alocado.posicoes, 0) as posicoes
+    FROM produtos p
+    LEFT JOIN (SELECT produto_id, ROUND(SUM(saldo), 6) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
+    LEFT JOIN (SELECT produto_id, ROUND(SUM(quantidade), 6) as total, COUNT(*) as posicoes FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
+    WHERE saldo.total IS NOT NULL OR alocado.total IS NOT NULL
+    ORDER BY p.nome
+  `);
+
+  const itens: ItemEstoqueTotal[] = (rs.rows as any[]).map((r) => {
+    const saldo = r.saldo_winthor != null ? Number(r.saldo_winthor) : null;
+    const posicionado = Number(r.posicionado);
+    const diferenca = arredondarQtd(posicionado - (saldo ?? 0));
+    const status: ItemEstoqueTotal['status'] =
+      saldo == null ? 'sem_saldo' : diferenca === 0 ? 'ok' : diferenca < 0 ? 'falta_posicionar' : 'sobra';
+    return {
+      produto_id: Number(r.produto_id),
+      codigo: r.codigo,
+      nome: r.nome,
+      qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
+      unidade: r.unidade ?? null,
+      saldo_winthor: saldo,
+      posicionado,
+      posicoes: Number(r.posicoes),
+      diferenca,
+      status,
+    };
+  });
+
+  res.json(itens);
+});
+
 // GET /api/produtos/codigo-barras/:codigo -> match exato por codigo_barras, usado pelo
 // scanner/coletor pra resolver o produto direto do codigo lido, sem digitar/buscar.
 produtosRouter.get('/codigo-barras/:codigo', async (req, res) => {
@@ -231,6 +274,7 @@ produtosRouter.get('/codigo-barras/:codigo', async (req, res) => {
     codigo_barras: produto.codigo_barras,
     peso_caixa: produto.peso_caixa != null ? Number(produto.peso_caixa) : null,
     qt_por_cx: produto.qt_por_cx != null ? Number(produto.qt_por_cx) : null,
+    unidade: produto.unidade ?? null,
   };
   res.json(resultado);
 });

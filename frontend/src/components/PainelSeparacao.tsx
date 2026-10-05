@@ -15,6 +15,7 @@ interface Props {
   setorId: number;
   quantidade: number;
   qtPorCx?: number | null;
+  unidade?: string | null;
   validade: string;
   lote: string | null;
   onFechar: () => void;
@@ -31,6 +32,7 @@ export default function PainelSeparacao({
   setorId,
   quantidade,
   qtPorCx = null,
+  unidade = null,
   validade,
   lote,
   onFechar,
@@ -82,7 +84,7 @@ export default function PainelSeparacao({
             Separando {produtoNome} <span className="data-code font-normal text-steel-400">— {produtoCodigo}</span>
           </h3>
           <p className="mt-0.5 text-sm text-ink-600">
-            Posição <strong>{codigoEndereco}</strong> · {formatarQtdCx(quantidade, qtPorCx)} · lote {lote ?? '—'} · vence{' '}
+            Posição <strong>{codigoEndereco}</strong> · {formatarQtdCx(quantidade, qtPorCx, unidade)} · lote {lote ?? '—'} · vence{' '}
             {formatarData(validade)}
           </p>
         </div>

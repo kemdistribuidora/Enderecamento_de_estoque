@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS produtos (
   -- caixa conhecida. Saldo (estoque_erp_saldo.saldo / estoque_posicoes.quantidade)
   -- SEMPRE fica em UN -- qt_por_cx e so pra converter em CX na exibicao.
   qt_por_cx INTEGER,
+  -- unidade de venda do Winthor (P.UNIDADE: UN, KG...), so rotulo na exibicao das
+  -- quantidades. NULL = nao veio no import, exibe como UN.
+  unidade TEXT,
   -- marcador visual escolhido no mapa (chave da paleta fixa do frontend, ex: "azul");
   -- NULL = sem marcador. Fica no produto, entao aparece em todas as posicoes dele.
   cor_marcador TEXT

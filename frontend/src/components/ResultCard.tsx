@@ -52,7 +52,7 @@ export default function ResultCard({ produto, onSeparar }: Props) {
                 }`}
               >
                 <span className="data-code">
-                  {p.codigo_endereco} · {formatarQtdCx(p.quantidade, produto.qt_por_cx)} · vence {formatarData(p.validade)}
+                  {p.codigo_endereco} · {formatarQtdCx(p.quantidade, produto.qt_por_cx, produto.unidade)} · vence {formatarData(p.validade)}
                 </span>
                 {p.status_validade !== 'normal' && (
                   <span className={p.status_validade === 'emergencia' ? 'tag-red' : 'tag-amber'}>

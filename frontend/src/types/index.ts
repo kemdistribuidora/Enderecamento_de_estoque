@@ -7,6 +7,7 @@ export interface Produto {
   codigo_barras: string;
   peso_caixa: number | null;
   qt_por_cx: number | null;
+  unidade: string | null;
 }
 
 export interface ProdutoComPosicoes extends Produto {
@@ -39,6 +40,7 @@ export interface EnderecoComStatus {
     codigo_barras: string;
     peso_caixa: number | null;
     qt_por_cx: number | null;
+    unidade: string | null;
     cor_marcador: string | null;
     quantidade: number;
     validade: string;

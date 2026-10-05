@@ -181,6 +181,7 @@ export interface ItemReconciliacao {
   codigo: string;
   nome: string;
   qt_por_cx: number | null;
+  unidade: string | null;
   produto_novo: boolean;
   cadastro_alterado: boolean;
   saldo_anterior: number | null;
@@ -280,6 +281,7 @@ export interface PendenciaPosicionamento {
   codigo_barras: string;
   peso_caixa: number | null;
   qt_por_cx: number | null;
+  unidade: string | null;
   saldo_total: number;
   alocado_total: number;
   pendente: number;
@@ -334,6 +336,7 @@ export interface DivergenciaSobra {
   codigo: string;
   nome: string;
   qt_por_cx: number | null;
+  unidade: string | null;
   saldo_total: number;
   alocado_total: number;
   excesso: number;
@@ -355,6 +358,23 @@ export interface ItemCurvaAbc {
 
 export function buscarCurvaAbc(): Promise<ItemCurvaAbc[]> {
   return requisicao(`${BASE_URL}/produtos/curva-abc`).then((r) => handleJson(r));
+}
+
+export interface ItemEstoqueTotal {
+  produto_id: number;
+  codigo: string;
+  nome: string;
+  qt_por_cx: number | null;
+  unidade: string | null;
+  saldo_winthor: number | null;
+  posicionado: number;
+  posicoes: number;
+  diferenca: number;
+  status: 'ok' | 'falta_posicionar' | 'sobra' | 'sem_saldo';
+}
+
+export function buscarEstoqueTotal(): Promise<ItemEstoqueTotal[]> {
+  return requisicao(`${BASE_URL}/produtos/estoque-total`).then((r) => handleJson(r));
 }
 
 export type TipoMovimentacao = 'entrada' | 'saida';
@@ -405,6 +425,7 @@ export interface PosicaoAVencer {
   produto_codigo: string;
   produto_nome: string;
   produto_qt_por_cx: number | null;
+  produto_unidade: string | null;
   quantidade: number;
   validade: string;
   lote: string | null;

@@ -104,10 +104,10 @@ export default function PosicionamentoPage() {
                     <span className="font-medium text-ink-900">{p.nome}</span>{' '}
                     <span className="text-steel-400"> ({p.codigo})</span>
                   </td>
-                  <td className="data-code whitespace-nowrap">{formatarQtdCx(p.saldo_total, p.qt_por_cx)}</td>
-                  <td className="data-code whitespace-nowrap">{formatarQtdCx(p.alocado_total, p.qt_por_cx)}</td>
+                  <td className="data-code whitespace-nowrap">{formatarQtdCx(p.saldo_total, p.qt_por_cx, p.unidade)}</td>
+                  <td className="data-code whitespace-nowrap">{formatarQtdCx(p.alocado_total, p.qt_por_cx, p.unidade)}</td>
                   <td className="data-code whitespace-nowrap font-medium text-signal-amber600">
-                    {formatarQtdCx(p.pendente, p.qt_por_cx)}
+                    {formatarQtdCx(p.pendente, p.qt_por_cx, p.unidade)}
                   </td>
                   <td>
                     <PesoCaixaInput
@@ -167,10 +167,10 @@ export default function PosicionamentoPage() {
                       <span className="font-medium text-ink-900">{s.nome}</span>{' '}
                       <span className="text-steel-400"> ({s.codigo})</span>
                     </td>
-                    <td className="data-code whitespace-nowrap">{formatarQtdCx(s.saldo_total, s.qt_por_cx)}</td>
-                    <td className="data-code whitespace-nowrap">{formatarQtdCx(s.alocado_total, s.qt_por_cx)}</td>
+                    <td className="data-code whitespace-nowrap">{formatarQtdCx(s.saldo_total, s.qt_por_cx, s.unidade)}</td>
+                    <td className="data-code whitespace-nowrap">{formatarQtdCx(s.alocado_total, s.qt_por_cx, s.unidade)}</td>
                     <td className="data-code whitespace-nowrap font-medium text-signal-red600">
-                      {formatarQtdCx(s.excesso, s.qt_por_cx)}
+                      {formatarQtdCx(s.excesso, s.qt_por_cx, s.unidade)}
                     </td>
                   </tr>
                 ))}
@@ -286,6 +286,7 @@ function PosicionarModal({
         codigoBarras: pendencia.codigo_barras,
         pesoCaixa: pendencia.peso_caixa,
         qtPorCx: pendencia.qt_por_cx,
+        unidade: pendencia.unidade,
         quantidade: qtd,
         validade,
         lote: lote.trim() || null,
@@ -334,7 +335,7 @@ function PosicionarModal({
         <div className="mt-3 grid grid-cols-3 gap-3">
           <label className="col-span-3 block text-sm sm:col-span-1">
             <span className="mb-1 block font-medium text-ink-600">
-              Quantidade em UN
+              Quantidade em {pendencia.unidade || 'UN'}
             </span>
             <input
               type="number"

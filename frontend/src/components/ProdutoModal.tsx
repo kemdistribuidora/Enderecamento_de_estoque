@@ -264,7 +264,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
             <dl className="space-y-2 text-sm">
               <Row label="Produto" value={endereco.produto.nome} />
               <Row label="Código" value={endereco.produto.codigo} code />
-              <Row label="Quantidade" value={formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx)} code />
+              <Row label="Quantidade" value={formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx, endereco.produto.unidade)} code />
               {!endereco.produto.qt_por_cx ? (
                 <Row label="Peso do pallet" value="sem qtd/caixa (vem do Winthor)" code />
               ) : pesoCaixa == null ? (
@@ -394,8 +394,8 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
 
             <div className="panel mt-3 p-3">
               <label className="mb-1 block text-xs font-medium text-ink-600">
-                Retirar quantidade em UN (máx. {endereco.produto.quantidade} ={' '}
-                {formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx)})
+                Retirar quantidade em {endereco.produto.unidade || 'UN'} (máx. {endereco.produto.quantidade} ={' '}
+                {formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx, endereco.produto.unidade)})
               </label>
               <div className="flex gap-2">
                 <input
@@ -569,6 +569,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
             codigoBarras: endereco.produto.codigo_barras,
             pesoCaixa,
             qtPorCx: endereco.produto.qt_por_cx,
+            unidade: endereco.produto.unidade,
             quantidade: endereco.produto.quantidade,
             validade: validadeAtual,
             lote: endereco.produto.lote,
