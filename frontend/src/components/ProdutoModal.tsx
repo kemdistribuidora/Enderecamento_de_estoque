@@ -292,7 +292,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="max-h-[calc(100vh-2rem)] w-full max-w-sm overflow-y-auto rounded-soft border border-steel-600 bg-white p-5 shadow-lg shadow-steel-900/20"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-xl overflow-y-auto rounded-soft border border-steel-600 bg-white p-5 shadow-lg shadow-steel-900/20"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -322,7 +322,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                 <Row label="Peso do pallet" value="sem qtd/caixa (vem do Winthor)" code />
               ) : pesoCaixa == null ? (
                 <div className={LINHA}>
-                  <dt className="shrink-0 text-ink-600">Peso da caixa (KG)</dt>
+                  <dt className="shrink-0 whitespace-nowrap text-ink-600">Peso da caixa (KG)</dt>
                   <dd className="flex gap-1">
                     <input
                       type="number"
@@ -352,7 +352,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                 />
               )}
               <div className={LINHA}>
-                <dt className="shrink-0 text-ink-600">Validade da posição</dt>
+                <dt className="shrink-0 whitespace-nowrap text-ink-600">Validade da posição</dt>
                 {editandoValidade ? (
                   <dd className="flex gap-1">
                     <input
@@ -399,7 +399,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
               </div>
               <Row label="Lote" value={endereco.produto.lote ?? '—'} code />
               <div className={LINHA}>
-                <dt className="shrink-0 text-ink-600">Marcador</dt>
+                <dt className="shrink-0 whitespace-nowrap text-ink-600">Marcador</dt>
                 <dd className="flex gap-1.5">
                   {CORES_MARCADOR.map((c) => {
                     const ativa = corMarcadorAtual === c.chave;
@@ -441,10 +441,10 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
             <div className="panel mt-4 divide-y divide-steel-100">
               <div className="p-3">
                 <div className="mb-2 flex items-baseline justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-ink-900">
+                  <span className="shrink-0 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-900">
                     Retirar <span className="font-normal normal-case text-ink-600">({endereco.produto.unidade || 'UN'})</span>
                   </span>
-                  <span className="data-code text-right text-xs text-ink-600">
+                  <span className="data-code min-w-0 truncate whitespace-nowrap text-right text-xs text-ink-600">
                     máx. {endereco.produto.quantidade} ·{' '}
                     {formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx, endereco.produto.unidade)}
                   </span>
@@ -473,10 +473,10 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
 
               <div className="p-3">
                 <div className="mb-2 flex items-baseline justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-ink-900">
+                  <span className="shrink-0 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-900">
                     Adicionar <span className="font-normal normal-case text-ink-600">({endereco.produto.unidade || 'UN'})</span>
                   </span>
-                  <span className="data-code text-right text-xs text-ink-600">
+                  <span className="data-code min-w-0 truncate whitespace-nowrap text-right text-xs text-ink-600">
                     {pendente == null
                       ? 'carregando...'
                       : pendente > 0
@@ -677,8 +677,8 @@ const LINHA = 'flex min-h-10 items-center justify-between gap-4 border-b border-
 function Row({ label, value, code }: { label: string; value: string; code?: boolean }) {
   return (
     <div className={LINHA}>
-      <dt className="shrink-0 text-ink-600">{label}</dt>
-      <dd className={`text-right font-medium text-ink-900 ${code ? 'data-code' : ''}`}>{value}</dd>
+      <dt className="shrink-0 whitespace-nowrap text-ink-600">{label}</dt>
+      <dd title={value} className={`min-w-0 truncate whitespace-nowrap text-right font-medium text-ink-900 ${code ? 'data-code' : ''}`}>{value}</dd>
     </div>
   );
 }
