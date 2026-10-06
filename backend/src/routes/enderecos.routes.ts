@@ -276,6 +276,67 @@ enderecosRouter.post('/:id/baixar-parcial', async (req, res) => {
   res.json({ ok: true, ...resultado });
 });
 
+// POST /api/enderecos/:id/adicionar { quantidade } -> inverso do /baixar-parcial: soma uma
+// quantidade na posicao ja ocupada (mesmo produto, mantem validade/lote do pallet). So deixa
+// somar ate o saldo a posicionar do produto (saldo Winthor - SUM(estoque_posicoes), mesma
+// conta de /produtos/pendencias-posicionamento). Registrada como 'entrada' ja 'confirmada'.
+enderecosRouter.post('/:id/adicionar', async (req, res) => {
+  const enderecoId = Number(req.params.id);
+  const qtdAdicionada = arredondarQtd(Number((req.body ?? {}).quantidade));
+
+  if (!Number.isFinite(qtdAdicionada) || qtdAdicionada <= 0) {
+    return res.status(400).json({ erro: 'quantidade (> 0) e obrigatoria' });
+  }
+
+  // dentro da transacao pelo mesmo motivo do /baixar-parcial: duas somas simultaneas nao
+  // podem ler o mesmo saldo a posicionar e passar as duas
+  const resultado = await emTransacao(async (tx) => {
+    const ocupacaoRs = await tx.execute({
+      sql: `SELECT produto_id, quantidade, validade, lote FROM estoque_posicoes WHERE endereco_id = ?`,
+      args: [enderecoId],
+    });
+    const ocupacao = ocupacaoRs.rows[0] as any;
+    if (!ocupacao) throw new ErroHttp(404, 'Endereco esta livre. Use Posicionar estoque para ocupar.');
+
+    const produtoId = Number(ocupacao.produto_id);
+    const saldoRs = await tx.execute({
+      sql: `SELECT
+              (SELECT COALESCE(SUM(saldo), 0) FROM estoque_erp_saldo WHERE produto_id = ?) as saldo_total,
+              (SELECT COALESCE(SUM(quantidade), 0) FROM estoque_posicoes WHERE produto_id = ?) as alocado_total`,
+      args: [produtoId, produtoId],
+    });
+    const saldo = saldoRs.rows[0] as any;
+    const pendente = Math.max(0, arredondarQtd(Number(saldo.saldo_total) - Number(saldo.alocado_total)));
+    if (qtdAdicionada > pendente) {
+      throw new ErroHttp(
+        400,
+        pendente === 0
+          ? 'Produto sem estoque a posicionar. Importe o saldo do Winthor antes de adicionar.'
+          : `Quantidade adicionada (${qtdAdicionada}) maior que o estoque a posicionar (${pendente})`
+      );
+    }
+
+    const qtdNova = arredondarQtd(Number(ocupacao.quantidade) + qtdAdicionada);
+    const agora = new Date().toISOString();
+
+    await tx.execute({
+      sql: `UPDATE estoque_posicoes SET quantidade = ? WHERE endereco_id = ?`,
+      args: [qtdNova, enderecoId],
+    });
+    const movimentacaoInfo = await tx.execute({
+      sql: `INSERT INTO movimentacoes (tipo, produto_id, endereco_id, quantidade, validade, lote, status, criado_em) VALUES ('entrada', ?, ?, ?, ?, ?, 'confirmada', ?)`,
+      args: [produtoId, enderecoId, qtdAdicionada, ocupacao.validade, ocupacao.lote ?? null, agora],
+    });
+    return {
+      movimentacao_id: Number(movimentacaoInfo.lastInsertRowid),
+      quantidade_total: qtdNova,
+      pendente_restante: arredondarQtd(pendente - qtdAdicionada),
+    };
+  });
+
+  res.json({ ok: true, ...resultado });
+});
+
 // POST /api/enderecos/:id/mover { destino_id } -> move o pallet inteiro da posicao :id pra
 // outra posicao LIVRE (posicao e' sempre 1 pallet, nao mescla). Troca so o endereco_id em
 // estoque_posicoes, entao quantidade/validade/lote/criado_em (data de entrada da etiqueta)

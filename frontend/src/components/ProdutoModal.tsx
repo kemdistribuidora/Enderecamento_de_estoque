@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { EnderecoComStatus, StatusValidade } from '../types';
 import {
+  adicionarNaPosicao,
   atualizarCorMarcador,
   atualizarPesoCaixa,
   baixarParcialEndereco,
   bloquearEndereco,
+  buscarPendenciasPosicionamento,
   corrigirValidade,
   desbloquearEndereco,
   moverPallet,
@@ -33,6 +35,10 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
   const [confirmandoLiberacao, setConfirmandoLiberacao] = useState(false);
   const [retirando, setRetirando] = useState(false);
   const [qtdRetirar, setQtdRetirar] = useState('');
+  const [adicionando, setAdicionando] = useState(false);
+  const [qtdAdicionar, setQtdAdicionar] = useState('');
+  // saldo a posicionar do produto (Winthor - ja alocado); null = carregando
+  const [pendente, setPendente] = useState<number | null>(null);
   const [erro, setErro] = useState('');
   const [etiquetaAberta, setEtiquetaAberta] = useState(false);
   const [formBloqueioAberto, setFormBloqueioAberto] = useState(false);
@@ -61,7 +67,26 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
   useEffect(() => {
     setEditandoValidade(false);
     setConfirmandoValidade(false);
+    setQtdAdicionar('');
   }, [endereco?.id]);
+
+  // "Adicionar" so pode somar ate o saldo a posicionar (mesma lista da tela Posicionar estoque)
+  const produtoIdAtual = endereco?.produto?.id ?? null;
+  useEffect(() => {
+    if (produtoIdAtual == null) return;
+    let ativo = true;
+    setPendente(null);
+    buscarPendenciasPosicionamento()
+      .then((lista) => {
+        if (ativo) setPendente(lista.find((p) => p.produto_id === produtoIdAtual)?.pendente ?? 0);
+      })
+      .catch(() => {
+        if (ativo) setPendente(0);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [endereco?.id, produtoIdAtual]);
 
   if (!endereco) return null;
 
@@ -184,6 +209,34 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
     } finally {
       setConfirmandoLiberacao(false);
       setRetirando(false);
+    }
+  }
+
+  async function handleAdicionar() {
+    if (!endereco || !endereco.produto) return;
+    const qtd = Number(qtdAdicionar.replace(',', '.'));
+    if (!qtd || qtd <= 0) {
+      setErro('Informe uma quantidade válida.');
+      return;
+    }
+    if (pendente != null && qtd > pendente) {
+      setErro(
+        pendente === 0
+          ? 'Produto sem estoque a posicionar.'
+          : `Quantidade maior que o estoque a posicionar (${pendente}).`
+      );
+      return;
+    }
+    setAdicionando(true);
+    setErro('');
+    try {
+      await adicionarNaPosicao(endereco.id, qtd);
+      onAtualizado?.();
+      onClose();
+    } catch (err: any) {
+      setErro(err.message ?? 'Erro ao adicionar quantidade.');
+    } finally {
+      setAdicionando(false);
     }
   }
 
@@ -415,6 +468,38 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                   className="shrink-0 rounded-tag border-2 border-signal-amber600 bg-white px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-signal-amber600 transition-colors hover:bg-signal-amber100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {retirando ? 'Retirando...' : 'Retirar'}
+                </button>
+              </div>
+            </div>
+
+            <div className="panel mt-2 p-3">
+              <label className="mb-1 block text-xs font-medium text-ink-600">
+                Adicionar quantidade em {endereco.produto.unidade || 'UN'}{' '}
+                {pendente == null
+                  ? '(carregando estoque a posicionar...)'
+                  : pendente > 0
+                    ? `(a posicionar: ${pendente} = ${formatarQtdCx(pendente, endereco.produto.qt_por_cx, endereco.produto.unidade)})`
+                    : '(sem estoque a posicionar)'}
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  step="any"
+                  min={0}
+                  max={pendente ?? undefined}
+                  value={qtdAdicionar}
+                  onChange={(e) => setQtdAdicionar(e.target.value)}
+                  className="input"
+                  placeholder="Qtd"
+                  disabled={!pendente}
+                />
+                <button
+                  type="button"
+                  onClick={handleAdicionar}
+                  disabled={adicionando || !qtdAdicionar || !pendente}
+                  className="shrink-0 rounded-tag border-2 border-signal-green600 bg-white px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-signal-green600 transition-colors hover:bg-signal-green100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {adicionando ? 'Adicionando...' : 'Adicionar'}
                 </button>
               </div>
             </div>

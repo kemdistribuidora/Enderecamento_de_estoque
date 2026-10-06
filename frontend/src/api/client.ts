@@ -129,6 +129,17 @@ export function baixarParcialEndereco(
   }).then((r) => handleJson(r));
 }
 
+export function adicionarNaPosicao(
+  enderecoId: number,
+  quantidade: number
+): Promise<{ ok: true; movimentacao_id: number; quantidade_total: number; pendente_restante: number }> {
+  return requisicao(`${BASE_URL}/enderecos/${enderecoId}/adicionar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quantidade }),
+  }).then((r) => handleJson(r));
+}
+
 export function contarEndereco(
   enderecoId: number,
   quantidadeContada: number
