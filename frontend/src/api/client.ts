@@ -366,11 +366,8 @@ export interface ItemEstoqueTotal {
   nome: string;
   qt_por_cx: number | null;
   unidade: string | null;
-  saldo_winthor: number | null;
-  posicionado: number;
+  total: number;
   posicoes: number;
-  diferenca: number;
-  status: 'ok' | 'falta_posicionar' | 'sobra' | 'sem_saldo';
 }
 
 export function buscarEstoqueTotal(): Promise<ItemEstoqueTotal[]> {

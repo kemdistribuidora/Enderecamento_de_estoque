@@ -218,42 +218,30 @@ produtosRouter.get('/curva-abc', async (_req, res) => {
   res.json(curva);
 });
 
-// GET /api/produtos/estoque-total -> visao lado a lado saldo Winthor x posicionado no WMS,
-// 1 linha por produto que tenha saldo importado OU posicao ocupada. Conferencia de olho
-// contra a tela do Winthor. saldo_winthor null = produto nunca veio no import.
+// GET /api/produtos/estoque-total -> total fisico de cada produto no WMS (soma das posicoes),
+// so dado do WMS (nada do saldo Winthor): a tela e pra conferencia manual, olhando ela e o
+// Winthor lado a lado. So produto com pelo menos 1 posicao ocupada.
 produtosRouter.get('/estoque-total', async (_req, res) => {
   const rs = await db.execute(`
     SELECT
       p.id as produto_id, p.codigo, p.nome, p.qt_por_cx, p.unidade,
-      saldo.total as saldo_winthor,
-      COALESCE(alocado.total, 0) as posicionado,
-      COALESCE(alocado.posicoes, 0) as posicoes
-    FROM produtos p
-    LEFT JOIN (SELECT produto_id, ROUND(SUM(saldo), 6) as total FROM estoque_erp_saldo GROUP BY produto_id) saldo ON saldo.produto_id = p.id
-    LEFT JOIN (SELECT produto_id, ROUND(SUM(quantidade), 6) as total, COUNT(*) as posicoes FROM estoque_posicoes GROUP BY produto_id) alocado ON alocado.produto_id = p.id
-    WHERE saldo.total IS NOT NULL OR alocado.total IS NOT NULL
+      ROUND(SUM(ep.quantidade), 6) as total,
+      COUNT(*) as posicoes
+    FROM estoque_posicoes ep
+    JOIN produtos p ON p.id = ep.produto_id
+    GROUP BY p.id
     ORDER BY p.nome
   `);
 
-  const itens: ItemEstoqueTotal[] = (rs.rows as any[]).map((r) => {
-    const saldo = r.saldo_winthor != null ? Number(r.saldo_winthor) : null;
-    const posicionado = Number(r.posicionado);
-    const diferenca = arredondarQtd(posicionado - (saldo ?? 0));
-    const status: ItemEstoqueTotal['status'] =
-      saldo == null ? 'sem_saldo' : diferenca === 0 ? 'ok' : diferenca < 0 ? 'falta_posicionar' : 'sobra';
-    return {
-      produto_id: Number(r.produto_id),
-      codigo: r.codigo,
-      nome: r.nome,
-      qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
-      unidade: r.unidade ?? null,
-      saldo_winthor: saldo,
-      posicionado,
-      posicoes: Number(r.posicoes),
-      diferenca,
-      status,
-    };
-  });
+  const itens: ItemEstoqueTotal[] = (rs.rows as any[]).map((r) => ({
+    produto_id: Number(r.produto_id),
+    codigo: r.codigo,
+    nome: r.nome,
+    qt_por_cx: r.qt_por_cx != null ? Number(r.qt_por_cx) : null,
+    unidade: r.unidade ?? null,
+    total: arredondarQtd(Number(r.total)),
+    posicoes: Number(r.posicoes),
+  }));
 
   res.json(itens);
 });

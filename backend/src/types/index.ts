@@ -168,19 +168,15 @@ export interface ItemCurvaAbc {
   classe: 'A' | 'B' | 'C';
 }
 
-// Estoque total por produto: saldo Winthor x soma das posicoes no WMS.
-// diferenca = posicionado - saldo (negativo = falta posicionar, positivo = sobra fisica).
+// Estoque total por produto no WMS: soma das posicoes ocupadas (unidade do produto).
 export interface ItemEstoqueTotal {
   produto_id: number;
   codigo: string;
   nome: string;
   qt_por_cx: number | null;
   unidade: string | null;
-  saldo_winthor: number | null;
-  posicionado: number;
+  total: number;
   posicoes: number;
-  diferenca: number;
-  status: 'ok' | 'falta_posicionar' | 'sobra' | 'sem_saldo';
 }
 
 // Posicao ocupada com validade vencida ou proxima (ver DIAS_ALERTA_VENCIMENTO).
