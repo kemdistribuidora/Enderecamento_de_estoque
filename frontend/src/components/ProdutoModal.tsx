@@ -292,7 +292,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-sm rounded-soft border border-steel-600 bg-white p-5 shadow-lg shadow-steel-900/20"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-sm overflow-y-auto rounded-soft border border-steel-600 bg-white p-5 shadow-lg shadow-steel-900/20"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -314,14 +314,14 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
           <p className="text-sm text-ink-600">Posição livre</p>
         ) : (
           <>
-            <dl className="space-y-2 text-sm">
+            <dl className="text-sm">
               <Row label="Produto" value={endereco.produto.nome} />
               <Row label="Código" value={endereco.produto.codigo} code />
               <Row label="Quantidade" value={formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx, endereco.produto.unidade)} code />
               {!endereco.produto.qt_por_cx ? (
                 <Row label="Peso do pallet" value="sem qtd/caixa (vem do Winthor)" code />
               ) : pesoCaixa == null ? (
-                <div className="flex items-center justify-between gap-2 border-b border-steel-100 pb-1">
+                <div className={LINHA}>
                   <dt className="shrink-0 text-ink-600">Peso da caixa (KG)</dt>
                   <dd className="flex gap-1">
                     <input
@@ -351,7 +351,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                   code
                 />
               )}
-              <div className="flex items-center justify-between gap-2 border-b border-steel-100 pb-1">
+              <div className={LINHA}>
                 <dt className="shrink-0 text-ink-600">Validade da posição</dt>
                 {editandoValidade ? (
                   <dd className="flex gap-1">
@@ -398,7 +398,7 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
                 )}
               </div>
               <Row label="Lote" value={endereco.produto.lote ?? '—'} code />
-              <div className="flex items-center justify-between gap-2 border-b border-steel-100 pb-1">
+              <div className={LINHA}>
                 <dt className="shrink-0 text-ink-600">Marcador</dt>
                 <dd className="flex gap-1.5">
                   {CORES_MARCADOR.map((c) => {
@@ -424,91 +424,95 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
             </dl>
 
             {statusValidadeAtual !== 'normal' && (
-              <p className={`mt-2 ${statusValidadeAtual === 'emergencia' ? 'tag-red' : 'tag-amber'}`}>
+              <p className={`mt-3 ${statusValidadeAtual === 'emergencia' ? 'tag-red' : 'tag-amber'}`}>
                 {ROTULO_STATUS_VALIDADE[statusValidadeAtual]}
               </p>
             )}
 
-            <button
-              type="button"
-              onClick={() => setEtiquetaAberta(true)}
-              className="btn-secondary mt-4 w-full"
-            >
-              Imprimir etiqueta
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setEscolhendoDestino(true)}
-              className="btn-secondary mt-2 w-full"
-            >
-              Mover pallet para outra posição
-            </button>
-
-            <div className="panel mt-3 p-3">
-              <label className="mb-1 block text-xs font-medium text-ink-600">
-                Retirar quantidade em {endereco.produto.unidade || 'UN'} (máx. {endereco.produto.quantidade} ={' '}
-                {formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx, endereco.produto.unidade)})
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  step="any"
-                  min={0}
-                  max={endereco.produto.quantidade}
-                  value={qtdRetirar}
-                  onChange={(e) => setQtdRetirar(e.target.value)}
-                  className="input"
-                  placeholder="Qtd"
-                />
-                <button
-                  type="button"
-                  onClick={handleRetirarParcial}
-                  disabled={retirando || !qtdRetirar}
-                  className="shrink-0 rounded-tag border-2 border-signal-amber600 bg-white px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-signal-amber600 transition-colors hover:bg-signal-amber100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {retirando ? 'Retirando...' : 'Retirar'}
-                </button>
-              </div>
+            <div className="mt-4 flex flex-col gap-2">
+              <button type="button" onClick={() => setEtiquetaAberta(true)} className="btn-secondary w-full">
+                Imprimir etiqueta
+              </button>
+              <button type="button" onClick={() => setEscolhendoDestino(true)} className="btn-secondary w-full">
+                Mover pallet para outra posição
+              </button>
             </div>
 
-            <div className="panel mt-2 p-3">
-              <label className="mb-1 block text-xs font-medium text-ink-600">
-                Adicionar quantidade em {endereco.produto.unidade || 'UN'}{' '}
-                {pendente == null
-                  ? '(carregando estoque a posicionar...)'
-                  : pendente > 0
-                    ? `(a posicionar: ${pendente} = ${formatarQtdCx(pendente, endereco.produto.qt_por_cx, endereco.produto.unidade)})`
-                    : '(sem estoque a posicionar)'}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  step="any"
-                  min={0}
-                  max={pendente ?? undefined}
-                  value={qtdAdicionar}
-                  onChange={(e) => setQtdAdicionar(e.target.value)}
-                  className="input"
-                  placeholder="Qtd"
-                  disabled={!pendente}
-                />
-                <button
-                  type="button"
-                  onClick={handleAdicionar}
-                  disabled={adicionando || !qtdAdicionar || !pendente}
-                  className="shrink-0 rounded-tag border-2 border-signal-green600 bg-white px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-signal-green600 transition-colors hover:bg-signal-green100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {adicionando ? 'Adicionando...' : 'Adicionar'}
-                </button>
+            <div className="panel mt-4 divide-y divide-steel-100">
+              <div className="p-3">
+                <div className="mb-2 flex items-baseline justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-ink-900">
+                    Retirar <span className="font-normal normal-case text-ink-600">({endereco.produto.unidade || 'UN'})</span>
+                  </span>
+                  <span className="data-code text-right text-xs text-ink-600">
+                    máx. {endereco.produto.quantidade} ·{' '}
+                    {formatarQtdCx(endereco.produto.quantidade, endereco.produto.qt_por_cx, endereco.produto.unidade)}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    step="any"
+                    min={0}
+                    max={endereco.produto.quantidade}
+                    value={qtdRetirar}
+                    onChange={(e) => setQtdRetirar(e.target.value)}
+                    className="input min-w-0 flex-1"
+                    placeholder="Qtd"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRetirarParcial}
+                    disabled={retirando || !qtdRetirar}
+                    className="w-32 shrink-0 rounded-tag border-2 border-signal-amber600 bg-white px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-signal-amber600 transition-colors hover:bg-signal-amber100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {retirando ? 'Retirando...' : 'Retirar'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3">
+                <div className="mb-2 flex items-baseline justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-ink-900">
+                    Adicionar <span className="font-normal normal-case text-ink-600">({endereco.produto.unidade || 'UN'})</span>
+                  </span>
+                  <span className="data-code text-right text-xs text-ink-600">
+                    {pendente == null
+                      ? 'carregando...'
+                      : pendente > 0
+                        ? `a posicionar: ${pendente} · ${formatarQtdCx(pendente, endereco.produto.qt_por_cx, endereco.produto.unidade)}`
+                        : 'sem estoque a posicionar'}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    step="any"
+                    min={0}
+                    max={pendente ?? undefined}
+                    value={qtdAdicionar}
+                    onChange={(e) => setQtdAdicionar(e.target.value)}
+                    className="input min-w-0 flex-1 disabled:cursor-not-allowed disabled:bg-steel-100/50"
+                    placeholder="Qtd"
+                    disabled={!pendente}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAdicionar}
+                    disabled={adicionando || !qtdAdicionar || !pendente}
+                    className="w-32 shrink-0 rounded-tag border-2 border-signal-green600 bg-white px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-signal-green600 transition-colors hover:bg-signal-green100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {adicionando ? 'Adicionando...' : 'Adicionar'}
+                  </button>
+                </div>
               </div>
             </div>
           </>
         )}
 
-        {erro && <p className="mt-2 text-sm text-signal-red600">{erro}</p>}
+        {erro && <p className="mt-3 text-sm text-signal-red600">{erro}</p>}
 
-        <div className="mt-3 border-t-2 border-steel-600/25 pt-3">
+        <div className="mt-4 border-t-2 border-steel-600/25 pt-4">
           {endereco.bloqueado ? (
             <button
               type="button"
@@ -667,11 +671,14 @@ export default function ProdutoModal({ endereco, onClose, onAtualizado, setorAtu
   );
 }
 
+// toda linha da ficha com a mesma altura (as de input/marcador nao ficam mais altas que as de texto)
+const LINHA = 'flex min-h-10 items-center justify-between gap-4 border-b border-steel-100 py-1.5';
+
 function Row({ label, value, code }: { label: string; value: string; code?: boolean }) {
   return (
-    <div className="flex justify-between border-b border-steel-100 pb-1">
-      <dt className="text-ink-600">{label}</dt>
-      <dd className={`font-medium text-ink-900 ${code ? 'data-code' : ''}`}>{value}</dd>
+    <div className={LINHA}>
+      <dt className="shrink-0 text-ink-600">{label}</dt>
+      <dd className={`text-right font-medium text-ink-900 ${code ? 'data-code' : ''}`}>{value}</dd>
     </div>
   );
 }
