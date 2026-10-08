@@ -84,37 +84,6 @@ function CelulaPosicao({
   );
 }
 
-// Buracos (andar x posicao sem endereco) agrupados por vizinhanca: cada grupo vira um
-// bloco so (retangulo envolvente), em vez de um quadrado tracejado por posicao.
-// linha = indice em `andares` (ordem de exibicao), coluna = posicao - 1.
-function blocosPassagem(posicoes: EnderecoComStatus[], andares: number[], colunas: number) {
-  const existe = new Set(posicoes.map((p) => `${andares.indexOf(p.andar)}:${p.posicao - 1}`));
-  const visto = new Set<string>();
-  const blocos: { linha: number; coluna: number; linhas: number; colunas: number }[] = [];
-  for (let l = 0; l < andares.length; l++) {
-    for (let c = 0; c < colunas; c++) {
-      const chave = `${l}:${c}`;
-      if (existe.has(chave) || visto.has(chave)) continue;
-      let [l0, l1, c0, c1] = [l, l, c, c];
-      const fila = [[l, c]];
-      visto.add(chave);
-      while (fila.length > 0) {
-        const [fl, fc] = fila.pop()!;
-        l0 = Math.min(l0, fl); l1 = Math.max(l1, fl);
-        c0 = Math.min(c0, fc); c1 = Math.max(c1, fc);
-        for (const [vl, vc] of [[fl - 1, fc], [fl + 1, fc], [fl, fc - 1], [fl, fc + 1]]) {
-          const k = `${vl}:${vc}`;
-          if (vl < 0 || vl >= andares.length || vc < 0 || vc >= colunas || existe.has(k) || visto.has(k)) continue;
-          visto.add(k);
-          fila.push([vl, vc]);
-        }
-      }
-      blocos.push({ linha: l0, coluna: c0, linhas: l1 - l0 + 1, colunas: c1 - c0 + 1 });
-    }
-  }
-  return blocos;
-}
-
 function BlocoPrateleira({
   posicoes,
   letraDono,
@@ -161,42 +130,40 @@ function BlocoPrateleira({
         {letraDono}
         {ladoDono}
       </div>
-      {/* grid unico (andares nas linhas) pra passagem poder atravessar mais de um andar */}
-      <div
-        className={`grid items-center ${grande ? 'gap-x-2 gap-y-3' : 'gap-x-1 gap-y-1.5'}`}
-        style={{ gridTemplateColumns: `auto repeat(${colunas}, minmax(0, 1fr))` }}
-      >
-        {andares.map((andar, linha) => (
-          <span
-            key={`andar-${andar}`}
-            style={{ gridRow: linha + 1, gridColumn: 1 }}
-            className={`data-code text-center text-steel-400 ${grande ? 'mr-0 w-5 text-sm' : 'mr-1 w-4 text-[10px]'}`}
-          >
-            {andar}
-          </span>
-        ))}
-        {posicoes.map((p) => (
-          <div key={p.id} style={{ gridRow: andares.indexOf(p.andar) + 1, gridColumn: p.posicao + 1 }}>
-            <CelulaPosicao
-              posicao={p}
-              onClick={onSelect}
-              grande={grande}
-              destacado={idsDestacados?.has(p.id)}
-              candidato={idsCandidatos?.has(p.id)}
-              candidatoPontilhado={candidatoPontilhado}
-            />
-          </div>
-        ))}
-        {blocosPassagem(posicoes, andares, colunas).map((b) => (
-          <div
-            key={`passagem-${b.linha}-${b.coluna}`}
-            title="Passagem (sem posição)"
-            style={{ gridRow: `${b.linha + 1} / span ${b.linhas}`, gridColumn: `${b.coluna + 2} / span ${b.colunas}` }}
-            className="flex h-full items-center justify-center rounded-tag border-2 border-dashed border-signal-amber600 bg-signal-amber100"
-          >
-            <span className={`font-semibold tracking-wide text-signal-amber600 ${grande ? 'text-xs' : 'text-[10px]'}`}>
-              Passagem
+      <div className={grande ? 'space-y-3' : 'space-y-1.5'}>
+        {andares.map((andar) => (
+          <div key={andar} className="flex items-center gap-2">
+            <span className={`data-code shrink-0 text-center text-steel-400 ${grande ? 'w-5 text-sm' : 'w-4 text-[10px]'}`}>
+              {andar}
             </span>
+            <div
+              className={`grid flex-1 ${grande ? 'gap-2' : 'gap-1'}`}
+              style={{ gridTemplateColumns: `repeat(${colunas}, minmax(0, 1fr))` }}
+            >
+              {Array.from({ length: colunas }, (_, i) => {
+                const p = posicoes.find((x) => x.andar === andar && x.posicao === i + 1);
+                if (!p) {
+                  return (
+                    <div
+                      key={`vazio-${i}`}
+                      title="Passagem (sem posição)"
+                      className="aspect-square min-w-0 rounded-tag border-2 border-dashed border-signal-amber600 bg-signal-amber100"
+                    />
+                  );
+                }
+                return (
+                  <CelulaPosicao
+                    key={p.id}
+                    posicao={p}
+                    onClick={onSelect}
+                    grande={grande}
+                    destacado={idsDestacados?.has(p.id)}
+                    candidato={idsCandidatos?.has(p.id)}
+                    candidatoPontilhado={candidatoPontilhado}
+                  />
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>
