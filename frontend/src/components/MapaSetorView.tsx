@@ -114,6 +114,29 @@ function BlocoPrateleira({
   // coluna = numero da posicao (nao a contagem): posicao inexistente no meio (passagem
   // entre corredores) vira buraco no lugar certo em vez de puxar as seguintes pra esquerda
   const colunas = Math.max(...posicoes.map((p) => p.posicao));
+  const grade = andares.map((andar) =>
+    Array.from({ length: colunas }, (_, i) => posicoes.find((x) => x.andar === andar && x.posicao === i + 1))
+  );
+  // buracos vizinhos viram um retangulo tracejado so (ex: passagem 15/16 dos andares 1 e 2)
+  const passagens: { linha: number; col: number; largura: number; altura: number }[] = [];
+  const coberto = grade.map((linha) => linha.map(() => false));
+  grade.forEach((linhaGrade, linha) =>
+    linhaGrade.forEach((p, col) => {
+      if (p || coberto[linha][col]) return;
+      let largura = 1;
+      while (col + largura < colunas && !linhaGrade[col + largura] && !coberto[linha][col + largura]) largura++;
+      let altura = 1;
+      while (
+        linha + altura < grade.length &&
+        Array.from({ length: largura }, (_, k) => col + k).every(
+          (c) => !grade[linha + altura][c] && !coberto[linha + altura][c]
+        )
+      )
+        altura++;
+      for (let l = linha; l < linha + altura; l++) for (let c = col; c < col + largura; c++) coberto[l][c] = true;
+      passagens.push({ linha, col, largura, altura });
+    })
+  );
 
   return (
     <div className="relative panel p-3">
@@ -130,42 +153,44 @@ function BlocoPrateleira({
         {letraDono}
         {ladoDono}
       </div>
-      <div className={grande ? 'space-y-3' : 'space-y-1.5'}>
-        {andares.map((andar) => (
-          <div key={andar} className="flex items-center gap-2">
-            <span className={`data-code shrink-0 text-center text-steel-400 ${grande ? 'w-5 text-sm' : 'w-4 text-[10px]'}`}>
-              {andar}
-            </span>
-            <div
-              className={`grid flex-1 ${grande ? 'gap-2' : 'gap-1'}`}
-              style={{ gridTemplateColumns: `repeat(${colunas}, minmax(0, 1fr))` }}
-            >
-              {Array.from({ length: colunas }, (_, i) => {
-                const p = posicoes.find((x) => x.andar === andar && x.posicao === i + 1);
-                if (!p) {
-                  return (
-                    <div
-                      key={`vazio-${i}`}
-                      title="Passagem (sem posição)"
-                      className="aspect-square min-w-0 rounded-tag border-2 border-dashed border-signal-amber600 bg-signal-amber100"
-                    />
-                  );
-                }
-                return (
-                  <CelulaPosicao
-                    key={p.id}
-                    posicao={p}
-                    onClick={onSelect}
-                    grande={grande}
-                    destacado={idsDestacados?.has(p.id)}
-                    candidato={idsCandidatos?.has(p.id)}
-                    candidatoPontilhado={candidatoPontilhado}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      <div
+        className={`grid items-center ${grande ? 'gap-x-2 gap-y-3' : 'gap-x-1 gap-y-1.5'}`}
+        style={{ gridTemplateColumns: `auto repeat(${colunas}, minmax(0, 1fr))` }}
+      >
+        {andares.flatMap((andar, linha) => [
+          <span
+            key={`andar-${andar}`}
+            className={`data-code text-center text-steel-400 ${grande ? 'w-5 text-sm' : 'mr-1 w-4 text-[10px]'}`}
+          >
+            {andar}
+          </span>,
+          ...Array.from({ length: colunas }, (_, i) => {
+            const p = grade[linha][i];
+            if (p) {
+              return (
+                <CelulaPosicao
+                  key={p.id}
+                  posicao={p}
+                  onClick={onSelect}
+                  grande={grande}
+                  destacado={idsDestacados?.has(p.id)}
+                  candidato={idsCandidatos?.has(p.id)}
+                  candidatoPontilhado={candidatoPontilhado}
+                />
+              );
+            }
+            const area = passagens.find((a) => a.linha === linha && a.col === i);
+            if (!area) return null; // coberto por uma passagem ancorada antes
+            return (
+              <div
+                key={`passagem-${andar}-${i}`}
+                title="Passagem (sem posição)"
+                className="min-w-0 self-stretch rounded-tag border-2 border-dashed border-signal-amber600 bg-signal-amber100"
+                style={{ gridColumn: `span ${area.largura}`, gridRow: `span ${area.altura}` }}
+              />
+            );
+          }),
+        ])}
       </div>
     </div>
   );
