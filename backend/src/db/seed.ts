@@ -16,6 +16,8 @@ interface SetorDef {
   andares: number;
   posicoesPorAndar: number;
   prateleirasExtras?: PrateleiraExtra[];
+  // enderecos que nao existem fisicamente (ex: passagem entre corredores), nao criados
+  enderecosInexistentes?: string[];
 }
 
 const SETORES: SetorDef[] = [
@@ -26,6 +28,9 @@ const SETORES: SetorDef[] = [
     posicoesPorAndar: 24,
     // BE: prateleira extra encostada na AD (ordem 1), sem corredor entre elas.
     prateleirasExtras: [{ aposPrateleiraOrdem: 1, letra: 'B', lado: 'E' }],
+    // passagem que liga o corredor A ao B atravessando AD+BE: posicoes 15/16 dos andares
+    // 1 e 2 sem prateleira (andar 3 passa por cima)
+    enderecosInexistentes: ['AD115', 'AD116', 'AD215', 'AD216', 'BE115', 'BE116', 'BE215', 'BE216'],
   },
   { nome: 'Seco 1', corredores: ['C', 'D', 'E'], andares: 3, posicoesPorAndar: 24 },
 ];
@@ -139,6 +144,7 @@ async function seed() {
       for (let andar = def.andares; andar >= 1; andar--) {
         for (let posicao = 1; posicao <= def.posicoesPorAndar; posicao++) {
           const codigo = formatarEndereco(dono.letra, dono.lado, andar, posicao);
+          if (def.enderecosInexistentes?.includes(codigo)) continue;
           const enderecoInfo = await db.execute({
             sql: `INSERT INTO enderecos (prateleira_id, corredor, lado, andar, posicao, codigo) VALUES (?, ?, ?, ?, ?, ?)`,
             args: [prateleiraId, dono.letra, dono.lado, andar, posicao, codigo],

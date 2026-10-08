@@ -111,7 +111,9 @@ function BlocoPrateleira({
   const andares = Array.from(new Set(posicoes.map((p) => p.andar))).sort((a, b) =>
     corredorAcima ? a - b : b - a
   );
-  const colunas = Math.max(...andares.map((andar) => posicoes.filter((p) => p.andar === andar).length));
+  // coluna = numero da posicao (nao a contagem): posicao inexistente no meio (passagem
+  // entre corredores) vira buraco no lugar certo em vez de puxar as seguintes pra esquerda
+  const colunas = Math.max(...posicoes.map((p) => p.posicao));
 
   return (
     <div className="relative panel p-3">
@@ -138,10 +140,18 @@ function BlocoPrateleira({
               className={`grid flex-1 ${grande ? 'gap-2' : 'gap-1'}`}
               style={{ gridTemplateColumns: `repeat(${colunas}, minmax(0, 1fr))` }}
             >
-              {posicoes
-                .filter((p) => p.andar === andar)
-                .sort((a, b) => a.posicao - b.posicao)
-                .map((p) => (
+              {Array.from({ length: colunas }, (_, i) => {
+                const p = posicoes.find((x) => x.andar === andar && x.posicao === i + 1);
+                if (!p) {
+                  return (
+                    <div
+                      key={`vazio-${i}`}
+                      title="Passagem (sem posição)"
+                      className="aspect-square min-w-0 rounded-tag border-2 border-dashed border-signal-amber600 bg-signal-amber100"
+                    />
+                  );
+                }
+                return (
                   <CelulaPosicao
                     key={p.id}
                     posicao={p}
@@ -151,7 +161,8 @@ function BlocoPrateleira({
                     candidato={idsCandidatos?.has(p.id)}
                     candidatoPontilhado={candidatoPontilhado}
                   />
-                ))}
+                );
+              })}
             </div>
           </div>
         ))}
